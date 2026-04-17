@@ -29,14 +29,14 @@ export function LoginForm() {
       })
 
       if (result?.error) {
-        setError(result.error)
+        setError('邮箱或密码错误')
         return
       }
 
-      router.push('/dashboard')
+      router.push('/')
       router.refresh()
     } catch {
-      setError('An unexpected error occurred')
+      setError('发生未知错误')
     } finally {
       setIsLoading(false)
     }
@@ -51,7 +51,7 @@ export function LoginForm() {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">邮箱</Label>
         <Input
           id="email"
           name="email"
@@ -63,7 +63,7 @@ export function LoginForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">密码</Label>
         <Input
           id="password"
           name="password"
@@ -75,13 +75,13 @@ export function LoginForm() {
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Signing in...' : 'Sign In'}
+        {isLoading ? '登录中...' : '登录'}
       </Button>
 
       <p className="text-center text-sm text-warm-silver">
-        No account?{' '}
+        没有账号？{' '}
         <a href="/register" className="text-foreground underline hover:opacity-80">
-          Create one with invite code
+          注册
         </a>
       </p>
     </form>

@@ -6,9 +6,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-feature border border-border shadow-clay p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold tracking-tight">Welcome Back</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">欢迎回来</h1>
             <p className="text-sm text-warm-silver mt-2">
-              Sign in to your Media AI account
+              登录 AI Content Factory
             </p>
           </div>
 

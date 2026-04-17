@@ -22,15 +22,16 @@ export function RegisterForm() {
     const confirmPassword = formData.get('confirmPassword') as string
     const nickname = formData.get('nickname') as string
     const inviteCode = formData.get('inviteCode') as string
+    const teamName = formData.get('teamName') as string
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError('两次输入的密码不一致')
       setIsLoading(false)
       return
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError('密码至少8个字符')
       setIsLoading(false)
       return
     }
@@ -39,20 +40,20 @@ export function RegisterForm() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, nickname, inviteCode }),
+        body: JSON.stringify({ email, password, nickname, inviteCode: inviteCode || undefined, teamName: teamName || undefined }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Registration failed')
+        setError(data.error || '注册失败')
         return
       }
 
       // Redirect to login page after successful registration
       router.push('/login?registered=true')
     } catch {
-      setError('An unexpected error occurred')
+      setError('发生未知错误')
     } finally {
       setIsLoading(false)
     }
@@ -67,7 +68,7 @@ export function RegisterForm() {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">邮箱</Label>
         <Input
           id="email"
           name="email"
@@ -79,18 +80,18 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="nickname">Nickname (optional)</Label>
+        <Label htmlFor="nickname">昵称（选填）</Label>
         <Input
           id="nickname"
           name="nickname"
           type="text"
-          placeholder="Your display name"
+          placeholder="您的显示名称"
           disabled={isLoading}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">密码</Label>
         <Input
           id="password"
           name="password"
@@ -103,7 +104,7 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
+        <Label htmlFor="confirmPassword">确认密码</Label>
         <Input
           id="confirmPassword"
           name="confirmPassword"
@@ -115,27 +116,41 @@ export function RegisterForm() {
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="inviteCode">Invite Code</Label>
-        <Input
-          id="inviteCode"
-          name="inviteCode"
-          type="text"
-          placeholder="XXXXXXXX"
-          required
-          disabled={isLoading}
-          className="uppercase"
-        />
+      <div className="border-t border-border pt-4 mt-4">
+        <p className="text-sm text-warm-silver mb-3">如有邀请码请填写，可跳过此步骤</p>
+
+        <div className="space-y-2">
+          <Label htmlFor="inviteCode">邀请码（选填）</Label>
+          <Input
+            id="inviteCode"
+            name="inviteCode"
+            type="text"
+            placeholder="XXXXXXXX"
+            disabled={isLoading}
+            className="uppercase"
+          />
+        </div>
+
+        <div className="space-y-2 mt-3">
+          <Label htmlFor="teamName">团队名称（无邀请码时填写）</Label>
+          <Input
+            id="teamName"
+            name="teamName"
+            type="text"
+            placeholder="我的团队"
+            disabled={isLoading}
+          />
+        </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Creating account...' : 'Create Account'}
+        {isLoading ? '注册中...' : '注册'}
       </Button>
 
       <p className="text-center text-sm text-warm-silver">
-        Already have an account?{' '}
+        已有账号？{' '}
         <a href="/login" className="text-foreground underline hover:opacity-80">
-          Sign in
+          登录
         </a>
       </p>
     </form>

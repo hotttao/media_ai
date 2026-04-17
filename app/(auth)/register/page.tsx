@@ -6,9 +6,9 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-feature border border-border shadow-clay p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold tracking-tight">Join Your Team</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">创建账号</h1>
             <p className="text-sm text-warm-silver mt-2">
-              Create your account with an invite code
+              加入 AI Content Factory
             </p>
           </div>
 
