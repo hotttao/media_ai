@@ -7,7 +7,7 @@ import { TopBar } from './TopBar'
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <div className="flex min-h-screen bg-[#0a0f1a]">
+      <div className="flex min-h-screen bg-gray-50/50">
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <TopBar />

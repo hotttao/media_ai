@@ -18,17 +18,15 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-64 min-h-screen bg-[#0a0f1a] border-r border-cyan-500/20 flex flex-col">
+    <aside className="w-64 min-h-screen bg-white border-r border-gray-100 flex flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-cyan-500/20">
+      <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-matcha-400 to-matcha-600 flex items-center justify-center shadow-md">
             <span className="text-xl">🤖</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
-              AI Content Factory
-            </h1>
+            <h1 className="text-base font-bold text-gray-900">AI Content Factory</h1>
             <p className="text-xs text-gray-500">智能内容工厂</p>
           </div>
         </div>
@@ -44,33 +42,30 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300',
+                'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 border border-cyan-500/30 shadow-lg shadow-cyan-500/10'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-gradient-to-r from-matcha-500 to-matcha-400 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               )}
             >
               <span className="text-lg">{item.icon}</span>
               {item.name}
-              {isActive && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-lg shadow-cyan-400/50" />
-              )}
             </Link>
           )
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-cyan-500/20">
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-transparent border border-cyan-500/20">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-sm">
+      {/* User section */}
+      <div className="p-4 border-t border-gray-100">
+        <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-matcha-400 to-matcha-600 flex items-center justify-center text-sm text-white">
             👤
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">用户</p>
+            <p className="text-sm font-medium text-gray-900 truncate">用户</p>
             <p className="text-xs text-gray-500">在线</p>
           </div>
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+          <div className="w-2 h-2 bg-green-400 rounded-full" />
         </div>
       </div>
     </aside>
