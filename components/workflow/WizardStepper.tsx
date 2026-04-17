@@ -1,8 +1,6 @@
 // components/workflow/WizardStepper.tsx
 'use client'
 
-import { useState } from 'react'
-
 interface Step {
   label: string
   description: string

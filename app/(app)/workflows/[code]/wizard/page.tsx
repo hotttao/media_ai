@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { usePermissions } from '@/foundation/hooks/usePermissions'
-import Link from 'next/link'
 
 export default function WizardPage({ params }: { params: { code: string } }) {
   const router = useRouter()
