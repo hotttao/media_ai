@@ -1,5 +1,6 @@
 // domains/video/service.ts
 import { db } from '@/foundation/lib/db'
+import { v4 as uuid } from 'uuid'
 import type { CreateTaskInput, TaskStatus } from './types'
 import type { WorkflowExecutionResult } from '@/domains/workflow/types'
 
@@ -77,7 +78,7 @@ export async function createVideo(taskId: string, userId: string, teamId: string
 }) {
   return db.video.create({
     data: {
-      id: require('uuid').v4(),
+      id: uuid(),
       taskId,
       userId,
       teamId,
