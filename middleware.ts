@@ -23,6 +23,11 @@ export const config = {
     '/tasks/:path*',
     '/videos/:path*',
     '/team/:path*',
-    '/api/(?!auth)',
+    '/api/teams/:path*',
+    '/api/ips/:path*',
+    '/api/materials/:path*',
+    '/api/workflows/:path*',
+    '/api/tasks/:path*',
+    '/api/videos/:path*',
   ],
 }
