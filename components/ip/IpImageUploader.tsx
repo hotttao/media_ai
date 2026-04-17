@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 
 interface IpImageUploaderProps {
   ipId: string
-  onUploadComplete?: () => void
 }
 
-export function IpImageUploader({ ipId, onUploadComplete }: IpImageUploaderProps) {
+export function IpImageUploader({ ipId }: IpImageUploaderProps) {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [previews, setPreviews] = useState<Record<string, string>>({})
 
@@ -36,7 +37,7 @@ export function IpImageUploader({ ipId, onUploadComplete }: IpImageUploaderProps
         throw new Error('Upload failed')
       }
 
-      onUploadComplete?.()
+      router.refresh()
     } catch (error) {
       console.error('Upload error:', error)
       alert('上传失败')

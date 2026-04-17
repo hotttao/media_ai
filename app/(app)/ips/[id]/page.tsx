@@ -168,7 +168,7 @@ export default async function IpDetailPage({ params }: { params: { id: string } 
 
           <div className="bg-white rounded-card border border-border shadow-clay p-6">
             <h3 className="text-lg font-semibold mb-4">上传图片</h3>
-            <IpImageUploader ipId={ip.id} onUploadComplete={() => window.location.reload()} />
+            <IpImageUploader ipId={ip.id} />
           </div>
         </div>
       </div>
