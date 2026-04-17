@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
-import { getTaskById, updateTaskStatus } from '@/domains/video/service'
+import { getTaskById } from '@/domains/video/service'
 
 type RouteParams = { params: { id: string } }
 
