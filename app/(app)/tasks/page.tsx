@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { getTasks } from '@/domains/video/service'
 import { TaskStatusBadge } from '@/components/workflow/TaskStatusBadge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 
 export default async function TasksPage() {
