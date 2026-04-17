@@ -4,8 +4,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { getWorkflows } from '@/domains/workflow/service'
 import { WorkflowCard } from '@/components/workflow/WorkflowCard'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 
 export default async function WorkflowsPage() {
   const session = await getServerSession(authOptions)
