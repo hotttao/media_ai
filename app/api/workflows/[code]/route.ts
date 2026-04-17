@@ -7,7 +7,7 @@ import { getWorkflowByCode } from '@/domains/workflow/service'
 type RouteParams = { params: { code: string } }
 
 // GET /api/workflows/:code - 工作流详情
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {

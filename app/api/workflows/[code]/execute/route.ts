@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       teamId: session.user.teamId,
       ipId: ipId || '',
       userId: session.user.id,
-      nodeOutputs: {},
+      nodes: {},
     }
 
     // 异步执行，不阻塞
