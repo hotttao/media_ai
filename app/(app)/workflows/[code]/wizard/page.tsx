@@ -63,11 +63,6 @@ export default function WizardPage({ params }: { params: { code: string } }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{workflow.name}</h1>
-        <p className="text-warm-silver">{workflow.description}</p>
-      </div>
-
       <WizardStepper
         steps={WIZARD_STEPS}
         currentStep={currentStep}

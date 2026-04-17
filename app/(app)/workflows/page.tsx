@@ -15,11 +15,6 @@ export default async function WorkflowsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">视频工作流</h1>
-        <p className="text-warm-silver mt-1">选择一种工作流开始生成视频</p>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {workflows.map((workflow) => (
           <WorkflowCard

@@ -25,11 +25,6 @@ export default async function TasksPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">视频生成任务</h1>
-        <p className="text-warm-silver mt-1">查看和管理视频生成任务</p>
-      </div>
-
       {tasks.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-warm-silver">暂无任务</p>

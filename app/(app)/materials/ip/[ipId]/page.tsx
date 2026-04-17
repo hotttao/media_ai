@@ -38,13 +38,6 @@ export default async function IpMaterialsPage({
         </Button>
       </div>
 
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {ip.nickname} 的素材
-        </h1>
-        <p className="text-warm-silver mt-1">管理此 IP 特有的妆容、装饰等素材</p>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {ip.ipMaterials.map((material) => (
           <Card key={material.id}>

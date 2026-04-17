@@ -13,15 +13,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Welcome back, {session.user.nickname || session.user.email}
-        </h1>
-        <p className="text-warm-silver mt-1">
-          Here&apos;s what&apos;s happening with your video generation today.
-        </p>
-      </div>
-
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard title="Virtual IPs" value="0" icon="👤" />

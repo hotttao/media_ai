@@ -39,12 +39,7 @@ export default async function MaterialsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">素材库</h1>
-          <p className="text-warm-silver mt-1">管理你的服装、场景、妆容等素材</p>
-        </div>
-
+      <div className="flex items-center justify-end">
         <Dialog>
           <DialogTrigger asChild>
             <Button>上传素材</Button>

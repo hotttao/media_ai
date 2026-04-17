@@ -50,7 +50,7 @@ export default async function IpDetailPage({ params }: { params: { id: string } 
                 />
               </div>
               <div className="flex-1">
-                <h1 className="text-2xl font-semibold">{ip.nickname}</h1>
+                <h2 className="text-2xl font-semibold">{ip.nickname}</h2>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {ip.gender && (
                     <Badge>
