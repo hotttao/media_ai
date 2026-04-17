@@ -14,6 +14,10 @@ export default async function IpDetailPage({ params }: { params: { id: string } 
     redirect('/login')
   }
 
+  if (!session.user.teamId) {
+    redirect('/ips')
+  }
+
   const ip = await db.virtualIp.findFirst({
     where: { id: params.id, teamId: session.user.teamId },
     include: { images: true },
@@ -73,31 +77,31 @@ export default async function IpDetailPage({ params }: { params: { id: string } 
                   {ip.height && (
                     <div>
                       <p className="text-xs text-warm-silver">身高</p>
-                      <p className="font-medium">{ip.height} cm</p>
+                      <p className="font-medium">{Number(ip.height)} cm</p>
                     </div>
                   )}
                   {ip.weight && (
                     <div>
                       <p className="text-xs text-warm-silver">体重</p>
-                      <p className="font-medium">{ip.weight} kg</p>
+                      <p className="font-medium">{Number(ip.weight)} kg</p>
                     </div>
                   )}
                   {ip.bust && (
                     <div>
                       <p className="text-xs text-warm-silver">胸围</p>
-                      <p className="font-medium">{ip.bust} cm</p>
+                      <p className="font-medium">{Number(ip.bust)} cm</p>
                     </div>
                   )}
                   {ip.waist && (
                     <div>
                       <p className="text-xs text-warm-silver">腰围</p>
-                      <p className="font-medium">{ip.waist} cm</p>
+                      <p className="font-medium">{Number(ip.waist)} cm</p>
                     </div>
                   )}
                   {ip.hip && (
                     <div>
                       <p className="text-xs text-warm-silver">臀围</p>
-                      <p className="font-medium">{ip.hip} cm</p>
+                      <p className="font-medium">{Number(ip.hip)} cm</p>
                     </div>
                   )}
                 </div>
@@ -144,7 +148,18 @@ export default async function IpDetailPage({ params }: { params: { id: string } 
           <div className="bg-white rounded-card border border-border shadow-clay p-6">
             <h3 className="text-lg font-semibold mb-4">操作</h3>
             <div className="space-y-3">
-              <IpForm initialData={ip} isEdit />
+              <IpForm initialData={{
+                id: ip.id,
+                nickname: ip.nickname,
+                gender: ip.gender || undefined,
+                age: ip.age ? Number(ip.age) : undefined,
+                height: ip.height ? Number(ip.height) : undefined,
+                weight: ip.weight ? Number(ip.weight) : undefined,
+                education: ip.education || undefined,
+                major: ip.major || undefined,
+                personality: ip.personality || undefined,
+                catchphrase: ip.catchphrase || undefined,
+              }} isEdit />
               <Button variant="destructive" className="w-full">
                 删除此 IP
               </Button>

@@ -52,7 +52,10 @@ export function MaterialUploader() {
         type: formData.get('type'),
         visibility: formData.get('visibility'),
         description: formData.get('description') || undefined,
-        tags: formData.get('tags') ? formData.get('tags').split(',').map(t => t.trim()) : undefined,
+        tags: (() => {
+          const tags = formData.get('tags')
+          return tags ? String(tags).split(',').map(t => t.trim()) : undefined
+        })(),
         url,
       }
 

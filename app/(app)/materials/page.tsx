@@ -30,7 +30,7 @@ export default async function MaterialsPage() {
     where: {
       OR: [
         { visibility: 'PUBLIC' },
-        { visibility: 'TEAM', teamId: session.user.teamId },
+        { visibility: 'TEAM', teamId: session.user.teamId || undefined },
         { visibility: 'PERSONAL', userId: session.user.id },
       ],
     },

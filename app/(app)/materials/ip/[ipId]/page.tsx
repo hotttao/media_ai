@@ -17,6 +17,10 @@ export default async function IpMaterialsPage({
     redirect('/login')
   }
 
+  if (!session.user.teamId) {
+    redirect('/ips')
+  }
+
   const ip = await db.virtualIp.findFirst({
     where: { id: params.ipId, teamId: session.user.teamId },
     include: { ipMaterials: true },

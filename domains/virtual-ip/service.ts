@@ -68,11 +68,11 @@ export async function createOrUpdateIpImage(
   ipId: string,
   data: { avatarUrl?: string; fullBodyUrl?: string; threeViewUrl?: string; nineViewUrl?: string }
 ) {
-  const existing = await db.ipImage.findUnique({ where: { ipId } })
+  const existing = await db.ipImage.findFirst({ where: { ipId } })
 
   if (existing) {
     return db.ipImage.update({
-      where: { ipId },
+      where: { id: existing.id },
       data,
     })
   }
