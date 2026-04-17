@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// 用户与团队
+// ============================================
+
+model Team {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users        User[]        @relation("TeamToUsers")
+  inviteCodes  InviteCode[] @relation("TeamToInviteCodes")
+  virtualIps   VirtualIp[]  @relation("TeamToVirtualIps")
+  materials    Material[]   @relation("TeamToMaterials")
+  videoTasks   VideoTask[]  @relation("TeamToVideoTasks")
+  videos       Video[]      @relation("TeamToVideos")
+
+  @@map("teams")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  nickname     String?   @db.VarChar(50)
+  teamId       String?   @map("team_id")
+  role         Role      @default(MEMBER)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  team           Team?       @relation("TeamToUsers", fields: [teamId], references: [id])
+
+  virtualIps   VirtualIp[]  @relation("UserToVirtualIps")
+  materials    Material[]   @relation("UserToMaterials")
+  ipMaterials  IpMaterial[] @relation("UserToIpMaterials")
+  videoTasks   VideoTask[]  @relation("UserToVideoTasks")
+  videos       Video[]      @relation("UserToVideos")
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model InviteCode {
+  id        String    @id @default(uuid())
+  teamId    String    @map("team_id")
+  code      String    @unique @db.VarChar(20)
+  used      Boolean   @default(false)
+  usedBy    String?   @map("used_by")
+  expiresAt DateTime  @map("expires_at") @db.DateTime
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  team Team @relation("TeamToInviteCodes", fields: [teamId], references: [id])
+  // usedBy is a plain string field storing user's email - not a relation
+
+  @@map("invite_codes")
+}
+
+// ============================================
+// 虚拟 IP
+// ============================================
+
+model VirtualIp {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  teamId       String   @map("team_id")
+  nickname     String   @db.VarChar(50)
+  avatar       String?  @db.VarChar(500)
+  age          Int?
+  gender       Gender?
+  height       Decimal? @db.Decimal(5,2)
+  weight       Decimal? @db.Decimal(5,2)
+  bust         Decimal? @db.Decimal(5,2)
+  waist        Decimal? @db.Decimal(5,2)
+  hip          Decimal? @db.Decimal(5,2)
+  education    String?  @db.VarChar(50)
+  major        String?  @db.VarChar(100)
+  personality  String?  @db.VarChar(200)
+  catchphrase  String?  @map("catchphrase") @db.VarChar(200)
+  classicAccessories String? @map("classic_accessories") @db.VarChar(500)
+  classicActions     String? @map("classic_actions") @db.VarChar(500)
+  platforms    String?  // JSON stored as String for MySQL
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user       User        @relation("UserToVirtualIps", fields: [userId], references: [id])
+  team       Team        @relation("TeamToVirtualIps", fields: [teamId], references: [id])
+  images     IpImage[]   @relation("VirtualIpToImages")
+  ipMaterials IpMaterial[] @relation("VirtualIpToIpMaterials")
+  videoTasks VideoTask[] @relation("VirtualIpToVideoTasks")
+  videos     Video[]     @relation("VirtualIpToVideos")
+
+  @@map("virtual_ips")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model IpImage {
+  id           String   @id @default(uuid())
+  ipId        String   @map("ip_id")
+  avatarUrl    String?  @map("avatar_url") @db.VarChar(500)
+  fullBodyUrl  String?  @map("full_body_url") @db.VarChar(500)
+  threeViewUrl String?  @map("three_view_url") @db.VarChar(500)
+  nineViewUrl  String?  @map("nine_view_url") @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  ip          VirtualIp     @relation("VirtualIpToImages", fields: [ipId], references: [id], onDelete: Cascade)
+  ipMaterials IpMaterial[] @relation("SourceImageToIpMaterials")
+
+  @@map("ip_images")
+}
+
+// ============================================
+// 素材库
+// ============================================
+
+model Material {
+  id          String     @id @default(uuid())
+  userId      String?    @map("user_id")
+  teamId      String?    @map("team_id")
+  visibility  Visibility @default(PERSONAL)
+  type       MaterialType
+  name       String     @db.VarChar(100)
+  description String?   @db.Text
+  url        String     @db.VarChar(500)
+  tags       String?    // JSON stored as String for MySQL
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  user User? @relation("UserToMaterials", fields: [userId], references: [id])
+  team Team? @relation("TeamToMaterials", fields: [teamId], references: [id])
+
+  @@map("materials")
+}
+
+enum Visibility {
+  PUBLIC
+  PERSONAL
+  TEAM
+}
+
+enum MaterialType {
+  CLOTHING
+  SCENE
+  ACTION
+  MAKEUP
+  ACCESSORY
+  OTHER
+}
+
+model IpMaterial {
+  id             String         @id @default(uuid())
+  ipId           String         @map("ip_id")
+  userId         String         @map("user_id")
+  type           IpMaterialType
+  name           String         @db.VarChar(100)
+  description    String?        @db.Text
+  tags           String?        // JSON stored as String for MySQL
+  fullBodyUrl    String?        @map("full_body_url") @db.VarChar(500)
+  threeViewUrl   String?        @map("three_view_url") @db.VarChar(500)
+  nineViewUrl    String?        @map("nine_view_url") @db.VarChar(500)
+  sourceImageId  String?        @map("source_image_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  ip          VirtualIp @relation("VirtualIpToIpMaterials", fields: [ipId], references: [id], onDelete: Cascade)
+  user        User      @relation("UserToIpMaterials", fields: [userId], references: [id])
+  sourceImage IpImage?  @relation("SourceImageToIpMaterials", fields: [sourceImageId], references: [id])
+
+  @@map("ip_materials")
+}
+
+enum IpMaterialType {
+  MAKEUP
+  ACCESSORY
+  CUSTOMIZED_CLOTHING
+}
+
+// ============================================
+// 工作流与视频
+// ============================================
+
+model Workflow {
+  id          String   @id @default(uuid())
+  code        String   @unique @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  version     String   @db.VarChar(20)
+  config      String?  // JSON stored as String for MySQL
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  videoTasks VideoTask[] @relation("WorkflowToVideoTasks")
+
+  @@map("workflows")
+}
+
+model VideoTask {
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
+  teamId      String     @map("team_id")
+  workflowId  String     @map("workflow_id")
+  ipId        String?    @map("ip_id")
+  status      TaskStatus @default(PENDING)
+  params      String?     // JSON stored as String for MySQL
+  result      String?     // JSON stored as String for MySQL
+  error       String?    @db.Text
+  startedAt   DateTime?  @map("started_at") @db.DateTime
+  completedAt DateTime?  @map("completed_at") @db.DateTime
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  user     User     @relation("UserToVideoTasks", fields: [userId], references: [id])
+  team     Team    @relation("TeamToVideoTasks", fields: [teamId], references: [id])
+  workflow Workflow @relation("WorkflowToVideoTasks", fields: [workflowId], references: [id])
+  ip       VirtualIp? @relation("VirtualIpToVideoTasks", fields: [ipId], references: [id])
+  videos   Video[] @relation("TaskToVideos")
+
+  @@map("video_tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Video {
+  id         String   @id @default(uuid())
+  taskId     String   @map("task_id")
+  userId     String   @map("user_id")
+  teamId     String   @map("team_id")
+  ipId       String?  @map("ip_id")
+  name       String?  @db.VarChar(100)
+  url        String   @db.VarChar(500)
+  thumbnail  String?  @db.VarChar(500)
+  duration   Int?
+  size       BigInt?  @db.BigInt
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  task VideoTask  @relation("TaskToVideos", fields: [taskId], references: [id])
+  user User       @relation("UserToVideos", fields: [userId], references: [id])
+  team Team       @relation("TeamToVideos", fields: [teamId], references: [id])
+  ip   VirtualIp? @relation("VirtualIpToVideos", fields: [ipId], references: [id])
+
+  @@map("videos")
+}
