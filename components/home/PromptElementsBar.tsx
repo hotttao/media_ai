@@ -40,7 +40,7 @@ export function PromptElementsBar() {
               transition-all duration-200 cursor-pointer
               ${hoveredId === element.id
                 ? 'bg-gradient-to-r from-matcha-500 to-matcha-400 text-white shadow-md scale-105'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
               }
             `}
           >

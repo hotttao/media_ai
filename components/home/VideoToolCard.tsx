@@ -51,22 +51,18 @@ export function VideoToolCard({ id, title, description, href, gradient, icon }: 
           </div>
 
           {/* Title */}
-          <h3 className="text-white font-semibold text-sm leading-tight mb-1">
+          <h3 className="text-white font-semibold text-sm leading-tight mb-1 drop-shadow-sm">
             {title}
           </h3>
 
-          {/* Description - visible on hover */}
-          <p className={`text-white/90 text-xs line-clamp-2 leading-relaxed transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          {/* Description - always visible */}
+          <p className="text-white/95 text-xs line-clamp-2 leading-relaxed drop-shadow-sm">
             {description}
           </p>
         </div>
 
         {/* Bottom accent */}
-        <div
-          className={`absolute bottom-0 left-0 right-0 h-1 bg-white/20 transition-opacity duration-300 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
-        />
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/30" />
       </div>
     </Link>
   )
