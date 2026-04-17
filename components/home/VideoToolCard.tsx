@@ -55,8 +55,8 @@ export function VideoToolCard({ id, title, description, href, gradient, icon }: 
             {title}
           </h3>
 
-          {/* Description */}
-          <p className="text-white/80 text-xs line-clamp-2 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Description - visible on hover */}
+          <p className={`text-white/90 text-xs line-clamp-2 leading-relaxed transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
             {description}
           </p>
         </div>

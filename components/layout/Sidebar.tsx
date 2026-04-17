@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/foundation/lib/utils'
+import { signOut, useSession } from 'next-auth/react'
 
 const navigation = [
   { name: '首页', href: '/', icon: '🏠' },
@@ -11,11 +12,11 @@ const navigation = [
   { name: 'IP库', href: '/ips', icon: '👤' },
   { name: '任务', href: '/tasks', icon: '📋' },
   { name: '视频', href: '/videos', icon: '🎬' },
-  { name: '设置', href: '/team/settings', icon: '⚙️' },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { data: session } = useSession()
 
   return (
     <aside className="w-52 min-h-screen bg-gray-50 flex flex-col">
@@ -55,18 +56,26 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User section */}
-      <div className="px-3 py-4">
-        <div className="flex items-center gap-3 px-3 py-2.5">
+      {/* User section with logout */}
+      <div className="p-3 border-t border-gray-200">
+        <div className="flex items-center gap-3 px-3 py-2.5 mb-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-matcha-400 to-matcha-600 flex items-center justify-center text-sm text-white">
-            👤
+            {session?.user?.nickname?.[0] || session?.user?.email?.[0] || '👤'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">用户</p>
-            <p className="text-xs text-gray-400">在线</p>
+            <p className="text-sm font-medium text-gray-900 truncate">{session?.user?.nickname || session?.user?.email}</p>
+            <p className="text-xs text-gray-400">{session?.user?.role === 'ADMIN' ? '管理员' : '成员'}</p>
           </div>
-          <div className="w-2 h-2 bg-green-400 rounded-full" />
         </div>
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          退出登录
+        </button>
       </div>
     </aside>
   )
