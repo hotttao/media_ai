@@ -122,11 +122,15 @@ CREATE TABLE virtual_ips (
 );
 
 -- IP 形象图
+-- 三视图：一张图里包含正面/侧面/背面三个视角
+-- 九视图：一张图里包含9个角度
 CREATE TABLE ip_images (
   id          VARCHAR(36) PRIMARY KEY,
   ip_id       VARCHAR(36) NOT NULL,
-  type        ENUM('avatar', 'front', 'side', 'back', 'nine_view') NOT NULL,
-  url         VARCHAR(500) NOT NULL,
+  avatar_url  VARCHAR(500),       -- 头像
+  full_body_url VARCHAR(500),      -- 全身图/平面图
+  three_view_url VARCHAR(500),    -- 三视图（front + side + back 合一）
+  nine_view_url VARCHAR(500),     -- 九视图
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (ip_id) REFERENCES virtual_ips(id)
 );
@@ -161,10 +165,12 @@ CREATE TABLE ip_materials (
   name            VARCHAR(100) NOT NULL,
   description     TEXT,
   tags            JSON,
-  -- 平面图 + 三视图 + 九视图，单条记录全量存储，便于工具调用
-  front_url       VARCHAR(500),   -- 平面图
-  side_url        VARCHAR(500),   -- 侧视图
-  back_url        VARCHAR(500),   -- 背面图
+  -- 单条记录全量存储，便于工具调用
+  -- 全身图：人物正面全身图（一整张）
+  -- 三视图：一张图里包含正面/侧面/背面三个视角
+  -- 九视图：一张图里包含9个角度
+  full_body_url   VARCHAR(500),   -- 全身图/平面图
+  three_view_url  VARCHAR(500),   -- 三视图（front + side + back 合一）
   nine_view_url   VARCHAR(500),   -- 九视图
   source_image_id VARCHAR(36),    -- 源图片 ID（原始人物图）
   created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
