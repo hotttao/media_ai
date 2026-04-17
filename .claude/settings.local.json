@@ -2,8 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(*)",
-      "Edit(*)"
-
+      "Edit(*)",
+      "WebFetch(domain:www.runninghub.cn)"
     ],
     "deny": [
       "Bash(rm -rf *)",

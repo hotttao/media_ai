@@ -56,18 +56,21 @@ export default async function TasksPage() {
                 {task.error && (
                   <p className="text-sm text-red-500 mt-2">错误: {task.error}</p>
                 )}
-                {task.result?.videoUrl && (
-                  <div className="mt-3">
-                    <a
-                      href={task.result.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-matcha-600 hover:underline text-sm"
-                    >
-                      查看生成的视频 →
-                    </a>
-                  </div>
-                )}
+                {task.result && (() => {
+                  const result = typeof task.result === 'string' ? JSON.parse(task.result) : task.result
+                  return result?.videoUrl && (
+                    <div className="mt-3">
+                      <a
+                        href={result.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-matcha-600 hover:underline text-sm"
+                      >
+                        查看生成的视频 →
+                      </a>
+                    </div>
+                  )
+                })()}
               </CardContent>
             </Card>
           ))}

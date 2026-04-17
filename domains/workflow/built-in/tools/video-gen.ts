@@ -14,6 +14,6 @@ export const VideoGenTool: ToolDefinition = {
     { name: 'composition', type: 'text', required: false },
   ],
   outputs: [
-    { name: 'video', type: 'video', required: true },
+    { name: 'video', type: 'video' },
   ],
 }

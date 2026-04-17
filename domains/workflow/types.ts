@@ -17,11 +17,11 @@ export interface WorkflowDefinition {
   id: string
   code: string
   name: string
-  description?: string
+  description?: string | null
   version: string
   nodes: WorkflowNode[]
   edges: WorkflowEdge[]
-  config?: Record<string, any>
+  config?: Record<string, any> | string | null
 }
 
 export interface WorkflowExecutionResult {

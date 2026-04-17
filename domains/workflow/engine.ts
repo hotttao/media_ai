@@ -1,6 +1,6 @@
 // domains/workflow/engine.ts
 import { providerRegistry } from '@/foundation/providers/registry'
-import type { WorkflowDefinition, WorkflowExecutionResult } from './types'
+import type { WorkflowDefinition, WorkflowNode, WorkflowExecutionResult } from './types'
 
 export interface ExecutionContext {
   teamId: string
