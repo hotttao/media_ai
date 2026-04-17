@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #faf9f7;
+    --foreground: #000000;
+    --border: #dad4c8;
+    --border-light: #eee9df;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Clay hover animation - playful rotate + translate */
+@layer utilities {
+  .hover-tilt {
+    @apply transition-all duration-200;
+  }
+  .hover-tilt:hover {
+    @apply rotate-[-8deg] translate-y-[-80%];
+    box-shadow: -7px 7px 0px rgb(0,0,0);
+  }
+}
