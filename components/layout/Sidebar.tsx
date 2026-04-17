@@ -19,7 +19,7 @@ export function Sidebar() {
   const { data: session } = useSession()
 
   return (
-    <aside className="w-52 min-h-screen bg-gray-50 flex flex-col">
+    <aside className="w-52 min-h-screen bg-dark-charcoal flex flex-col">
       {/* Logo */}
       <div className="p-4">
         <div className="flex items-center gap-3">
@@ -27,8 +27,8 @@ export function Sidebar() {
             <span className="text-lg">🤖</span>
           </div>
           <div>
-            <h1 className="text-sm font-bold text-gray-900">AI Content Factory</h1>
-            <p className="text-xs text-gray-400">智能内容工厂</p>
+            <h1 className="text-sm font-bold text-white">AI Content Factory</h1>
+            <p className="text-xs text-white/60">智能内容工厂</p>
           </div>
         </div>
       </div>
@@ -45,8 +45,8 @@ export function Sidebar() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 mb-1',
                 isActive
-                  ? 'bg-matcha-500 text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-matcha-500 text-white shadow-sm'
+                  : 'text-white/80 hover:bg-white/10 hover:text-white'
               )}
             >
               <span className="text-base">{item.icon}</span>
@@ -57,19 +57,19 @@ export function Sidebar() {
       </nav>
 
       {/* User section with logout */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="p-3 border-t border-white/10">
         <div className="flex items-center gap-3 px-3 py-2.5 mb-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-matcha-400 to-matcha-600 flex items-center justify-center text-sm text-white">
             {session?.user?.nickname?.[0] || session?.user?.email?.[0] || '👤'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{session?.user?.nickname || session?.user?.email}</p>
-            <p className="text-xs text-gray-400">{session?.user?.role === 'ADMIN' ? '管理员' : '成员'}</p>
+            <p className="text-sm font-medium text-white truncate">{session?.user?.nickname || session?.user?.email}</p>
+            <p className="text-xs text-white/60">{session?.user?.role === 'ADMIN' ? '管理员' : '成员'}</p>
           </div>
         </div>
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/10 hover:text-white transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

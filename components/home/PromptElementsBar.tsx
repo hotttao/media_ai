@@ -18,14 +18,14 @@ export function PromptElementsBar() {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+    <div className="bg-warm-charcoal/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 border border-white/10">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-matcha-400 to-matcha-600 flex items-center justify-center shadow-md">
           <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <h3 className="text-sm font-semibold text-gray-800">提示词核心要素</h3>
+        <h3 className="text-sm font-semibold text-white">提示词核心要素</h3>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -40,7 +40,7 @@ export function PromptElementsBar() {
               transition-all duration-200 cursor-pointer
               ${hoveredId === element.id
                 ? 'bg-gradient-to-r from-matcha-500 to-matcha-400 text-white shadow-md scale-105'
-                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                : 'bg-white/10 text-white/90 hover:bg-white/20'
               }
             `}
           >

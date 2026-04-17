@@ -6,9 +6,9 @@ import { Sidebar } from './Sidebar'
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <div className="flex min-h-screen bg-white">
+      <div className="flex min-h-screen bg-dark-charcoal">
         <Sidebar />
-        <main className="flex-1 bg-gray-50">{children}</main>
+        <main className="flex-1 bg-dark-charcoal">{children}</main>
       </div>
     </AuthProvider>
   )

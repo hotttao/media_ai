@@ -42,25 +42,25 @@ export function ChatWindow() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="h-full flex flex-col bg-warm-charcoal rounded-2xl shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+      <div className="px-5 py-4 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-matcha-300 to-matcha-600 flex items-center justify-center shadow-md">
               <span className="text-lg">🤖</span>
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-warm-charcoal" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-800">AI 创作助手</h3>
-            <p className="text-xs text-gray-400">在线</p>
+            <h3 className="text-sm font-semibold text-white">AI 创作助手</h3>
+            <p className="text-xs text-white/60">在线</p>
           </div>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50/50">
+      <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-warm-charcoal/50">
         {messages.map((msg, index) => (
           <div
             key={index}
@@ -75,7 +75,7 @@ export function ChatWindow() {
               className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
                 msg.role === 'user'
                   ? 'bg-gradient-to-r from-matcha-600 to-matcha-500 text-white rounded-tr-sm'
-                  : 'bg-white text-gray-700 rounded-tl-sm border border-gray-100'
+                  : 'bg-white/10 backdrop-blur-sm text-white/90 rounded-tl-sm border border-white/10'
               }`}
             >
               {msg.content}
@@ -91,7 +91,7 @@ export function ChatWindow() {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-100 bg-white">
+      <div className="p-4 border-t border-white/10 bg-warm-charcoal">
         <div className="flex gap-3">
           <input
             type="text"
@@ -99,7 +99,7 @@ export function ChatWindow() {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="输入您的创作需求..."
-            className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-matcha-500/20 focus:border-matcha-500 transition-all"
+            className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-matcha-500/40 focus:border-matcha-500/50 transition-all"
           />
           <button
             onClick={handleSend}
