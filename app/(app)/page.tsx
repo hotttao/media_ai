@@ -58,18 +58,6 @@ const videoTools = [
 export default function HomePage() {
   return (
     <div className="p-6 space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">AI 创作中心</h1>
-          <p className="text-sm text-gray-500 mt-0.5">智能视频内容生成平台</p>
-        </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-100">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-          <span className="text-sm text-gray-600">系统正常</span>
-        </div>
-      </div>
-
       {/* Chat Window */}
       <div className="h-[35vh] min-h-[300px] max-h-[400px]">
         <ChatWindow />
