@@ -95,12 +95,16 @@ CREATE TABLE invite_codes (
 
 ```sql
 -- 虚拟 IP 主表
+-- 头像和形象图直接存储在主表，便于快速访问
 CREATE TABLE virtual_ips (
   id          VARCHAR(36) PRIMARY KEY,
   user_id     VARCHAR(36) NOT NULL,
   team_id     VARCHAR(36) NOT NULL,
   nickname    VARCHAR(50) NOT NULL,
-  avatar      VARCHAR(500),           -- 头像路径
+  avatar_url  VARCHAR(500),           -- 头像路径
+  full_body_url VARCHAR(500),         -- 全身图/平面图
+  three_view_url VARCHAR(500),        -- 三视图（front + side + back 合一）
+  nine_view_url VARCHAR(500),         -- 九视图
   age         INT,
   gender      ENUM('male', 'female', 'other'),
   height      DECIMAL(5,2),
@@ -110,29 +114,31 @@ CREATE TABLE virtual_ips (
   hip         DECIMAL(5,2),
   education   VARCHAR(50),
   major       VARCHAR(100),
-  personality VARCHAR(200),           -- 性格描述
+  city        VARCHAR(50),
+  occupation  VARCHAR(100),
+  basic_setting TEXT,                 -- 人物基础设定
   catchphrase VARCHAR(200),           -- 口头禅
-  classic_accessories VARCHAR(500),   -- 经典装饰 JSON
-  classic_actions VARCHAR(500),       -- 经典动作 JSON
-  platforms   JSON,                   -- 平台信息 JSON
+  small_habit VARCHAR(500),          -- 小癖好
+  family_background TEXT,             -- 家庭背景
+  income_level VARCHAR(100),         -- 收入水平
+  personality VARCHAR(500),           -- 性格特点
+  hobbies     VARCHAR(500),           -- 兴趣爱好
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (team_id) REFERENCES teams(id)
 );
 
--- IP 形象图
--- 三视图：一张图里包含正面/侧面/背面三个视角
--- 九视图：一张图里包含9个角度
+-- IP 形象图（扩展用，保留关联关系）
+-- 用于存储从原始形象图生成的变体（妆容、装饰等）
 CREATE TABLE ip_images (
   id          VARCHAR(36) PRIMARY KEY,
   ip_id       VARCHAR(36) NOT NULL,
-  avatar_url  VARCHAR(500),       -- 头像
-  full_body_url VARCHAR(500),      -- 全身图/平面图
-  three_view_url VARCHAR(500),    -- 三视图（front + side + back 合一）
-  nine_view_url VARCHAR(500),     -- 九视图
+  full_body_url VARCHAR(500),         -- 全身图/平面图（扩展）
+  three_view_url VARCHAR(500),        -- 三视图（扩展）
+  nine_view_url VARCHAR(500),         -- 九视图（扩展）
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id)
+  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id) ON DELETE CASCADE
 );
 ```
 
@@ -564,7 +570,7 @@ Step 6: 任务完成
 - `IpCard` — IP 卡片（头像 + 昵称 + 简介）
 - `IpForm` — IP 创建/编辑表单
 - `IpImageUploader` — 形象图上传器
-- `IpImageGallery` — 形象图展示（平面+三视图+九视图）
+- `IpDetailClient` — IP 详情页客户端组件（包含图片展示、编辑、详情信息）
 
 ### 10.4 素材库组件
 - `MaterialCard` — 素材卡片（图片 + 名称 + tag）
