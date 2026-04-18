@@ -9,7 +9,10 @@ export async function createVirtualIp(userId: string, teamId: string, input: Cre
       userId,
       teamId,
       nickname: input.nickname,
-      avatar: input.avatar,
+      avatarUrl: input.avatarUrl,
+      fullBodyUrl: input.fullBodyUrl,
+      threeViewUrl: input.threeViewUrl,
+      nineViewUrl: input.nineViewUrl,
       age: input.age,
       gender: input.gender,
       height: input.height,
@@ -19,11 +22,15 @@ export async function createVirtualIp(userId: string, teamId: string, input: Cre
       hip: input.hip,
       education: input.education,
       major: input.major,
+      city: input.city,
+      occupation: input.occupation,
+      basicSetting: input.basicSetting,
       personality: input.personality,
       catchphrase: input.catchphrase,
-      classicAccessories: input.classicAccessories,
-      classicActions: input.classicActions,
-      platforms: input.platforms ? JSON.stringify(input.platforms) : null,
+      smallHabit: input.smallHabit,
+      familyBackground: input.familyBackground,
+      incomeLevel: input.incomeLevel,
+      hobbies: input.hobbies,
     },
   })
 }
@@ -51,10 +58,7 @@ export async function getVirtualIpById(id: string, teamId: string) {
 export async function updateVirtualIp(id: string, teamId: string, input: UpdateIpInput) {
   return db.virtualIp.updateMany({
     where: { id, teamId },
-    data: {
-      ...input,
-      platforms: input.platforms ? JSON.stringify(input.platforms) : undefined,
-    },
+    data: input,
   })
 }
 
@@ -66,7 +70,7 @@ export async function deleteVirtualIp(id: string, teamId: string) {
 
 export async function createOrUpdateIpImage(
   ipId: string,
-  data: { avatarUrl?: string; fullBodyUrl?: string; threeViewUrl?: string; nineViewUrl?: string }
+  data: { fullBodyUrl?: string; threeViewUrl?: string; nineViewUrl?: string }
 ) {
   const existing = await db.ipImage.findFirst({ where: { ipId } })
 

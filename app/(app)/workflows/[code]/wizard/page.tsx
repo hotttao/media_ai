@@ -90,7 +90,7 @@ export default function WizardPage({ params }: { params: { code: string } }) {
                   >
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-oat-light mx-auto">
                       <img
-                        src={ip.images?.[0]?.avatarUrl || ip.avatar || '/placeholder.png'}
+                        src={ip.avatarUrl || ip.images?.[0]?.fullBodyUrl || '/placeholder.png'}
                         alt={ip.nickname}
                         className="w-full h-full object-cover"
                       />

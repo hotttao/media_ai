@@ -73,34 +73,41 @@ model InviteCode {
 // ============================================
 
 model VirtualIp {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  teamId       String   @map("team_id")
-  nickname     String   @db.VarChar(50)
-  avatar       String?  @db.VarChar(500)
-  age          Int?
-  gender       Gender?
-  height       Decimal? @db.Decimal(5,2)
-  weight       Decimal? @db.Decimal(5,2)
-  bust         Decimal? @db.Decimal(5,2)
-  waist        Decimal? @db.Decimal(5,2)
-  hip          Decimal? @db.Decimal(5,2)
-  education    String?  @db.VarChar(50)
-  major        String?  @db.VarChar(100)
-  personality  String?  @db.VarChar(200)
-  catchphrase  String?  @map("catchphrase") @db.VarChar(200)
-  classicAccessories String? @map("classic_accessories") @db.VarChar(500)
-  classicActions     String? @map("classic_actions") @db.VarChar(500)
-  platforms    String?  // JSON stored as String for MySQL
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  teamId         String    @map("team_id")
+  nickname       String    @db.VarChar(50)          // 名称
+  avatarUrl      String?   @map("avatar_url") @db.VarChar(500)     // 头像
+  fullBodyUrl    String?   @map("full_body_url") @db.VarChar(500)  // 全身图/平面图
+  threeViewUrl   String?   @map("three_view_url") @db.VarChar(500) // 三视图
+  nineViewUrl    String?   @map("nine_view_url") @db.VarChar(500)  // 九视图
+  age            Int?                                    // 年龄
+  gender         Gender?                                 // 性别
+  height         Decimal?  @db.Decimal(5,2)              // 身高 (cm)
+  weight         Decimal?  @db.Decimal(5,2)              // 体重 (kg)
+  bust           Decimal?  @db.Decimal(5,2)              // 胸围 (cm)
+  waist          Decimal?  @db.Decimal(5,2)              // 腰围 (cm)
+  hip            Decimal?  @db.Decimal(5,2)             // 臀围 (cm)
+  education      String?   @db.VarChar(50)             // 学历
+  major          String?   @db.VarChar(100)             // 专业/主修
+  city           String?   @db.VarChar(50)             // 城市
+  occupation     String?   @db.VarChar(100)            // 职业
+  basicSetting   String?   @db.Text                    // 人物基础设定
+  catchphrase   String?   @map("catchphrase") @db.VarChar(200)   // 口头禅
+  smallHabit     String?   @map("small_habit") @db.VarChar(500)  // 小癖好
+  familyBackground String? @map("family_background") @db.Text     // 家庭背景
+  incomeLevel    String?   @map("income_level") @db.VarChar(100)  // 收入水平
+  personality    String?   @db.VarChar(500)            // 性格特点
+  hobbies        String?   @db.VarChar(500)            // 兴趣爱好
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  user       User        @relation("UserToVirtualIps", fields: [userId], references: [id])
-  team       Team        @relation("TeamToVirtualIps", fields: [teamId], references: [id])
-  images     IpImage[]   @relation("VirtualIpToImages")
+  user        User         @relation("UserToVirtualIps", fields: [userId], references: [id])
+  team        Team         @relation("TeamToVirtualIps", fields: [teamId], references: [id])
+  images      IpImage[]    @relation("VirtualIpToImages")
   ipMaterials IpMaterial[] @relation("VirtualIpToIpMaterials")
-  videoTasks VideoTask[] @relation("VirtualIpToVideoTasks")
-  videos     Video[]     @relation("VirtualIpToVideos")
+  videoTasks  VideoTask[]  @relation("VirtualIpToVideoTasks")
+  videos      Video[]      @relation("VirtualIpToVideos")
 
   @@map("virtual_ips")
 }
@@ -113,12 +120,11 @@ enum Gender {
 
 model IpImage {
   id           String   @id @default(uuid())
-  ipId        String   @map("ip_id")
-  avatarUrl    String?  @map("avatar_url") @db.VarChar(500)
+  ipId         String   @map("ip_id")
   fullBodyUrl  String?  @map("full_body_url") @db.VarChar(500)
   threeViewUrl String?  @map("three_view_url") @db.VarChar(500)
   nineViewUrl  String?  @map("nine_view_url") @db.VarChar(500)
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   ip          VirtualIp     @relation("VirtualIpToImages", fields: [ipId], references: [id], onDelete: Cascade)
   ipMaterials IpMaterial[] @relation("SourceImageToIpMaterials")

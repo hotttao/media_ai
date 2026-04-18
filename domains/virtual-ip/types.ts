@@ -3,7 +3,10 @@ export interface VirtualIp {
   userId: string
   teamId: string
   nickname: string
-  avatar: string | null
+  avatarUrl: string | null
+  fullBodyUrl: string | null
+  threeViewUrl: string | null
+  nineViewUrl: string | null
   age: number | null
   gender: 'MALE' | 'FEMALE' | 'OTHER' | null
   height: number | null
@@ -13,24 +16,22 @@ export interface VirtualIp {
   hip: number | null
   education: string | null
   major: string | null
-  personality: string | null
+  city: string | null
+  occupation: string | null
+  basicSetting: string | null
   catchphrase: string | null
-  classicAccessories: string | null
-  classicActions: string | null
-  platforms: PlatformInfo[] | null
+  smallHabit: string | null
+  familyBackground: string | null
+  incomeLevel: string | null
+  personality: string | null
+  hobbies: string | null
   createdAt: Date
   updatedAt: Date
-}
-
-export interface PlatformInfo {
-  platform: string
-  accountId: string
 }
 
 export interface IpImage {
   id: string
   ipId: string
-  avatarUrl: string | null
   fullBodyUrl: string | null
   threeViewUrl: string | null
   nineViewUrl: string | null
@@ -39,7 +40,10 @@ export interface IpImage {
 
 export interface CreateIpInput {
   nickname: string
-  avatar?: string
+  avatarUrl?: string
+  fullBodyUrl?: string
+  threeViewUrl?: string
+  nineViewUrl?: string
   age?: number
   gender?: 'MALE' | 'FEMALE' | 'OTHER'
   height?: number
@@ -49,11 +53,15 @@ export interface CreateIpInput {
   hip?: number
   education?: string
   major?: string
-  personality?: string
+  city?: string
+  occupation?: string
+  basicSetting?: string
   catchphrase?: string
-  classicAccessories?: string
-  classicActions?: string
-  platforms?: PlatformInfo[]
+  smallHabit?: string
+  familyBackground?: string
+  incomeLevel?: string
+  personality?: string
+  hobbies?: string
 }
 
 export interface UpdateIpInput extends Partial<CreateIpInput> {}

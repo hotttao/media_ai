@@ -7,10 +7,10 @@ import { IpCard } from '@/components/ip/IpCard'
 interface Ip {
   id: string
   nickname: string
-  avatar: string | null
+  avatarUrl: string | null
   gender: string | null
   personality: string | null
-  images: Array<{ avatarUrl: string | null }>
+  images: Array<{ fullBodyUrl: string | null }>
 }
 
 export default function IpsPage() {

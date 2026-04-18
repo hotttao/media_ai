@@ -26,9 +26,11 @@ interface IpFormProps {
     catchphrase?: string
   }
   isEdit?: boolean
+  onCancel?: () => void
+  onSuccess?: () => void
 }
 
-export function IpForm({ initialData, isEdit }: IpFormProps) {
+export function IpForm({ initialData, isEdit, onCancel, onSuccess }: IpFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -66,8 +68,12 @@ export function IpForm({ initialData, isEdit }: IpFormProps) {
         throw new Error(errorData.error || 'Failed to save IP')
       }
 
-      router.push('/ips')
-      router.refresh()
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.push('/ips')
+        router.refresh()
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -250,7 +256,7 @@ export function IpForm({ initialData, isEdit }: IpFormProps) {
         </button>
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={onCancel || (() => router.back())}
           className="px-5 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all border border-white/10"
         >
           取消

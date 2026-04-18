@@ -7,16 +7,16 @@ interface IpCardProps {
   ip: {
     id: string
     nickname: string
-    avatar: string | null
+    avatarUrl: string | null
     gender: string | null
     personality: string | null
-    images: Array<{ avatarUrl: string | null }>
+    images: Array<{ fullBodyUrl: string | null }>
   }
 }
 
 export function IpCard({ ip }: IpCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const imageUrl = ip.images?.[0]?.avatarUrl || ip.avatar || 'https://via.placeholder.com/150'
+  const imageUrl = ip.avatarUrl || ip.images?.[0]?.fullBodyUrl || 'https://via.placeholder.com/150'
 
   return (
     <Link href={`/ips/${ip.id}`}>

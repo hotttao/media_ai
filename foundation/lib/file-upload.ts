@@ -22,7 +22,9 @@ export function generateFileName(originalName: string): string {
 
 // Get public URL path for a file
 export function getPublicUrl(teamId: string, fileName: string): string {
-  return `/uploads/teams/${teamId}/${fileName}`
+  // Normalize Windows backslashes to forward slashes for URLs
+  const normalizedFileName = fileName.replace(/\\/g, '/')
+  return `/uploads/teams/${teamId}/${normalizedFileName}`
 }
 
 // Delete a file
