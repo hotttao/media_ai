@@ -233,107 +233,105 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
       </div>
 
       {/* IP Materials Section */}
-      {displayIp.ipMaterials && displayIp.ipMaterials.length > 0 && (
-        <div
-          className="rounded-2xl p-6 backdrop-blur-xl"
-          style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          <h3 className="text-sm font-medium text-white/60 mb-4">IP 素材</h3>
+      <div
+        className="rounded-2xl p-6 backdrop-blur-xl"
+        style={{
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        <h3 className="text-sm font-medium text-white/60 mb-4">IP 素材</h3>
 
-          {/* Tab Navigation */}
-          <div className="flex gap-1 mb-4 border-b border-white/10">
-            {(['MAKEUP', 'ACCESSORY', 'CUSTOMIZED_CLOTHING'] as const).map((tab) => {
-              const count = displayIp.ipMaterials?.filter((m: any) => m.type === tab).length || 0
-              return (
-                <button
-                  key={tab}
-                  onClick={() => {
-                    setActiveMaterialTab(tab)
-                    setMaterialPage(0)
-                  }}
-                  className={`px-4 py-2 text-sm font-medium transition-colors ${
-                    activeMaterialTab === tab
-                      ? 'text-white border-b-2 border-purple-500'
-                      : 'text-white/40 hover:text-white/60'
-                  }`}
-                >
-                  {tab === 'MAKEUP' ? '妆容' : tab === 'ACCESSORY' ? '装饰' : '定制服装'} ({count})
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Tab Content */}
-          {(() => {
-            const filteredMaterials = displayIp.ipMaterials?.filter((m: any) => m.type === activeMaterialTab) || []
-            const itemsPerPage = 4
-            const totalPages = Math.ceil(filteredMaterials.length / itemsPerPage)
-            const paginatedMaterials = filteredMaterials.slice(materialPage * itemsPerPage, (materialPage + 1) * itemsPerPage)
-
-            if (filteredMaterials.length === 0) {
-              return (
-                <div className="text-center py-8 text-white/40 text-sm">
-                  暂无 {activeMaterialTab === 'MAKEUP' ? '妆容' : activeMaterialTab === 'ACCESSORY' ? '装饰' : '定制服装'} 素材
-                </div>
-              )
-            }
-
+        {/* Tab Navigation */}
+        <div className="flex gap-1 mb-4 border-b border-white/10">
+          {(['MAKEUP', 'ACCESSORY', 'CUSTOMIZED_CLOTHING'] as const).map((tab) => {
+            const count = displayIp.ipMaterials?.filter((m: any) => m.type === tab).length || 0
             return (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {paginatedMaterials.map((material: any) => {
-                    const imageUrl = material.threeViewUrl || material.fullBodyUrl || null
-                    return (
-                      <div key={material.id} className="group">
-                        <p className="text-xs text-white/40 mb-2 truncate">{material.name}</p>
-                        <div
-                          className="relative rounded-xl overflow-hidden ring-1 ring-white/10"
-                          style={{ aspectRatio: '3/4' }}
-                        >
-                          {imageUrl ? (
-                            <img src={imageUrl} alt={material.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                              <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        {material.material && (
-                          <p className="text-xs text-white/30 mt-1 truncate">来源: {material.material.name}</p>
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveMaterialTab(tab)
+                  setMaterialPage(0)
+                }}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeMaterialTab === tab
+                    ? 'text-white border-b-2 border-purple-500'
+                    : 'text-white/40 hover:text-white/60'
+                }`}
+              >
+                {tab === 'MAKEUP' ? '妆容' : tab === 'ACCESSORY' ? '装饰' : '定制服装'} ({count})
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Tab Content */}
+        {(() => {
+          const filteredMaterials = displayIp.ipMaterials?.filter((m: any) => m.type === activeMaterialTab) || []
+          const itemsPerPage = 4
+          const totalPages = Math.ceil(filteredMaterials.length / itemsPerPage)
+          const paginatedMaterials = filteredMaterials.slice(materialPage * itemsPerPage, (materialPage + 1) * itemsPerPage)
+
+          if (filteredMaterials.length === 0) {
+            return (
+              <div className="text-center py-8 text-white/40 text-sm">
+                暂无 {activeMaterialTab === 'MAKEUP' ? '妆容' : activeMaterialTab === 'ACCESSORY' ? '装饰' : '定制服装'} 素材
+              </div>
+            )
+          }
+
+          return (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {paginatedMaterials.map((material: any) => {
+                  const imageUrl = material.threeViewUrl || material.fullBodyUrl || null
+                  return (
+                    <div key={material.id} className="group">
+                      <p className="text-xs text-white/40 mb-2 truncate">{material.name}</p>
+                      <div
+                        className="relative rounded-xl overflow-hidden ring-1 ring-white/10"
+                        style={{ aspectRatio: '3/4' }}
+                      >
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={material.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                            <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
                         )}
                       </div>
-                    )
-                  })}
-                </div>
+                      {material.material && (
+                        <p className="text-xs text-white/30 mt-1 truncate">来源: {material.material.name}</p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center gap-2 mt-4">
-                    {Array.from({ length: totalPages }).map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setMaterialPage(i)}
-                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                          materialPage === i
-                            ? 'bg-purple-500/30 text-white'
-                            : 'bg-white/5 text-white/40 hover:bg-white/10'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
-            )
-          })()}
-        </div>
-      )}
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center gap-2 mt-4">
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setMaterialPage(i)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                        materialPage === i
+                          ? 'bg-purple-500/30 text-white'
+                          : 'bg-white/5 text-white/40 hover:bg-white/10'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )
+        })()}
+      </div>
 
       {/* Detail Info */}
       <div
