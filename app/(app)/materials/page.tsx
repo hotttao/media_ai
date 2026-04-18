@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import Link from 'next/link'
 import { MaterialCard } from '@/components/material/MaterialCard'
 
 interface Material {
@@ -41,7 +40,6 @@ function MaterialUploader({ onClose, onSuccess }: { onClose: () => void; onSucce
     setIsLoading(true)
 
     try {
-      // Upload file
       const uploadFormData = new FormData()
       uploadFormData.append('file', file)
       uploadFormData.append('subDir', 'materials')
@@ -55,7 +53,6 @@ function MaterialUploader({ onClose, onSuccess }: { onClose: () => void; onSucce
 
       const { url } = await uploadResponse.json()
 
-      // Create material
       const materialData = {
         name,
         type,
@@ -137,7 +134,6 @@ function MaterialUploader({ onClose, onSuccess }: { onClose: () => void; onSucce
           </div>
         </div>
 
-        {/* Image Upload */}
         <div>
           <label className="text-xs text-white/40 mb-1 block">素材图片</label>
           <input
@@ -252,17 +248,6 @@ export default function MaterialsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header - simplified, no "素材库" text */}
-      <div className="flex items-center justify-end">
-        <button
-          onClick={() => setShowUpload(true)}
-          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-sm font-medium shadow-lg shadow-fuchsia-500/20 hover:shadow-xl hover:scale-[1.02] transition-all flex items-center gap-2"
-        >
-          <span className="text-lg">+</span>
-          上传素材
-        </button>
-      </div>
-
       {/* Filter */}
       <div className="flex gap-2">
         {['ALL', 'CLOTHING', 'SCENE', 'ACTION', 'MAKEUP', 'ACCESSORY', 'OTHER'].map((f) => (
@@ -311,22 +296,36 @@ export default function MaterialsPage() {
       )}
 
       {/* Materials Grid */}
-      {filteredMaterials.length === 0 ? (
+      {filteredMaterials.length === 0 && filter === 'ALL' ? (
         <div
-          className="flex flex-col items-center justify-center h-64 rounded-2xl"
+          className="flex flex-col items-center justify-center rounded-2xl cursor-pointer"
           style={{
             background: 'rgba(255,255,255,0.03)',
-            border: '1px dashed rgba(255,255,255,0.1)',
+            border: '2px dashed rgba(255,255,255,0.1)',
+            minHeight: '300px',
           }}
+          onClick={() => setShowUpload(true)}
         >
-          <div className="text-6xl mb-4">📦</div>
-          <p className="text-white/60 mb-2">
-            {filter === 'ALL' ? '还没有上传任何素材' : '该类型暂无素材'}
-          </p>
-          <p className="text-white/40 text-sm mb-4">点击上方「上传素材」开始</p>
+          <div className="text-6xl mb-4 text-white/20">+</div>
+          <p className="text-white/60 mb-2">还没有上传任何素材</p>
+          <p className="text-white/40 text-sm">点击这里上传素材</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {/* Add Button - always first */}
+          <div
+            onClick={() => setShowUpload(true)}
+            className="flex flex-col items-center justify-center rounded-2xl cursor-pointer transition-all hover:scale-[1.02]"
+            style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '2px dashed rgba(255,255,255,0.1)',
+              minHeight: '200px',
+            }}
+          >
+            <div className="text-5xl mb-3 text-white/20">+</div>
+            <span className="text-white/40 text-sm">上传素材</span>
+          </div>
+
           {filteredMaterials.map((material) => (
             <MaterialCard key={material.id} material={material} />
           ))}
