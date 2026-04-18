@@ -17,7 +17,14 @@ export default async function IpDetailPage({ params }: { params: { id: string } 
 
   const ip = await db.virtualIp.findFirst({
     where: { id: params.id, teamId: session.user.teamId },
-    include: { images: true },
+    include: {
+      ipMaterials: {
+        include: {
+          sourceIpMaterial: true,
+          material: true,
+        },
+      },
+    },
   })
 
   if (!ip) {

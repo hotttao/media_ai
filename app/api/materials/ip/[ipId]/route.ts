@@ -9,6 +9,7 @@ import path from 'path'
 type RouteParams = { params: { ipId: string } }
 
 // GET /api/materials/ip/[ipId] - Get IP-specific materials
+// GET /api/materials/ip/[ipId]?type=MAKEUP - Filter by type
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,7 +17,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const materials = await getIpMaterials(params.ipId)
+    const { searchParams } = new URL(request.url)
+    const type = searchParams.get('type') as 'MAKEUP' | 'ACCESSORY' | 'CUSTOMIZED_CLOTHING' | null
+
+    const materials = await getIpMaterials(params.ipId, type || undefined)
     return NextResponse.json(materials)
   } catch (error) {
     console.error('Get IP materials error:', error)
@@ -41,6 +45,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const fullBody = formData.get('fullBody') as File | null
     const threeView = formData.get('threeView') as File | null
     const nineView = formData.get('nineView') as File | null
+    const sourceIpMaterialId = formData.get('sourceIpMaterialId') as string | null
+    const materialId = formData.get('materialId') as string | null
 
     const ipId = params.ipId
     const teamId = session.user.teamId
@@ -78,6 +84,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       fullBodyUrl: fullBodyUrl || undefined,
       threeViewUrl: threeViewUrl || undefined,
       nineViewUrl: nineViewUrl || undefined,
+      sourceIpMaterialId: sourceIpMaterialId || undefined,
+      materialId: materialId || undefined,
     })
 
     return NextResponse.json(material, { status: 201 })

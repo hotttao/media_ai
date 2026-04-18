@@ -104,7 +104,6 @@ model VirtualIp {
 
   user        User         @relation("UserToVirtualIps", fields: [userId], references: [id])
   team        Team         @relation("TeamToVirtualIps", fields: [teamId], references: [id])
-  images      IpImage[]    @relation("VirtualIpToImages")
   ipMaterials IpMaterial[] @relation("VirtualIpToIpMaterials")
   videoTasks  VideoTask[]  @relation("VirtualIpToVideoTasks")
   videos      Video[]      @relation("VirtualIpToVideos")
@@ -116,20 +115,6 @@ enum Gender {
   MALE
   FEMALE
   OTHER
-}
-
-model IpImage {
-  id           String   @id @default(uuid())
-  ipId         String   @map("ip_id")
-  fullBodyUrl  String?  @map("full_body_url") @db.VarChar(500)
-  threeViewUrl String?  @map("three_view_url") @db.VarChar(500)
-  nineViewUrl  String?  @map("nine_view_url") @db.VarChar(500)
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  ip          VirtualIp     @relation("VirtualIpToImages", fields: [ipId], references: [id], onDelete: Cascade)
-  ipMaterials IpMaterial[] @relation("SourceImageToIpMaterials")
-
-  @@map("ip_images")
 }
 
 // ============================================
@@ -151,6 +136,7 @@ model Material {
 
   user User? @relation("UserToMaterials", fields: [userId], references: [id])
   team Team? @relation("TeamToMaterials", fields: [teamId], references: [id])
+  ipMaterials IpMaterial[] @relation("IpMaterialToMaterial")
 
   @@map("materials")
 }
@@ -171,23 +157,26 @@ enum MaterialType {
 }
 
 model IpMaterial {
-  id             String         @id @default(uuid())
-  ipId           String         @map("ip_id")
-  userId         String         @map("user_id")
-  type           IpMaterialType
-  name           String         @db.VarChar(100)
-  description    String?        @db.Text
-  tags           String?        // JSON stored as String for MySQL
-  fullBodyUrl    String?        @map("full_body_url") @db.VarChar(500)
-  threeViewUrl   String?        @map("three_view_url") @db.VarChar(500)
-  nineViewUrl    String?        @map("nine_view_url") @db.VarChar(500)
-  sourceImageId  String?        @map("source_image_id")
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
+  id                 String         @id @default(uuid())
+  ipId               String         @map("ip_id")
+  userId             String         @map("user_id")
+  type               IpMaterialType
+  name               String         @db.VarChar(100)
+  description        String?        @db.Text
+  tags               String?        // JSON stored as String for MySQL
+  fullBodyUrl        String?        @map("full_body_url") @db.VarChar(500)
+  threeViewUrl       String?        @map("three_view_url") @db.VarChar(500)
+  nineViewUrl        String?        @map("nine_view_url") @db.VarChar(500)
+  sourceIpMaterialId String?        @map("source_ip_material_id")  // 自引用：指向 ip_materials 的另一条记录
+  materialId         String?        @map("material_id")            // 指向 materials 表
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
 
-  ip          VirtualIp @relation("VirtualIpToIpMaterials", fields: [ipId], references: [id], onDelete: Cascade)
-  user        User      @relation("UserToIpMaterials", fields: [userId], references: [id])
-  sourceImage IpImage?  @relation("SourceImageToIpMaterials", fields: [sourceImageId], references: [id])
+  ip              VirtualIp  @relation("VirtualIpToIpMaterials", fields: [ipId], references: [id], onDelete: Cascade)
+  user            User       @relation("UserToIpMaterials", fields: [userId], references: [id])
+  sourceIpMaterial IpMaterial? @relation("IpMaterialToSource", fields: [sourceIpMaterialId], references: [id])
+  derivedMaterials IpMaterial[] @relation("IpMaterialToSource")  // 自引用的反向：基于此记录生成的子记录
+  material        Material?  @relation("IpMaterialToMaterial", fields: [materialId], references: [id])
 
   @@map("ip_materials")
 }

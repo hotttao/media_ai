@@ -67,11 +67,17 @@ export async function deleteMaterial(id: string, userId: string, teamId: string)
   })
 }
 
-export async function getIpMaterials(ipId: string) {
+export async function getIpMaterials(ipId: string, type?: 'MAKEUP' | 'ACCESSORY' | 'CUSTOMIZED_CLOTHING') {
   return db.ipMaterial.findMany({
-    where: { ipId },
+    where: {
+      ipId,
+      ...(type ? { type } : {}),
+    },
     orderBy: { createdAt: 'desc' },
-    include: { sourceImage: true },
+    include: {
+      sourceIpMaterial: true,
+      material: true,
+    },
   })
 }
 
@@ -88,7 +94,8 @@ export async function createIpMaterial(userId: string, input: IpMaterialInput) {
       fullBodyUrl: input.fullBodyUrl,
       threeViewUrl: input.threeViewUrl,
       nineViewUrl: input.nineViewUrl,
-      sourceImageId: input.sourceImageId,
+      sourceIpMaterialId: input.sourceIpMaterialId,
+      materialId: input.materialId,
     },
   })
 }

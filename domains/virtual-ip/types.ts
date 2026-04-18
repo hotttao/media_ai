@@ -29,15 +29,6 @@ export interface VirtualIp {
   updatedAt: Date
 }
 
-export interface IpImage {
-  id: string
-  ipId: string
-  fullBodyUrl: string | null
-  threeViewUrl: string | null
-  nineViewUrl: string | null
-  createdAt: Date
-}
-
 export interface CreateIpInput {
   nickname: string
   avatarUrl?: string

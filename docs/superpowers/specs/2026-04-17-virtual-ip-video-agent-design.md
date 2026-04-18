@@ -128,18 +128,6 @@ CREATE TABLE virtual_ips (
   FOREIGN KEY (user_id) REFERENCES users(id),                            -- 关联创建者
   FOREIGN KEY (team_id) REFERENCES teams(id)                             -- 关联团队
 );
-
--- IP 形象图（扩展表）
--- 用于存储从原始形象图生成的变体（妆容图、装饰效果图等），不直接用于展示
-CREATE TABLE ip_images (
-  id              VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
-  ip_id           VARCHAR(36) NOT NULL,                                 -- 所属 IP ID
-  full_body_url   VARCHAR(500),                                         -- 全身图 URL（妆容/装饰变体）
-  three_view_url  VARCHAR(500),                                         -- 三视图 URL（妆容/装饰变体）
-  nine_view_url   VARCHAR(500),                                         -- 九视图 URL（妆容/装饰变体）
-  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
-  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id) ON DELETE CASCADE      -- 关联 IP，级联删除
-);
 ```
 
 ### 3.3 素材库
@@ -164,22 +152,24 @@ CREATE TABLE materials (
 
 -- IP 特有素材（妆容/装饰/服装，基于某 IP 生成的专属素材）
 CREATE TABLE ip_materials (
-  id              VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
-  ip_id           VARCHAR(36) NOT NULL,                                -- 所属 IP ID
-  user_id         VARCHAR(36) NOT NULL,                                -- 创建者用户 ID
-  type            ENUM('makeup', 'accessory', 'customized_clothing') NOT NULL,  -- 素材类型：makeup 妆容，accessory 装饰，customized_clothing 定制服装
-  name            VARCHAR(100) NOT NULL,                                -- 素材名称
-  description     TEXT,                                                -- 素材描述
-  tags            JSON,                                                 -- 标签数组
-  full_body_url   VARCHAR(500),                                         -- 全身图 URL（基于该 IP 生成的定妆图/服装图）
-  three_view_url  VARCHAR(500),                                         -- 三视图 URL（基于该 IP 生成）
-  nine_view_url   VARCHAR(500),                                         -- 九视图 URL（基于该 IP 生成）
-  source_image_id VARCHAR(36),                                         -- 源图片 ID（参考的原始人物形象图）
-  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
-  updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 更新时间
-  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id),                        -- 关联 IP
-  FOREIGN KEY (user_id) REFERENCES users(id),                          -- 关联创建者
-  FOREIGN KEY (source_image_id) REFERENCES ip_images(id)                -- 关联源图片
+  id                    VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
+  ip_id                 VARCHAR(36) NOT NULL,                                -- 所属 IP ID
+  user_id               VARCHAR(36) NOT NULL,                                -- 创建者用户 ID
+  type                  ENUM('makeup', 'accessory', 'customized_clothing') NOT NULL,  -- 素材类型：makeup 妆容，accessory 装饰，customized_clothing 定制服装
+  name                  VARCHAR(100) NOT NULL,                                -- 素材名称
+  description           TEXT,                                                -- 素材描述
+  tags                  JSON,                                                 -- 标签数组
+  full_body_url         VARCHAR(500),                                         -- 全身图 URL（基于该 IP 生成的定妆图/服装图）
+  three_view_url        VARCHAR(500),                                         -- 三视图 URL（基于该 IP 生成）
+  nine_view_url         VARCHAR(500),                                         -- 九视图 URL（基于该 IP 生成）
+  source_ip_material_id VARCHAR(36),                                         -- 自引用：指向 ip_materials 的另一条记录（表示基于哪个素材生成）
+  material_id           VARCHAR(36),                                         -- 指向 materials 表（应用的素材类型）
+  created_at            DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
+  updated_at            DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 更新时间
+  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id),                            -- 关联 IP
+  FOREIGN KEY (user_id) REFERENCES users(id),                                -- 关联创建者
+  FOREIGN KEY (source_ip_material_id) REFERENCES ip_materials(id),            -- 关联源素材（自引用）
+  FOREIGN KEY (material_id) REFERENCES materials(id)                         -- 关联应用的素材
 );
 ```
 

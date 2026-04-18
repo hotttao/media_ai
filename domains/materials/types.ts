@@ -26,7 +26,8 @@ export interface IpMaterial {
   fullBodyUrl: string | null
   threeViewUrl: string | null
   nineViewUrl: string | null
-  sourceImageId: string | null
+  sourceIpMaterialId: string | null  // 自引用：指向 ip_materials 的另一条记录
+  materialId: string | null            // 指向 materials 表
   createdAt: Date
 }
 
@@ -48,5 +49,6 @@ export interface IpMaterialInput {
   fullBodyUrl?: string
   threeViewUrl?: string
   nineViewUrl?: string
-  sourceImageId?: string
+  sourceIpMaterialId?: string
+  materialId?: string
 }
