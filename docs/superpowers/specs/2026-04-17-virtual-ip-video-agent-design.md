@@ -57,37 +57,37 @@
 ### 3.1 用户与团队
 
 ```sql
--- 团队
+-- 团队：用户组，同一团队成员共享素材和工作流
 CREATE TABLE teams (
-  id          VARCHAR(36) PRIMARY KEY,
-  name        VARCHAR(100) NOT NULL,
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  id          VARCHAR(36) PRIMARY KEY,              -- 唯一标识符 UUID
+  name        VARCHAR(100) NOT NULL,                -- 团队名称
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,   -- 创建时间
+  updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  -- 更新时间
 );
 
--- 用户
+-- 用户：系统登录账号
 CREATE TABLE users (
-  id          VARCHAR(36) PRIMARY KEY,
-  email       VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  nickname    VARCHAR(50),
-  team_id     VARCHAR(36),
-  role        ENUM('admin', 'member') DEFAULT 'member',
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (team_id) REFERENCES teams(id)
+  id           VARCHAR(36) PRIMARY KEY,              -- 唯一标识符 UUID
+  email        VARCHAR(255) UNIQUE NOT NULL,        -- 登录邮箱，唯一
+  password_hash VARCHAR(255) NOT NULL,               -- 密码哈希值
+  nickname     VARCHAR(50),                          -- 显示昵称
+  team_id      VARCHAR(36),                         -- 所属团队 ID
+  role         ENUM('admin', 'member') DEFAULT 'member',  -- 角色：admin 管理成员，member 普通成员
+  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,  -- 创建时间
+  updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 更新时间
+  FOREIGN KEY (team_id) REFERENCES teams(id)        -- 关联团队
 );
 
--- 邀请码
+-- 邀请码：团队邀请新成员加入
 CREATE TABLE invite_codes (
-  id          VARCHAR(36) PRIMARY KEY,
-  team_id     VARCHAR(36) NOT NULL,
-  code        VARCHAR(20) UNIQUE NOT NULL,
-  used        BOOLEAN DEFAULT FALSE,
-  used_by     VARCHAR(36),
-  expires_at  DATETIME NOT NULL,
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (team_id) REFERENCES teams(id)
+  id          VARCHAR(36) PRIMARY KEY,              -- 唯一标识符 UUID
+  team_id     VARCHAR(36) NOT NULL,                -- 所属团队 ID
+  code        VARCHAR(20) UNIQUE NOT NULL,         -- 邀请码
+  used        BOOLEAN DEFAULT FALSE,                -- 是否已被使用
+  used_by     VARCHAR(36),                         -- 使用者邮箱（存储用户邮箱，非 ID）
+  expires_at  DATETIME NOT NULL,                   -- 过期时间
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,  -- 创建时间
+  FOREIGN KEY (team_id) REFERENCES teams(id)      -- 关联团队
 );
 ```
 
@@ -97,149 +97,144 @@ CREATE TABLE invite_codes (
 -- 虚拟 IP 主表
 -- 头像和形象图直接存储在主表，便于快速访问
 CREATE TABLE virtual_ips (
-  id          VARCHAR(36) PRIMARY KEY,
-  user_id     VARCHAR(36) NOT NULL,
-  team_id     VARCHAR(36) NOT NULL,
-  nickname    VARCHAR(50) NOT NULL,
-  avatar_url  VARCHAR(500),           -- 头像路径
-  full_body_url VARCHAR(500),         -- 全身图/平面图
-  three_view_url VARCHAR(500),        -- 三视图（front + side + back 合一）
-  nine_view_url VARCHAR(500),         -- 九视图
-  age         INT,
-  gender      ENUM('male', 'female', 'other'),
-  height      DECIMAL(5,2),
-  weight      DECIMAL(5,2),
-  bust        DECIMAL(5,2),
-  waist       DECIMAL(5,2),
-  hip         DECIMAL(5,2),
-  education   VARCHAR(50),
-  major       VARCHAR(100),
-  city        VARCHAR(50),
-  occupation  VARCHAR(100),
-  basic_setting TEXT,                 -- 人物基础设定
-  catchphrase VARCHAR(200),           -- 口头禅
-  small_habit VARCHAR(500),          -- 小癖好
-  family_background TEXT,             -- 家庭背景
-  income_level VARCHAR(100),         -- 收入水平
-  personality VARCHAR(500),           -- 性格特点
-  hobbies     VARCHAR(500),           -- 兴趣爱好
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (team_id) REFERENCES teams(id)
+  id              VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
+  user_id         VARCHAR(36) NOT NULL,                                -- 创建者用户 ID
+  team_id         VARCHAR(36) NOT NULL,                                 -- 所属团队 ID
+  nickname        VARCHAR(50) NOT NULL,                                 -- IP 名称/昵称
+  avatar_url      VARCHAR(500),                                         -- 头像图片 URL
+  full_body_url   VARCHAR(500),                                         -- 全身图/平面图 URL
+  three_view_url  VARCHAR(500),                                         -- 三视图 URL（正面+侧面+背面三合一）
+  nine_view_url   VARCHAR(500),                                         -- 九视图 URL（9 个角度展示）
+  age             INT,                                                   -- 年龄
+  gender          ENUM('male', 'female', 'other'),                      -- 性别
+  height          DECIMAL(5,2),                                         -- 身高 (cm)
+  weight          DECIMAL(5,2),                                         -- 体重 (kg)
+  bust            DECIMAL(5,2),                                          -- 胸围 (cm)
+  waist           DECIMAL(5,2),                                          -- 腰围 (cm)
+  hip             DECIMAL(5,2),                                          -- 臀围 (cm)
+  education       VARCHAR(50),                                           -- 学历
+  major           VARCHAR(100),                                          -- 专业/主修
+  city            VARCHAR(50),                                           -- 所在城市
+  occupation      VARCHAR(100),                                          -- 职业
+  basic_setting   TEXT,                                                 -- 人物基础设定（背景故事等）
+  catchphrase     VARCHAR(200),                                          -- 口头禅
+  small_habit     VARCHAR(500),                                          -- 小癖好
+  family_background TEXT,                                               -- 家庭背景
+  income_level    VARCHAR(100),                                         -- 收入水平
+  personality     VARCHAR(500),                                          -- 性格特点描述
+  hobbies         VARCHAR(500),                                          -- 兴趣爱好
+  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
+  updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 更新时间
+  FOREIGN KEY (user_id) REFERENCES users(id),                            -- 关联创建者
+  FOREIGN KEY (team_id) REFERENCES teams(id)                             -- 关联团队
 );
 
--- IP 形象图（扩展用，保留关联关系）
--- 用于存储从原始形象图生成的变体（妆容、装饰等）
+-- IP 形象图（扩展表）
+-- 用于存储从原始形象图生成的变体（妆容图、装饰效果图等），不直接用于展示
 CREATE TABLE ip_images (
-  id          VARCHAR(36) PRIMARY KEY,
-  ip_id       VARCHAR(36) NOT NULL,
-  full_body_url VARCHAR(500),         -- 全身图/平面图（扩展）
-  three_view_url VARCHAR(500),        -- 三视图（扩展）
-  nine_view_url VARCHAR(500),         -- 九视图（扩展）
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id) ON DELETE CASCADE
+  id              VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
+  ip_id           VARCHAR(36) NOT NULL,                                 -- 所属 IP ID
+  full_body_url   VARCHAR(500),                                         -- 全身图 URL（妆容/装饰变体）
+  three_view_url  VARCHAR(500),                                         -- 三视图 URL（妆容/装饰变体）
+  nine_view_url   VARCHAR(500),                                         -- 九视图 URL（妆容/装饰变体）
+  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
+  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id) ON DELETE CASCADE      -- 关联 IP，级联删除
 );
 ```
 
 ### 3.3 素材库
 
 ```sql
--- 普通素材（公共/个人/团队）
+-- 普通素材（公共/个人/团队可见）
 CREATE TABLE materials (
-  id          VARCHAR(36) PRIMARY KEY,
-  user_id     VARCHAR(36),             -- 创建者，NULL 为系统公共
-  team_id     VARCHAR(36),             -- 团队 NULL 为个人/公共
-  visibility  ENUM('public', 'personal', 'team') NOT NULL,
-  type        ENUM('clothing', 'scene', 'action', 'makeup', 'accessory', 'other') NOT NULL,
-  name        VARCHAR(100) NOT NULL,
-  description TEXT,                   -- 描述创作过程
-  url         VARCHAR(500) NOT NULL,
-  tags        JSON,                   -- ["tag1", "tag2"]
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (team_id) REFERENCES teams(id)
+  id          VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
+  user_id     VARCHAR(36),                                          -- 创建者用户 ID，NULL 为系统公共素材
+  team_id     VARCHAR(36),                                          -- 所属团队 ID，NULL 为个人素材
+  visibility  ENUM('public', 'personal', 'team') NOT NULL,         -- 可见性：public 公共，personal 个人，team 团队
+  type        ENUM('clothing', 'scene', 'action', 'makeup', 'accessory', 'other') NOT NULL,  -- 素材类型
+  name        VARCHAR(100) NOT NULL,                                -- 素材名称
+  description TEXT,                                                 -- 素材描述（创作过程说明等）
+  url         VARCHAR(500) NOT NULL,                                -- 素材文件 URL
+  tags        JSON,                                                 -- 标签数组：["tag1", "tag2"]
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
+  updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 更新时间
+  FOREIGN KEY (user_id) REFERENCES users(id),                        -- 关联创建者
+  FOREIGN KEY (team_id) REFERENCES teams(id)                        -- 关联团队
 );
 
--- IP 特有素材（妆容/装饰/服装，基于某 IP 生成）
+-- IP 特有素材（妆容/装饰/服装，基于某 IP 生成的专属素材）
 CREATE TABLE ip_materials (
-  id              VARCHAR(36) PRIMARY KEY,
-  ip_id           VARCHAR(36) NOT NULL,
-  user_id         VARCHAR(36) NOT NULL,
-  type            ENUM('makeup', 'accessory', 'customized_clothing') NOT NULL,
-  name            VARCHAR(100) NOT NULL,
-  description     TEXT,
-  tags            JSON,
-  -- 单条记录全量存储，便于工具调用
-  -- 全身图：人物正面全身图（一整张）
-  -- 三视图：一张图里包含正面/侧面/背面三个视角
-  -- 九视图：一张图里包含9个角度
-  full_body_url   VARCHAR(500),   -- 全身图/平面图
-  three_view_url  VARCHAR(500),   -- 三视图（front + side + back 合一）
-  nine_view_url   VARCHAR(500),   -- 九视图
-  source_image_id VARCHAR(36),    -- 源图片 ID（原始人物图）
-  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id),
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (source_image_id) REFERENCES ip_images(id)
+  id              VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
+  ip_id           VARCHAR(36) NOT NULL,                                -- 所属 IP ID
+  user_id         VARCHAR(36) NOT NULL,                                -- 创建者用户 ID
+  type            ENUM('makeup', 'accessory', 'customized_clothing') NOT NULL,  -- 素材类型：makeup 妆容，accessory 装饰，customized_clothing 定制服装
+  name            VARCHAR(100) NOT NULL,                                -- 素材名称
+  description     TEXT,                                                -- 素材描述
+  tags            JSON,                                                 -- 标签数组
+  full_body_url   VARCHAR(500),                                         -- 全身图 URL（基于该 IP 生成的定妆图/服装图）
+  three_view_url  VARCHAR(500),                                         -- 三视图 URL（基于该 IP 生成）
+  nine_view_url   VARCHAR(500),                                         -- 九视图 URL（基于该 IP 生成）
+  source_image_id VARCHAR(36),                                         -- 源图片 ID（参考的原始人物形象图）
+  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
+  updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- 更新时间
+  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id),                        -- 关联 IP
+  FOREIGN KEY (user_id) REFERENCES users(id),                          -- 关联创建者
+  FOREIGN KEY (source_image_id) REFERENCES ip_images(id)                -- 关联源图片
 );
 ```
 
 ### 3.4 工作流与任务
 
 ```sql
--- 工作流定义（开发者内置，存储在代码中，DB 仅存元数据）
--- 此表用于展示可用工作流给用户
+-- 工作流定义（开发者内置，存储在代码中，DB 仅存元数据供展示）
 CREATE TABLE workflows (
-  id          VARCHAR(36) PRIMARY KEY,
-  code        VARCHAR(50) UNIQUE NOT NULL,  -- 工作流唯一标识
-  name        VARCHAR(100) NOT NULL,
-  description TEXT,
-  version     VARCHAR(20) NOT NULL,
-  config      JSON,                          -- 工作流参数配置
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  id          VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
+  code        VARCHAR(50) UNIQUE NOT NULL,                          -- 工作流唯一代码标识
+  name        VARCHAR(100) NOT NULL,                                 -- 工作流名称
+  description TEXT,                                                  -- 工作流描述
+  version     VARCHAR(20) NOT NULL,                                  -- 版本号
+  config      JSON,                                                  -- 工作流参数配置（节点参数等）
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
+  updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  -- 更新时间
 );
 
 -- 视频生成任务
 CREATE TABLE video_tasks (
-  id          VARCHAR(36) PRIMARY KEY,
-  user_id     VARCHAR(36) NOT NULL,
-  team_id     VARCHAR(36) NOT NULL,
-  workflow_id VARCHAR(36) NOT NULL,
-  ip_id       VARCHAR(36),                 -- 关联 IP
-  status      ENUM('pending', 'running', 'completed', 'failed') DEFAULT 'pending',
-  params      JSON,                        -- 用户填写的参数
-  result      JSON,                        -- 生成结果
-  error       TEXT,
-  started_at  DATETIME,
-  completed_at DATETIME,
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (team_id) REFERENCES teams(id),
-  FOREIGN KEY (workflow_id) REFERENCES workflows(id),
-  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id)
+  id           VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
+  user_id      VARCHAR(36) NOT NULL,                                  -- 创建者用户 ID
+  team_id      VARCHAR(36) NOT NULL,                                  -- 所属团队 ID
+  workflow_id  VARCHAR(36) NOT NULL,                                 -- 使用的工作流 ID
+  ip_id        VARCHAR(36),                                          -- 关联的虚拟 IP ID
+  status       ENUM('pending', 'running', 'completed', 'failed') DEFAULT 'pending',  -- 任务状态
+  params       JSON,                                                  -- 用户填写的参数（素材选择等）
+  result       JSON,                                                  -- 生成结果（输出文件路径等）
+  error        TEXT,                                                  -- 错误信息
+  started_at   DATETIME,                                              -- 开始执行时间
+  completed_at DATETIME,                                              -- 完成时间
+  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
+  FOREIGN KEY (user_id) REFERENCES users(id),                        -- 关联创建者
+  FOREIGN KEY (team_id) REFERENCES teams(id),                        -- 关联团队
+  FOREIGN KEY (workflow_id) REFERENCES workflows(id),                -- 关联工作流
+  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id)                      -- 关联 IP
 );
 
 -- 生成的视频
 CREATE TABLE videos (
-  id          VARCHAR(36) PRIMARY KEY,
-  task_id     VARCHAR(36) NOT NULL,
-  user_id     VARCHAR(36) NOT NULL,
-  team_id     VARCHAR(36) NOT NULL,
-  ip_id       VARCHAR(36),
-  name        VARCHAR(100),
-  url         VARCHAR(500) NOT NULL,
-  thumbnail   VARCHAR(500),
-  duration    INT,                          -- 秒
-  size        BIGINT,                       -- 字节
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (task_id) REFERENCES video_tasks(id),
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (team_id) REFERENCES teams(id),
-  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id)
+  id          VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
+  task_id     VARCHAR(36) NOT NULL,                                  -- 所属任务 ID
+  user_id     VARCHAR(36) NOT NULL,                                  -- 创建者用户 ID
+  team_id     VARCHAR(36) NOT NULL,                                  -- 所属团队 ID
+  ip_id       VARCHAR(36),                                          -- 关联的虚拟 IP ID
+  name        VARCHAR(100),                                          -- 视频名称
+  url         VARCHAR(500) NOT NULL,                                  -- 视频文件 URL
+  thumbnail   VARCHAR(500),                                          -- 视频封面图 URL
+  duration    INT,                                                   -- 视频时长（秒）
+  size        BIGINT,                                               -- 文件大小（字节）
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,                    -- 创建时间
+  FOREIGN KEY (task_id) REFERENCES video_tasks(id),                  -- 关联任务
+  FOREIGN KEY (user_id) REFERENCES users(id),                        -- 关联创建者
+  FOREIGN KEY (team_id) REFERENCES teams(id),                        -- 关联团队
+  FOREIGN KEY (ip_id) REFERENCES virtual_ips(id)                    -- 关联 IP
 );
 ```
 
