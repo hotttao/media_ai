@@ -19,6 +19,7 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
   const [displayIp, setDisplayIp] = useState(ip)
   const [activeMaterialTab, setActiveMaterialTab] = useState<'MAKEUP' | 'ACCESSORY' | 'CUSTOMIZED_CLOTHING'>('MAKEUP')
   const [materialPage, setMaterialPage] = useState(0)
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
 
   useEffect(() => {
     setDisplayIp(ip)
@@ -182,7 +183,11 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
           {/* 全身图 */}
           <div className="group">
             <p className="text-xs text-white/40 mb-2">全身图</p>
-            <div className="relative rounded-xl overflow-hidden ring-1 ring-white/10" style={{ aspectRatio: '3/4' }}>
+            <div
+              className="relative rounded-xl overflow-hidden ring-1 ring-white/10 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
+              style={{ aspectRatio: '3/4' }}
+              onClick={() => displayIp.fullBodyUrl && setLightboxImage(displayIp.fullBodyUrl)}
+            >
               {displayIp.fullBodyUrl ? (
                 <img src={displayIp.fullBodyUrl} alt="full body" className="w-full h-full object-contain" />
               ) : (
@@ -197,7 +202,10 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
           {/* 三视图 */}
           <div className="group">
             <p className="text-xs text-white/40 mb-2">三视图</p>
-            <div className="relative rounded-xl overflow-hidden ring-1 ring-white/10 aspect-square">
+            <div
+              className="relative rounded-xl overflow-hidden ring-1 ring-white/10 aspect-square cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
+              onClick={() => displayIp.threeViewUrl && setLightboxImage(displayIp.threeViewUrl)}
+            >
               {displayIp.threeViewUrl ? (
                 <img src={displayIp.threeViewUrl} alt="three view" className="w-full h-full object-cover" />
               ) : (
@@ -212,7 +220,11 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
           {/* 九视图 */}
           <div className="group">
             <p className="text-xs text-white/40 mb-2">九视图</p>
-            <div className="relative rounded-xl overflow-hidden ring-1 ring-white/10" style={{ aspectRatio: '3/4' }}>
+            <div
+              className="relative rounded-xl overflow-hidden ring-1 ring-white/10 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
+              style={{ aspectRatio: '3/4' }}
+              onClick={() => displayIp.nineViewUrl && setLightboxImage(displayIp.nineViewUrl)}
+            >
               {displayIp.nineViewUrl ? (
                 <img src={displayIp.nineViewUrl} alt="nine view" className="w-full h-full object-contain" />
               ) : (
@@ -289,8 +301,9 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
                     <div key={material.id} className="group">
                       <p className="text-xs text-white/40 mb-2 truncate">{material.name}</p>
                       <div
-                        className="relative rounded-xl overflow-hidden ring-1 ring-white/10"
+                        className="relative rounded-xl overflow-hidden ring-1 ring-white/10 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
                         style={{ aspectRatio: '3/4' }}
+                        onClick={() => imageUrl && setLightboxImage(imageUrl)}
                       >
                         {imageUrl ? (
                           <img src={imageUrl} alt={material.name} className="w-full h-full object-cover" />
@@ -400,6 +413,29 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
           删除此 IP
         </button>
       </div>
+
+      {/* Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <button
+              className="absolute -top-10 right-0 text-white/60 hover:text-white text-2xl"
+              onClick={() => setLightboxImage(null)}
+            >
+              ✕
+            </button>
+            <img
+              src={lightboxImage}
+              alt=""
+              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
