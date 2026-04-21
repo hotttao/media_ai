@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { createProduct, getProducts } from '@/domains/product/service'
 import { createProductSchema } from '@/domains/product/validators'
+import type { TargetAudience } from '@/domains/product/types'
 
 // GET /api/products - 获取产品列表
 export async function GET(request: NextRequest) {
@@ -13,9 +14,10 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
+    const targetAudienceParam = searchParams.get('targetAudience')
     const filters = {
       search: searchParams.get('search') || undefined,
-      targetAudience: searchParams.get('targetAudience') || undefined,
+      targetAudience: (targetAudienceParam as TargetAudience) || undefined,
     }
 
     const products = await getProducts(
