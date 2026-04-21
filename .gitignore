@@ -40,3 +40,5 @@ next-env.d.ts
 
 # uploads
 /public/uploads
+
+docs/virtual_ip

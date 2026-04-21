@@ -3,7 +3,9 @@
     "allow": [
       "Bash(*)",
       "Edit(*)",
-      "WebFetch(domain:www.runninghub.cn)"
+      "WebFetch(domain:www.runninghub.cn)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs"
     ],
     "deny": [
       "Bash(rm -rf *)",
