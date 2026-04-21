@@ -23,6 +23,7 @@ model Team {
   materials    Material[]   @relation("TeamToMaterials")
   videoTasks   VideoTask[]  @relation("TeamToVideoTasks")
   videos       Video[]      @relation("TeamToVideos")
+  products     Product[]    @relation("TeamToProducts")
 
   @@map("teams")
 }
@@ -44,6 +45,7 @@ model User {
   ipMaterials  IpMaterial[] @relation("UserToIpMaterials")
   videoTasks   VideoTask[]  @relation("UserToVideoTasks")
   videos       Video[]      @relation("UserToVideos")
+  products     Product[]    @relation("UserToProducts")
 
   @@map("users")
 }
@@ -234,6 +236,48 @@ enum TaskStatus {
   RUNNING
   COMPLETED
   FAILED
+}
+
+// ============================================
+// 产品库
+// ============================================
+
+enum TargetAudience {
+  MENS
+  WOMENS
+  KIDS
+}
+
+model Product {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  teamId          String   @map("team_id")
+  name            String   @db.VarChar(200)
+  targetAudience  TargetAudience
+  productDetails  String?  @db.Text
+  displayActions  String?  @map("display_actions") @db.Text
+  tags            String?  // JSON stored as String
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  images ProductImage[] @relation("ProductToImages")
+
+  user   User @relation("UserToProducts", fields: [userId], references: [id])
+  team   Team @relation("TeamToProducts", fields: [teamId], references: [id])
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  productId String  @map("product_id")
+  url       String  @db.VarChar(500)
+  isMain    Boolean @default(false) @map("is_main")
+  order     Int     @default(0)
+
+  product Product @relation("ProductToImages", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
 }
 
 model Video {
