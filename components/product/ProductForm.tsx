@@ -129,90 +129,145 @@ export function ProductForm({ initialData, isEditing }: ProductFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       {/* Images */}
-      <div className="space-y-2">
-        <Label>产品图片</Label>
+      <div className="space-y-3">
+        <Label className="text-white/80 text-sm font-medium">产品图片</Label>
         <ProductImageUploader images={images} onChange={setImages} />
 
         {images.length > 0 && (
-          <Button
+          <button
             type="button"
-            variant="secondary"
             onClick={handleExtractInfo}
             disabled={isExtracting}
+            className="
+              w-full py-3 rounded-xl
+              bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20
+              border border-violet-500/30
+              text-white font-medium
+              hover:from-violet-600/30 hover:to-fuchsia-600/30
+              transition-all duration-300
+              disabled:opacity-50
+            "
           >
-            {isExtracting ? '分析中...' : 'AI 提取信息'}
-          </Button>
+            {isExtracting ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                分析中...
+              </span>
+            ) : (
+              'AI 提取信息'
+            )}
+          </button>
         )}
       </div>
 
       {/* Name */}
       <div className="space-y-2">
-        <Label htmlFor="name">产品名称 *</Label>
-        <Input
+        <Label htmlFor="name" className="text-white/80 text-sm font-medium">产品名称 *</Label>
+        <input
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="输入产品名称"
           required
+          className="
+            w-full px-4 py-3 rounded-xl
+            bg-white/5 border border-white/10
+            text-white placeholder:text-white/30
+            focus:outline-none focus:border-violet-500/50 focus:bg-white/10
+            transition-all duration-300
+          "
         />
       </div>
 
       {/* Target Audience */}
       <div className="space-y-2">
-        <Label htmlFor="targetAudience">适用人群 *</Label>
+        <Label htmlFor="targetAudience" className="text-white/80 text-sm font-medium">适用人群 *</Label>
         <Select value={targetAudience} onValueChange={setTargetAudience}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-violet-500/50">
             <SelectValue placeholder="选择适用人群" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="MENS">男装</SelectItem>
-            <SelectItem value="WOMENS">女装</SelectItem>
-            <SelectItem value="KIDS">童装</SelectItem>
+          <SelectContent className="bg-slate-900 border-white/10 text-white">
+            <SelectItem value="MENS" className="focus:bg-violet-600/20 focus:text-white">男装</SelectItem>
+            <SelectItem value="WOMENS" className="focus:bg-violet-600/20 focus:text-white">女装</SelectItem>
+            <SelectItem value="KIDS" className="focus:bg-violet-600/20 focus:text-white">童装</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Tags */}
       <div className="space-y-2">
-        <Label htmlFor="tags">产品标签（逗号分隔）</Label>
-        <Input
+        <Label htmlFor="tags" className="text-white/80 text-sm font-medium">产品标签（逗号分隔）</Label>
+        <input
           id="tags"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           placeholder="如: 春夏, 休闲, 运动"
+          className="
+            w-full px-4 py-3 rounded-xl
+            bg-white/5 border border-white/10
+            text-white placeholder:text-white/30
+            focus:outline-none focus:border-violet-500/50 focus:bg-white/10
+            transition-all duration-300
+          "
         />
       </div>
 
       {/* Product Details */}
       <div className="space-y-2">
-        <Label htmlFor="productDetails">产品细节</Label>
+        <Label htmlFor="productDetails" className="text-white/80 text-sm font-medium">产品细节</Label>
         <textarea
           id="productDetails"
           value={productDetails}
           onChange={(e) => setProductDetails(e.target.value)}
           placeholder="描述产品特点、特殊设计等"
           rows={4}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm"
+          className="
+            w-full px-4 py-3 rounded-xl
+            bg-white/5 border border-white/10
+            text-white placeholder:text-white/30
+            focus:outline-none focus:border-violet-500/50 focus:bg-white/10
+            transition-all duration-300 resize-none
+          "
         />
       </div>
 
       {/* Display Actions */}
       <div className="space-y-2">
-        <Label htmlFor="displayActions">展示动作</Label>
+        <Label htmlFor="displayActions" className="text-white/80 text-sm font-medium">展示动作</Label>
         <textarea
           id="displayActions"
           value={displayActions}
           onChange={(e) => setDisplayActions(e.target.value)}
           placeholder="格式: 动作1: 描述&#10;动作2: 描述"
           rows={3}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm"
+          className="
+            w-full px-4 py-3 rounded-xl
+            bg-white/5 border border-white/10
+            text-white placeholder:text-white/30
+            focus:outline-none focus:border-violet-500/50 focus:bg-white/10
+            transition-all duration-300 resize-none
+          "
         />
       </div>
 
       {/* Submit */}
-      <Button type="submit" disabled={isLoading || !name.trim()}>
+      <button
+        type="submit"
+        disabled={isLoading || !name.trim()}
+        className="
+          w-full py-3.5 rounded-xl
+          bg-gradient-to-r from-violet-600 to-fuchsia-600
+          text-white font-semibold shadow-lg shadow-violet-500/30
+          hover:shadow-xl hover:scale-[1.01]
+          disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+          transition-all duration-300
+        "
+      >
         {isLoading ? '保存中...' : isEditing ? '更新产品' : '创建产品'}
-      </Button>
+      </button>
     </form>
   )
 }
