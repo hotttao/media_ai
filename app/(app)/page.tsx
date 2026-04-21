@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { ChatWindow } from '@/components/home/ChatWindow'
 import { VideoToolCard } from '@/components/home/VideoToolCard'
 import { PromptElementsBar } from '@/components/home/PromptElementsBar'
@@ -55,12 +56,60 @@ const videoTools = [
   },
 ]
 
+const quickAccess = [
+  {
+    id: 'products',
+    title: '产品库',
+    description: '管理产品素材库',
+    href: '/products',
+    gradient: 'from-violet-500 to-purple-500',
+    icon: '📦',
+  },
+  {
+    id: 'materials',
+    title: '素材库',
+    description: '管理视频素材',
+    href: '/materials',
+    gradient: 'from-teal-500 to-cyan-500',
+    icon: '🖼️',
+  },
+  {
+    id: 'ips',
+    title: '虚拟IP',
+    description: '管理虚拟人物',
+    href: '/ips',
+    gradient: 'from-pink-500 to-rose-500',
+    icon: '👤',
+  },
+]
+
 export default function HomePage() {
   return (
     <div className="p-6 space-y-6">
       {/* Chat Window */}
       <div className="h-[35vh] min-h-[280px] max-h-[350px]">
         <ChatWindow />
+      </div>
+
+      {/* Quick Access Section */}
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {quickAccess.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`
+                relative overflow-hidden rounded-2xl p-5
+                bg-gradient-to-br ${item.gradient}
+                text-white shadow-lg hover:scale-[1.02] transition-transform
+              `}
+            >
+              <div className="text-3xl mb-2">{item.icon}</div>
+              <h3 className="font-semibold text-lg">{item.title}</h3>
+              <p className="text-sm text-white/80 mt-1">{item.description}</p>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Video Tools Section */}
