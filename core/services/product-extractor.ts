@@ -18,8 +18,8 @@ export async function extractProductInfo(
     messages: [
       {
         role: "user",
-        content: images.map((imageDataUrl) => ({
-          type: "image" as const,
+        content: images.map(imageDataUrl => ({
+          type: 'image' as const,
           image: imageDataUrl,
         })),
       },
