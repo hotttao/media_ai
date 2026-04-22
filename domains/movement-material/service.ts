@@ -26,3 +26,22 @@ export async function getMovementMaterialById(id: string): Promise<MovementMater
     where: { id },
   })
 }
+
+export async function updateMovementMaterial(
+  id: string,
+  input: Partial<CreateMovementMaterialInput>
+): Promise<MovementMaterial> {
+  return db.movementMaterial.update({
+    where: { id },
+    data: {
+      url: input.url !== undefined ? input.url || null : undefined,
+      content: input.content,
+      clothing: input.clothing !== undefined ? input.clothing || null : undefined,
+      scope: input.scope !== undefined ? input.scope || null : undefined,
+    },
+  })
+}
+
+export async function deleteMovementMaterial(id: string): Promise<void> {
+  await db.movementMaterial.delete({ where: { id } })
+}
