@@ -168,18 +168,20 @@ export default function MaterialsPage() {
       {/* Upload Modal */}
       {showUpload && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setShowUpload(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl p-6 backdrop-blur-xl"
+            className="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
             style={{
-              background: 'rgba(20,20,25,0.95)',
+              background: 'linear-gradient(180deg, rgba(20,30,35,0.98) 0%, rgba(15,20,25,0.99) 100%)',
               border: '1px solid rgba(255,255,255,0.1)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <MaterialUploader />
+            <div className="p-6">
+              <MaterialUploader />
+            </div>
           </div>
         </div>
       )}
