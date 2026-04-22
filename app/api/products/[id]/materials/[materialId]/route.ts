@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
+import { Prisma } from '@prisma/client'
+
+const PRISMA_NOT_FOUND_ERROR_CODE = 'P2025'
 
 export async function DELETE(
   request: NextRequest,
@@ -34,6 +37,9 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Delete product material error:', error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === PRISMA_NOT_FOUND_ERROR_CODE) {
+      return NextResponse.json({ error: 'Product material not found' }, { status: 404 })
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
