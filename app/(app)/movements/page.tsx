@@ -13,6 +13,13 @@ interface Movement {
   createdAt: string
 }
 
+interface MovementFormData {
+  url?: string
+  content: string
+  clothing?: string
+  scope?: string
+}
+
 const filterOptions = [
   { value: 'ALL', label: '全部' },
   { value: 'TEXT', label: '文字动作' },
@@ -25,15 +32,23 @@ export default function MovementsPage() {
   const [filter, setFilter] = useState('ALL')
   const [showForm, setShowForm] = useState(false)
   const [editingMovement, setEditingMovement] = useState<Movement | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchMovements = () => {
     fetch('/api/movements')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('获取动作列表失败')
+        return res.json()
+      })
       .then(data => {
         setMovements(data)
         setLoading(false)
+        setError(null)
       })
-      .catch(() => setLoading(false))
+      .catch(err => {
+        setError(err.message)
+        setLoading(false)
+      })
   }
 
   useEffect(() => {
@@ -46,34 +61,48 @@ export default function MovementsPage() {
       ? movements.filter(m => !m.url)
       : movements.filter(m => m.url)
 
-  const handleCreate = async (data: any) => {
-    const res = await fetch('/api/movements', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (res.ok) {
+  const handleCreate = async (data: MovementFormData) => {
+    try {
+      const res = await fetch('/api/movements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('创建动作失败')
       setShowForm(false)
+      setError(null)
       fetchMovements()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '创建动作失败')
     }
   }
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: MovementFormData) => {
     if (!editingMovement) return
-    const res = await fetch(`/api/movements/${editingMovement.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/movements/${editingMovement.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('更新动作失败')
       setEditingMovement(null)
+      setError(null)
       fetchMovements()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '更新动作失败')
     }
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/movements/${id}`, { method: 'DELETE' })
-    fetchMovements()
+    try {
+      const res = await fetch(`/api/movements/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('删除动作失败')
+      setError(null)
+      fetchMovements()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '删除动作失败')
+    }
   }
 
   const handleEdit = (movement: Movement) => {
@@ -143,6 +172,13 @@ export default function MovementsPage() {
           </button>
         </div>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Grid */}
       {loading ? (

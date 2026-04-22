@@ -11,7 +11,7 @@ interface MovementCardProps {
     scope: string | null
     createdAt: string
   }
-  onEdit: (movement: any) => void
+  onEdit: (movement: MovementCardProps['movement']) => void
   onDelete: (id: string) => void
 }
 
