@@ -95,20 +95,21 @@ export async function generateEffectImage(
       where: { id: makeupId },
       select: { fullBodyUrl: true },
     })
-    if (makeup?.fullBodyUrl) {
-      const blendResult3: ToolResult = await provider.execute(
-        ImageBlendTool.workflowId,
-        {
-          imageA: finalUrl,
-          imageB: makeup.fullBodyUrl,
-          prompt: '将妆容自然地应用在人物面部，保持整体效果协调',
-        }
-      )
-      if (blendResult3.error || !blendResult3.outputs.result) {
-        throw new Error(`Makeup blend failed: ${blendResult3.error}`)
-      }
-      finalUrl = blendResult3.outputs.result
+    if (!makeup?.fullBodyUrl) {
+      throw new Error(`Makeup ${makeupId} not found or has no fullBodyUrl`)
     }
+    const blendResult3: ToolResult = await provider.execute(
+      ImageBlendTool.workflowId,
+      {
+        imageA: finalUrl,
+        imageB: makeup.fullBodyUrl,
+        prompt: '将妆容自然地应用在人物面部，保持整体效果协调',
+      }
+    )
+    if (blendResult3.error || !blendResult3.outputs.result) {
+      throw new Error(`Makeup blend failed: ${blendResult3.error}`)
+    }
+    finalUrl = blendResult3.outputs.result
   }
 
   // 7. 保存到 product_materials 表
