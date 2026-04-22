@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { GenerateVideoWizard } from './GenerateVideoWizard'
 
 const audienceConfig = {
   MENS: { label: '男装', gradient: 'from-slate-600 to-zinc-700', textColor: 'text-slate-700' },
@@ -12,6 +13,7 @@ const audienceConfig = {
 
 export function ProductDetail({ product }: { product: any }) {
   const [isZoomed, setIsZoomed] = useState(false)
+  const [showWizard, setShowWizard] = useState(false)
 
   const audience = audienceConfig[product.targetAudience as keyof typeof audienceConfig] || audienceConfig.WOMENS
   const mainImage = product.images?.find((img: any) => img.isMain) || product.images?.[0]
@@ -178,6 +180,15 @@ export function ProductDetail({ product }: { product: any }) {
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowWizard(true)}
+                className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-matcha-600 to-matcha-700 hover:from-matcha-500 hover:to-matcha-600 text-white font-medium shadow-lg shadow-matcha-500/30 hover:shadow-matcha-500/50 transition-all duration-300 flex items-center justify-center gap-2 group active:scale-[0.98]"
+              >
+                <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                生成视频
+              </button>
               <button className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-medium shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 transition-all duration-300 flex items-center justify-center gap-2 group active:scale-[0.98]">
                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -228,6 +239,21 @@ export function ProductDetail({ product }: { product: any }) {
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/10 text-white/60 text-sm backdrop-blur-sm">
             点击任意处关闭
           </div>
+        </div>
+      )}
+
+      {/* Generate Video Wizard Modal */}
+      {showWizard && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <button
+            onClick={() => setShowWizard(false)}
+            className="absolute top-6 right-6 z-50 w-12 h-12 rounded-full bg-oat-light hover:bg-oat flex items-center justify-center text-warm-charcoal transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <GenerateVideoWizard productId={product.id} />
         </div>
       )}
     </div>
