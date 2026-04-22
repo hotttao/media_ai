@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { GenerateVideoWizard } from './GenerateVideoWizard'
@@ -17,7 +17,7 @@ export function ProductDetail({ product }: { product: any }) {
 
   const audience = audienceConfig[product.targetAudience as keyof typeof audienceConfig] || audienceConfig.WOMENS
   const mainImage = product.images?.find((img: any) => img.isMain) || product.images?.[0]
-  const tags = product.tags ? JSON.parse(product.tags) : []
+  const tags = useMemo(() => product.tags ? JSON.parse(product.tags) : [], [product.tags])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
