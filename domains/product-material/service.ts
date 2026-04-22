@@ -1,6 +1,6 @@
 import { db } from '@/foundation/lib/db'
 import { v4 as uuid } from 'uuid'
-import type { CreateProductMaterialInput, ProductMaterial } from './types'
+import type { CreateProductMaterialInput, ProductMaterial, ProductMaterialFilterInput } from './types'
 
 export async function createProductMaterial(input: CreateProductMaterialInput): Promise<ProductMaterial> {
   return db.productMaterial.create({
@@ -18,9 +18,14 @@ export async function createProductMaterial(input: CreateProductMaterialInput): 
   })
 }
 
-export async function getProductMaterials(productId: string): Promise<ProductMaterial[]> {
+export async function getProductMaterials(filters?: ProductMaterialFilterInput): Promise<ProductMaterial[]> {
+  const where: any = {}
+  if (filters?.productId) where.productId = filters.productId
+  if (filters?.ipId) where.ipId = filters.ipId
+  if (filters?.sceneId) where.sceneId = filters.sceneId
+  if (filters?.poseId) where.poseId = filters.poseId
   return db.productMaterial.findMany({
-    where: { productId },
+    where,
     orderBy: { createdAt: 'desc' },
   })
 }
@@ -38,5 +43,11 @@ export async function updateProductMaterial(
   return db.productMaterial.update({
     where: { id },
     data: input,
+  })
+}
+
+export async function deleteProductMaterial(id: string): Promise<void> {
+  await db.productMaterial.delete({
+    where: { id },
   })
 }

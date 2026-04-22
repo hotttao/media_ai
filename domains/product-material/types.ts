@@ -11,6 +11,13 @@ export interface ProductMaterial {
   createdAt: Date
 }
 
+export interface ProductMaterialFilterInput {
+  productId?: string
+  ipId?: string
+  sceneId?: string
+  poseId?: string
+}
+
 export interface CreateProductMaterialInput {
   productId: string
   ipId?: string
