@@ -1,16 +1,18 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { getEnvVariable } from "./env";
 
+// ✅ 官方标准、Code Plan 专用、稳定
 const minimax = createOpenAICompatible({
   name: "minimax",
   apiKey: getEnvVariable("MINIMAX_API_KEY"),
-  baseURL: `https://api.minimaxi.com/v1`,
+  baseURL: "https://api.minimaxi.com/v1", // 必须用这个
 });
 
 export const models = {
   extract: minimax("MiniMax-M2.7"),
   memory: minimax("MiniMax-M2.7"),
   compactor: minimax("MiniMax-M2.7"),
+  chat: minimax("MiniMax-LLM"),
 };
 
 export const extractJson = (output: string) => {

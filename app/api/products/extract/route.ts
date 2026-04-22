@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { extractProductInfoSchema } from '@/domains/product/validators'
-import { extractProductInfo } from '@/agent/services/product-extractor'
+import { extractProductInfo } from '@/core/services/product-extractor'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,24 +23,8 @@ export async function POST(request: NextRequest) {
 
     const { images } = parsed.data
 
-    // 使用 gemini 模型进行图片分析
-    const result = await extractProductInfo(images, async (messages) => {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash-lite',
-          messages,
-          max_tokens: 1000,
-        }),
-      })
-
-      const data = await response.json()
-      return data.choices?.[0]?.message?.content || ''
-    })
+    // 使用 MiniMax 模型进行图片分析
+    const result = await extractProductInfo(images)
 
     if (!result) {
       return NextResponse.json(

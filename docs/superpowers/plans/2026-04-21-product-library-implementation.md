@@ -4,7 +4,7 @@
 
 **Goal:** 实现产品库功能，包含产品 CRUD、AI 自动填充、图片上传
 
-**Architecture:** 遵循项目分层架构（L0-L3），产品模块放置在 `domains/product/`，组件在 `components/product/`，页面在 `app/(app)/products/`。AI 相关代码放在 `agent/` 目录。
+**Architecture:** 遵循项目分层架构（L0-L3），产品模块放置在 `domains/product/`，组件在 `components/product/`，页面在 `app/(app)/products/`。AI 相关代码放在 `core/` 目录。
 
 **Tech Stack:** Next.js 14, Prisma, React Hook Form, Zod, shadcn/ui
 
@@ -18,7 +18,7 @@ domains/product/
 ├── service.ts         # 产品服务
 └── validators.ts      # 验证规则
 
-agent/
+core/
 ├── prompts/product.ts     # 产品 AI 提示词（新增）
 └── services/product-extractor.ts  # 产品信息提取服务（新增）
 
@@ -621,8 +621,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { extractProductInfoSchema } from '@/domains/product/validators'
-import { extractProductInfo } from '@/agent/services/product-extractor'
-import { models } from '@/agent/llm'
+import { extractProductInfo } from '@/core/services/product-extractor'
+import { models } from '@/core/llm'
 
 export async function POST(request: NextRequest) {
   try {
