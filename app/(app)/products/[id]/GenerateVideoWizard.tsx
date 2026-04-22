@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 
 // Types
 interface VirtualIP {
@@ -82,6 +83,7 @@ const cardHoverClass = "transition-all duration-300 hover:shadow-hard hover:-tra
 
 // GenerateVideoWizard Component
 export function GenerateVideoWizard({ productId }: { productId: string }) {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -130,6 +132,17 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchMovements()
   }, [])
+
+  // Keyboard shortcut to go home (Escape key)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        router.push('/')
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [router])
 
   const fetchIPs = async () => {
     try {
@@ -350,9 +363,9 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background">
       {/* Header Bar */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-oat">
+      <header className="flex-shrink-0 sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-oat">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -404,9 +417,10 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        <AnimatePresence mode="wait">
+      {/* Main Content - Scrollable */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
             variants={pageVariants}
@@ -450,9 +464,18 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
             />}
 
             {currentStep === 2 && <EffectPreviewStep
+              selectedIp={selectedIp}
+              selectedScene={selectedScene}
+              selectedPose={selectedPose}
+              selectedMakeup={selectedMakeup}
               effectImageUrl={effectImageUrl}
               isLoading={effectImageLoading}
+              onGenerate={generateEffectImage}
               onRegenerate={generateEffectImage}
+              onUpload={() => {
+                // TODO: Implement upload functionality
+                alert('上传功能开发中...')
+              }}
             />}
 
             {currentStep === 3 && <SelectMotionStep
@@ -477,50 +500,66 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
             />}
           </motion.div>
         </AnimatePresence>
+        </div>
+      </main>
 
-        {/* Navigation Footer */}
-        <div className="mt-12 flex items-center justify-between">
-          <button
-            onClick={goBack}
-            disabled={currentStep === 0}
-            className={`
-              flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300
-              ${currentStep === 0
-                ? 'text-warm-silver cursor-not-allowed'
-                : 'text-warm-charcoal hover:bg-oat-light'
-              }
-            `}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            上一步
-          </button>
+      {/* Navigation Footer - Fixed at bottom */}
+      <footer className="flex-shrink-0 bg-background/95 backdrop-blur-md border-t border-oat">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/')}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-warm-silver hover:bg-oat-light hover:text-warm-charcoal transition-all duration-300"
+                title="返回首页 (Esc)"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span className="hidden sm:inline">首页</span>
+              </button>
 
-          <div className="flex items-center gap-4">
+              <button
+                onClick={goBack}
+                disabled={currentStep === 0}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300
+                  ${currentStep === 0
+                    ? 'text-warm-silver cursor-not-allowed'
+                    : 'text-warm-charcoal hover:bg-oat-light'
+                }
+                `}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                上一步
+              </button>
+            </div>
+
             <span className="text-sm text-warm-silver">
               {STEPS[currentStep].icon} {STEPS[currentStep].label}
             </span>
-          </div>
 
-          <button
-            onClick={goNext}
-            disabled={!canProceed()}
-            className={`
-              flex items-center gap-2 px-8 py-3 rounded-xl font-medium transition-all duration-300
-              ${canProceed()
-                ? 'bg-matcha-600 text-white hover:bg-matcha-800 hover:shadow-hard active:scale-98'
-                : 'bg-gray-100 text-warm-silver cursor-not-allowed'
-              }
-            `}
-          >
-            {currentStep === STEPS.length - 1 ? '完成' : '下一步'}
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+            <button
+              onClick={goNext}
+              disabled={!canProceed()}
+              className={`
+                flex items-center gap-2 px-6 py-2 rounded-xl font-medium transition-all duration-300
+                ${canProceed()
+                  ? 'bg-matcha-600 text-white hover:bg-matcha-800 hover:shadow-hard active:scale-98'
+                  : 'bg-gray-100 text-warm-silver cursor-not-allowed'
+                }
+              `}
+            >
+              {currentStep === STEPS.length - 1 ? '完成' : '下一步'}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </main>
+      </footer>
 
       {/* Decorative Elements */}
       <div className="fixed top-40 left-20 w-72 h-72 bg-matcha-300/20 rounded-full blur-[120px] pointer-events-none animate-pulse" />
@@ -618,7 +657,7 @@ function SelectIPStep({
   )
 }
 
-// Step 2: Select Scene & Pose
+// Step 2: Select Scene & Pose - Tab-based layout
 function SelectSceneStep({
   scenes,
   poses,
@@ -640,165 +679,355 @@ function SelectSceneStep({
   onPoseSelect: (pose: Pose | null) => void
   onMakeupSelect: (makeup: Makeup | null) => void
 }) {
+  const [activeTab, setActiveTab] = useState<'scene' | 'pose' | 'makeup'>('scene')
+
+  const tabs = [
+    { id: 'scene' as const, label: '场景', icon: '🎬', required: true, count: scenes.length, selected: selectedScene },
+    { id: 'pose' as const, label: '姿势', icon: '🧍', required: false, count: poses.length, selected: selectedPose },
+    { id: 'makeup' as const, label: '妆容', icon: '💄', required: false, count: makeups.length, selected: selectedMakeup },
+  ]
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'scene':
+        if (scenes.length === 0) {
+          return (
+            <div className="flex flex-col items-center justify-center py-16">
+              <span className="text-5xl mb-4">🎬</span>
+              <p className="text-warm-charcoal font-medium mb-2">暂无可用场景</p>
+              <p className="text-warm-silver text-sm mb-4">需要先添加场景素材</p>
+              <a href="/materials" className="px-4 py-2 bg-matcha-600 text-white rounded-lg font-medium hover:bg-matcha-800 transition-all">
+                去添加场景
+              </a>
+            </div>
+          )
+        }
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {scenes.map((scene) => (
+              <button
+                key={scene.id}
+                onClick={() => onSceneSelect(scene)}
+                className={`
+                  relative aspect-[3/4] rounded-xl overflow-hidden transition-all duration-300
+                  ${selectedScene?.id === scene.id
+                    ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
+                    : 'hover:scale-[1.02] hover:shadow-lg'
+                  }
+                `}
+              >
+                <Image src={scene.thumbnailUrl} alt={scene.name} fill className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute bottom-0 inset-x-0 p-3">
+                  <span className="text-white font-medium text-sm">{scene.name}</span>
+                </div>
+                {selectedScene?.id === scene.id && (
+                  <div className="absolute top-3 right-3 w-6 h-6 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )
+
+      case 'pose':
+        if (poses.length === 0) {
+          return (
+            <div className="flex flex-col items-center justify-center py-16">
+              <span className="text-5xl mb-4">🧍</span>
+              <p className="text-warm-charcoal font-medium mb-2">暂无可用姿势</p>
+              <p className="text-warm-silver text-sm mb-4">需要先添加姿势素材</p>
+              <a href="/materials" className="px-4 py-2 bg-matcha-600 text-white rounded-lg font-medium hover:bg-matcha-800 transition-all">
+                去添加姿势
+              </a>
+            </div>
+          )
+        }
+        return (
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {poses.map((pose) => (
+              <button
+                key={pose.id}
+                onClick={() => onPoseSelect(pose.id === selectedPose?.id ? null : pose)}
+                className={`
+                  flex-shrink-0 w-36 aspect-[3/4] relative rounded-xl overflow-hidden transition-all duration-300
+                  ${selectedPose?.id === pose.id
+                    ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
+                    : 'hover:scale-[1.02] hover:shadow-lg grayscale hover:grayscale-0'
+                  }
+                `}
+              >
+                <Image src={pose.thumbnailUrl} alt={pose.name} fill className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute bottom-0 inset-x-0 p-2">
+                  <span className="text-white font-medium text-xs">{pose.name}</span>
+                </div>
+                {selectedPose?.id === pose.id && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )
+
+      case 'makeup':
+        if (makeups.length === 0) {
+          return (
+            <div className="flex flex-col items-center justify-center py-16">
+              <span className="text-5xl mb-4">💄</span>
+              <p className="text-warm-charcoal font-medium mb-2">暂无可用妆容</p>
+              <p className="text-warm-silver text-sm mb-4">需要先添加妆容素材</p>
+              <a href="/materials" className="px-4 py-2 bg-matcha-600 text-white rounded-lg font-medium hover:bg-matcha-800 transition-all">
+                去添加妆容
+              </a>
+            </div>
+          )
+        }
+        return (
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {makeups.map((makeup) => (
+              <button
+                key={makeup.id}
+                onClick={() => onMakeupSelect(makeup.id === selectedMakeup?.id ? null : makeup)}
+                className={`
+                  flex-shrink-0 w-36 aspect-[3/4] relative rounded-xl overflow-hidden transition-all duration-300
+                  ${selectedMakeup?.id === makeup.id
+                    ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
+                    : 'hover:scale-[1.02] hover:shadow-lg grayscale hover:grayscale-0'
+                  }
+                `}
+              >
+                <Image src={makeup.thumbnailUrl} alt={makeup.name} fill className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute bottom-0 inset-x-0 p-2">
+                  <span className="text-white font-medium text-xs">{makeup.name}</span>
+                </div>
+                {selectedMakeup?.id === makeup.id && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )
+    }
+  }
+
   return (
-    <motion.div
-      variants={staggerContainer}
-      initial="initial"
-      animate="animate"
-      className="space-y-10"
-    >
-      <div className="text-center space-y-4">
-        <h2 className="text-4xl font-semibold tracking-tight" style={{ fontFeatureSettings: '"ss01", "ss03", "ss10", "ss11", "ss12"' }}>
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-semibold text-warm-charcoal">
           选择场景与姿势
         </h2>
-        <p className="text-warm-charcoal text-lg">
+        <p className="text-warm-silver">
           为你的视频选择合适的场景、姿势和妆容
         </p>
       </div>
 
-      {/* Scene Selection */}
-      <motion.div variants={itemVariants} className="space-y-4">
-        <h3 className="text-lg font-semibold text-warm-charcoal flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-slushie-500/20 text-slushie-800 flex items-center justify-center text-sm">
-            1
-          </span>
-          选择场景
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {scenes.map((scene) => (
-            <button
-              key={scene.id}
-              onClick={() => onSceneSelect(scene)}
-              className={`
-                relative aspect-[3/4] rounded-xl overflow-hidden transition-all duration-300 group
-                ${selectedScene?.id === scene.id
-                  ? 'ring-4 ring-matcha-600 ring-offset-4 ring-offset-background'
-                  : 'hover:scale-105 hover:shadow-xl'
-                }
-              `}
-            >
-              <Image src={scene.thumbnailUrl} alt={scene.name} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className="absolute bottom-0 inset-x-0 p-3">
-                <span className="text-white font-medium text-sm">{scene.name}</span>
-              </div>
-              {selectedScene?.id === scene.id && (
-                <div className="absolute top-3 right-3 w-6 h-6 bg-matcha-600 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-      </motion.div>
+      {/* Tab Navigation */}
+      <div className="flex gap-2 p-1 bg-oat-light/50 rounded-xl">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`
+              flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-300
+              ${activeTab === tab.id
+                ? 'bg-white text-warm-charcoal shadow-sm'
+                : 'text-warm-silver hover:text-warm-charcoal'
+              }
+            `}
+          >
+            <span>{tab.icon}</span>
+            <span>{tab.label}</span>
+            {tab.required && <span className="text-pomegranate-400">*</span>}
+            {tab.selected && (
+              <span className="w-5 h-5 rounded-full bg-matcha-600 text-white text-xs flex items-center justify-center">
+                ✓
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
 
-      {/* Pose Selection */}
-      <motion.div variants={itemVariants} className="space-y-4">
-        <h3 className="text-lg font-semibold text-warm-charcoal flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-lemon-400/20 text-lemon-700 flex items-center justify-center text-sm">
-            2
-          </span>
-          选择姿势（可选）
-        </h3>
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {poses.map((pose) => (
-            <button
-              key={pose.id}
-              onClick={() => onPoseSelect(pose.id === selectedPose?.id ? null : pose)}
-              className={`
-                flex-shrink-0 w-32 aspect-[3/4] relative rounded-xl overflow-hidden transition-all duration-300
-                ${selectedPose?.id === pose.id
-                  ? 'ring-4 ring-matcha-600 ring-offset-4 ring-offset-background'
-                  : 'hover:scale-105 hover:shadow-xl grayscale hover:grayscale-0'
-                }
-              `}
-            >
-              <Image src={pose.thumbnailUrl} alt={pose.name} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className="absolute bottom-0 inset-x-0 p-2">
-                <span className="text-white font-medium text-xs">{pose.name}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </motion.div>
+      {/* Tab Content */}
+      <div className="min-h-[300px]">
+        {renderContent()}
+      </div>
 
-      {/* Makeup Selection */}
-      <motion.div variants={itemVariants} className="space-y-4">
-        <h3 className="text-lg font-semibold text-warm-charcoal flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg bg-pomegranate-400/20 text-pomegranate-400 flex items-center justify-center text-sm">
-            3
+      {/* Selected Summary */}
+      <div className="flex gap-4 justify-center text-sm text-warm-silver">
+        {selectedScene && (
+          <span className="flex items-center gap-1">
+            <span className="text-matcha-600">✓</span> 场景: {selectedScene.name}
           </span>
-          选择妆容（可选）
-        </h3>
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {makeups.map((makeup) => (
-            <button
-              key={makeup.id}
-              onClick={() => onMakeupSelect(makeup.id === selectedMakeup?.id ? null : makeup)}
-              className={`
-                flex-shrink-0 w-32 aspect-[3/4] relative rounded-xl overflow-hidden transition-all duration-300
-                ${selectedMakeup?.id === makeup.id
-                  ? 'ring-4 ring-matcha-600 ring-offset-4 ring-offset-background'
-                  : 'hover:scale-105 hover:shadow-xl grayscale hover:grayscale-0'
-                }
-              `}
-            >
-              <Image src={makeup.thumbnailUrl} alt={makeup.name} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className="absolute bottom-0 inset-x-0 p-2">
-                <span className="text-white font-medium text-xs">{makeup.name}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </motion.div>
-    </motion.div>
+        )}
+        {selectedPose && (
+          <span className="flex items-center gap-1">
+            <span className="text-matcha-600">✓</span> 姿势: {selectedPose.name}
+          </span>
+        )}
+        {selectedMakeup && (
+          <span className="flex items-center gap-1">
+            <span className="text-matcha-600">✓</span> 妆容: {selectedMakeup.name}
+          </span>
+        )}
+      </div>
+    </div>
   )
 }
 
-// Step 3: Effect Image Preview
+// Step 3: Effect Image Preview (renamed to 首帧图预览)
 function EffectPreviewStep({
+  selectedIp,
+  selectedScene,
+  selectedPose,
+  selectedMakeup,
   effectImageUrl,
   isLoading,
+  onGenerate,
   onRegenerate,
+  onUpload,
 }: {
+  selectedIp: VirtualIP | null
+  selectedScene: Scene | null
+  selectedPose: Pose | null
+  selectedMakeup: Makeup | null
   effectImageUrl: string | null
   isLoading: boolean
+  onGenerate: () => void
   onRegenerate: () => void
+  onUpload: () => void
 }) {
   return (
-    <motion.div
-      variants={staggerContainer}
-      initial="initial"
-      animate="animate"
-      className="space-y-8"
-    >
-      <div className="text-center space-y-4">
-        <h2 className="text-4xl font-semibold tracking-tight" style={{ fontFeatureSettings: '"ss01", "ss03", "ss10", "ss11", "ss12"' }}>
-          效果图预览
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-semibold text-warm-charcoal">
+          首帧图预览
         </h2>
-        <p className="text-warm-charcoal text-lg">
-          查看生成的效果图，确认后继续下一步
+        <p className="text-warm-silver">
+          选择或上传首帧图，用于视频生成
         </p>
       </div>
 
-      <motion.div variants={itemVariants} className="max-w-md mx-auto">
+      {/* Selected Materials - Show actual images */}
+      <div className="grid grid-cols-4 gap-4">
+        {/* IP */}
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-oat-light">
+          {selectedIp?.avatarUrl ? (
+            <Image src={selectedIp.avatarUrl} alt={selectedIp.name} fill className="object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">🎭</span>
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+            <span className="text-white text-xs font-medium">{selectedIp?.name || '虚拟IP'}</span>
+          </div>
+        </div>
+        {/* Scene */}
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-oat-light">
+          {selectedScene?.thumbnailUrl ? (
+            <Image src={selectedScene.thumbnailUrl} alt={selectedScene.name} fill className="object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">🎬</span>
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+            <span className="text-white text-xs font-medium">{selectedScene?.name || '场景'}</span>
+          </div>
+        </div>
+        {/* Pose */}
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-oat-light">
+          {selectedPose?.thumbnailUrl ? (
+            <Image src={selectedPose.thumbnailUrl} alt={selectedPose.name} fill className="object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">🧍</span>
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+            <span className="text-white text-xs font-medium">{selectedPose?.name || '姿势'}</span>
+          </div>
+        </div>
+        {/* Makeup */}
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-oat-light">
+          {selectedMakeup?.thumbnailUrl ? (
+            <Image src={selectedMakeup.thumbnailUrl} alt={selectedMakeup.name} fill className="object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">💄</span>
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+            <span className="text-white text-xs font-medium">{selectedMakeup?.name || '妆容'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4 justify-center">
+        <button
+          onClick={onGenerate}
+          disabled={!selectedIp || !selectedScene || isLoading}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <>
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              生成中...
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              AI 生成首帧图
+            </>
+          )}
+        </button>
+        <button
+          onClick={onUpload}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-oat text-warm-charcoal font-medium hover:bg-oat-light transition-all duration-300 disabled:opacity-50"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          上传首帧图
+        </button>
+      </div>
+
+      {/* Preview Area */}
+      <div className="max-w-sm mx-auto">
         <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-oat-light border-2 border-dashed border-oat">
           {isLoading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="w-16 h-16 border-4 border-matcha-600 border-t-transparent rounded-full animate-spin mb-4" />
-              <span className="text-warm-charcoal font-medium">正在生成效果图...</span>
+              <span className="text-warm-charcoal font-medium">正在生成首帧图...</span>
             </div>
           ) : effectImageUrl ? (
             <>
-              <Image src={effectImageUrl} alt="效果图" fill className="object-cover" />
+              <Image src={effectImageUrl} alt="首帧图" fill className="object-cover" />
               <div className="absolute bottom-4 left-4 right-4 flex gap-3">
                 <button
                   onClick={onRegenerate}
-                  className="flex-1 py-3 px-4 rounded-xl bg-white/90 backdrop-blur-sm text-warm-charcoal font-medium hover:bg-white transition-all duration-300 flex items-center justify-center gap-2"
+                  disabled={!selectedIp || !selectedScene}
+                  className="flex-1 py-3 px-4 rounded-xl bg-white/90 backdrop-blur-sm text-warm-charcoal font-medium hover:bg-white transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -812,12 +1041,12 @@ function EffectPreviewStep({
               <svg className="w-16 h-16 text-warm-silver mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="text-warm-silver">点击&quot;下一步&quot;生成效果图</span>
+              <span className="text-warm-silver">点击上方按钮生成或上传首帧图</span>
             </div>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   )
 }
 

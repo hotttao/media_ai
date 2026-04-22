@@ -180,7 +180,13 @@ export default function MaterialsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
-              <MaterialUploader />
+              <MaterialUploader
+                onClose={() => setShowUpload(false)}
+                onSuccess={() => {
+                  fetchMaterials()
+                  setShowUpload(false)
+                }}
+              />
             </div>
           </div>
         </div>

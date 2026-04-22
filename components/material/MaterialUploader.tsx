@@ -1,9 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-export function MaterialUploader() {
+interface MaterialUploaderProps {
+  onClose?: () => void
+  onSuccess?: () => void
+}
+
+export function MaterialUploader({ onClose, onSuccess }: MaterialUploaderProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isExtracting, setIsExtracting] = useState(false)
@@ -79,8 +84,14 @@ export function MaterialUploader() {
         throw new Error('素材创建失败')
       }
 
-      router.push('/materials')
-      router.refresh()
+      // Success - call callbacks and navigate
+      onSuccess?.()
+      if (onClose) {
+        onClose()
+      } else {
+        router.push('/materials')
+        router.refresh()
+      }
     } catch (error) {
       alert(error instanceof Error ? error.message : 'An error occurred')
     } finally {

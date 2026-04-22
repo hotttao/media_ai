@@ -24,6 +24,8 @@ export async function extractMaterialInfo(
         })),
       },
     ],
+    maxRetries: 3,
+    timeout: 120000, // 2 minutes
   });
 
   // Remove thinking tags and markdown code blocks
