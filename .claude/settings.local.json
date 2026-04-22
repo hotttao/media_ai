@@ -5,7 +5,8 @@
       "Edit(*)",
       "WebFetch(domain:www.runninghub.cn)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__query-docs"
+      "mcp__context7__query-docs",
+      "WebFetch(domain:minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com)"
     ],
     "deny": [
       "Bash(rm -rf *)",
