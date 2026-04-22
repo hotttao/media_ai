@@ -61,11 +61,24 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    let body: { ipId?: string; firstFrameUrl?: string; movementId?: string; productMaterialId?: string }
+    try {
+      body = await request.json()
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 })
+      }
+      throw error
+    }
+
     if (!session.user.teamId) {
       return NextResponse.json({ error: 'No team found' }, { status: 400 })
     }
 
-    const body = await request.json()
+    if (!params.id || !/^[a-zA-Z0-9-_]+$/.test(params.id)) {
+      return NextResponse.json({ error: 'Invalid product ID format' }, { status: 400 })
+    }
+
     const { ipId, firstFrameUrl, movementId, productMaterialId } = body
 
     if (!ipId || !firstFrameUrl || !movementId) {
