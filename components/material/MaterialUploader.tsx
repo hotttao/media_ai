@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 export function MaterialUploader() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [isExtracting, setIsExtracting] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -94,6 +95,48 @@ export function MaterialUploader() {
     }
   }
 
+  async function handleExtractInfo() {
+    if (!previewUrl) {
+      alert('请先上传素材图片')
+      return
+    }
+
+    setIsExtracting(true)
+
+    try {
+      // Convert preview URL to base64
+      const response = await fetch(previewUrl)
+      const blob = await response.blob()
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(blob)
+      })
+
+      const apiResponse = await fetch('/api/materials/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: [base64] }),
+      })
+
+      if (!apiResponse.ok) throw new Error('提取失败')
+
+      const data = await apiResponse.json()
+
+      setFormData(prev => ({
+        ...prev,
+        name: data.name || prev.name,
+        type: data.type || prev.type,
+        description: data.description || prev.description,
+        tags: data.tags?.join(', ') || prev.tags,
+      }))
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '提取失败')
+    } finally {
+      setIsExtracting(false)
+    }
+  }
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       {/* Header */}
@@ -153,7 +196,32 @@ export function MaterialUploader() {
 
       {/* Name Input */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-white/70">素材名称</label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-white/70">素材名称</label>
+          <button
+            type="button"
+            onClick={handleExtractInfo}
+            disabled={!previewUrl || isExtracting}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 text-cyan-400 text-sm font-medium hover:from-cyan-500/30 hover:to-emerald-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-cyan-500/30"
+          >
+            {isExtracting ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                分析中...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                AI 提取信息
+              </>
+            )}
+          </button>
+        </div>
         <input
           type="text"
           value={formData.name}
