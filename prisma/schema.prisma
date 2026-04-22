@@ -109,6 +109,7 @@ model VirtualIp {
   ipMaterials IpMaterial[] @relation("VirtualIpToIpMaterials")
   videoTasks  VideoTask[]  @relation("VirtualIpToVideoTasks")
   videos      Video[]      @relation("VirtualIpToVideos")
+  productMaterials ProductMaterial[] @relation("ProductMaterialToVirtualIp")
 
   @@map("virtual_ips")
 }
@@ -139,6 +140,8 @@ model Material {
   user User? @relation("UserToMaterials", fields: [userId], references: [id])
   team Team? @relation("TeamToMaterials", fields: [teamId], references: [id])
   ipMaterials IpMaterial[] @relation("IpMaterialToMaterial")
+  productMaterialScenes ProductMaterial[] @relation("ProductMaterialToScene")
+  productMaterialPoses   ProductMaterial[] @relation("ProductMaterialToPose")
 
   @@map("materials")
 }
@@ -156,6 +159,7 @@ enum MaterialType {
   MAKEUP
   ACCESSORY
   OTHER
+  POSE
 }
 
 model IpMaterial {
@@ -260,7 +264,9 @@ model Product {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  images ProductImage[] @relation("ProductToImages")
+  images          ProductImage[]    @relation("ProductToImages")
+  productMaterials ProductMaterial[] @relation("ProductToProductMaterials")
+  videos          Video[]           @relation("ProductToVideos")
 
   user   User @relation("UserToProducts", fields: [userId], references: [id])
   team   Team @relation("TeamToProducts", fields: [teamId], references: [id])
@@ -286,6 +292,7 @@ model Video {
   userId     String   @map("user_id")
   teamId     String   @map("team_id")
   ipId       String?  @map("ip_id")
+  productId  String?  @map("product_id")
   name       String?  @db.VarChar(100)
   url        String   @db.VarChar(500)
   thumbnail  String?  @db.VarChar(500)
@@ -293,10 +300,42 @@ model Video {
   size       BigInt?  @db.BigInt
   createdAt  DateTime @default(now()) @map("created_at")
 
-  task VideoTask  @relation("TaskToVideos", fields: [taskId], references: [id])
-  user User       @relation("UserToVideos", fields: [userId], references: [id])
-  team Team       @relation("TeamToVideos", fields: [teamId], references: [id])
-  ip   VirtualIp? @relation("VirtualIpToVideos", fields: [ipId], references: [id])
+  task    VideoTask  @relation("TaskToVideos", fields: [taskId], references: [id])
+  user    User       @relation("UserToVideos", fields: [userId], references: [id])
+  team    Team       @relation("TeamToVideos", fields: [teamId], references: [id])
+  ip      VirtualIp? @relation("VirtualIpToVideos", fields: [ipId], references: [id])
+  product Product?   @relation("ProductToVideos", fields: [productId], references: [id], onDelete: SetNull)
 
   @@map("videos")
+}
+
+model ProductMaterial {
+  id            String   @id @default(uuid())
+  productId     String   @map("product_id")
+  ipId          String?  @map("ip_id")
+  sceneId       String?  @map("scene_id")
+  poseId        String?  @map("pose_id")
+  fullBodyUrl   String?  @map("full_body_url") @db.VarChar(500)
+  threeViewUrl  String?  @map("three_view_url") @db.VarChar(500)
+  nineViewUrl   String?  @map("nine_view_url") @db.VarChar(500)
+  firstFrameUrl String?  @map("first_frame_url") @db.VarChar(500)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  product Product    @relation("ProductToProductMaterials", fields: [productId], references: [id], onDelete: Cascade)
+  ip      VirtualIp? @relation("ProductMaterialToVirtualIp", fields: [ipId], references: [id], onDelete: SetNull)
+  scene   Material?  @relation("ProductMaterialToScene", fields: [sceneId], references: [id], onDelete: SetNull)
+  pose    Material?  @relation("ProductMaterialToPose", fields: [poseId], references: [id], onDelete: SetNull)
+
+  @@map("product_materials")
+}
+
+model MovementMaterial {
+  id        String   @id @default(uuid())
+  url       String?  @db.VarChar(500)
+  content   String   @db.Text
+  clothing  String?  @db.Text
+  scope     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("movement_materials")
 }
