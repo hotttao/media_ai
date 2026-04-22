@@ -136,7 +136,12 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
       const res = await fetch('/api/ips')
       if (res.ok) {
         const data = await res.json()
-        setIps(data)
+        setIps(data.map((ip: any) => ({
+          id: ip.id,
+          name: ip.nickname || ip.name || '未命名',
+          avatarUrl: ip.avatarUrl,
+          type: ip.type || ip.occupation || '虚拟IP',
+        })))
       }
     } catch (err) {
       console.error('Failed to fetch IPs:', err)
@@ -144,33 +149,66 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
   }
 
   const fetchScenes = async () => {
-    // Mock data - in production, this would be an API call
-    setScenes([
-      { id: 'scene-1', name: '户外街拍', thumbnailUrl: 'https://picsum.photos/seed/scene1/300/400' },
-      { id: 'scene-2', name: '室内棚拍', thumbnailUrl: 'https://picsum.photos/seed/scene2/300/400' },
-      { id: 'scene-3', name: '咖啡厅', thumbnailUrl: 'https://picsum.photos/seed/scene3/300/400' },
-      { id: 'scene-4', name: '海边沙滩', thumbnailUrl: 'https://picsum.photos/seed/scene4/300/400' },
-    ])
-    setPoses([
-      { id: 'pose-1', name: '站姿展示', thumbnailUrl: 'https://picsum.photos/seed/pose1/300/400' },
-      { id: 'pose-2', name: '坐姿展示', thumbnailUrl: 'https://picsum.photos/seed/pose2/300/400' },
-      { id: 'pose-3', name: '走姿展示', thumbnailUrl: 'https://picsum.photos/seed/pose3/300/400' },
-    ])
-    setMakeups([
-      { id: 'makeup-1', name: '自然妆容', thumbnailUrl: 'https://picsum.photos/seed/makeup1/300/400' },
-      { id: 'makeup-2', name: '精致妆容', thumbnailUrl: 'https://picsum.photos/seed/makeup2/300/400' },
-      { id: 'makeup-3', name: '无妆感', thumbnailUrl: 'https://picsum.photos/seed/makeup3/300/400' },
-    ])
+    try {
+      const res = await fetch('/api/materials?type=SCENE')
+      if (res.ok) {
+        const data = await res.json()
+        setScenes(data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          thumbnailUrl: m.url,
+        })))
+      }
+    } catch (err) {
+      console.error('Failed to fetch scenes:', err)
+    }
+
+    try {
+      const res = await fetch('/api/materials?type=POSE')
+      if (res.ok) {
+        const data = await res.json()
+        setPoses(data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          thumbnailUrl: m.url,
+        })))
+      }
+    } catch (err) {
+      console.error('Failed to fetch poses:', err)
+    }
+
+    try {
+      const res = await fetch('/api/materials?type=MAKEUP')
+      if (res.ok) {
+        const data = await res.json()
+        setMakeups(data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          thumbnailUrl: m.url,
+        })))
+      }
+    } catch (err) {
+      console.error('Failed to fetch makeups:', err)
+    }
   }
 
   const fetchMovements = async () => {
-    // Mock data - in production, this would be an API call
-    setMovements([
-      { id: 'mov-1', content: '优雅转身', url: null, clothing: '连衣裙' },
-      { id: 'mov-2', content: '自信走步', url: null, clothing: '休闲装' },
-      { id: 'mov-3', content: '活泼跳跃', url: null, clothing: '运动装' },
-      { id: 'mov-4', content: '静态展示', url: null, clothing: '正装' },
-    ])
+    try {
+      const res = await fetch('/api/movement-materials')
+      if (res.ok) {
+        const data = await res.json()
+        setMovements(data.map((m: any) => ({
+          id: m.id,
+          content: m.content,
+          url: m.url,
+          clothing: m.clothing,
+        })))
+      }
+    } catch (err) {
+      console.error('Failed to fetch movements:', err)
+    }
+
+    // Compositions are still mock for now - could be from a separate API
     setCompositions([
       { id: 'comp-1', name: '全身构图', thumbnailUrl: 'https://picsum.photos/seed/comp1/300/400' },
       { id: 'comp-2', name: '三分构图', thumbnailUrl: 'https://picsum.photos/seed/comp2/300/400' },
@@ -501,23 +539,17 @@ function SelectIPStep({
   selectedIp: VirtualIP | null
   onSelect: (ip: VirtualIP) => void
 }) {
-  return (
-    <motion.div
-      variants={staggerContainer}
-      initial="initial"
-      animate="animate"
-      className="space-y-8"
-    >
-      <div className="text-center space-y-4">
-        <h2 className="text-4xl font-semibold tracking-tight" style={{ fontFeatureSettings: '"ss01", "ss03", "ss10", "ss11", "ss12"' }}>
-          选择虚拟 IP
-        </h2>
-        <p className="text-warm-charcoal text-lg">
-          从你的虚拟IP库中选择一个作为视频主角
-        </p>
-      </div>
-
-      {ips.length === 0 ? (
+  if (ips.length === 0) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center space-y-4">
+          <h2 className="text-4xl font-semibold tracking-tight" style={{ fontFeatureSettings: '"ss01", "ss03", "ss10", "ss11", "ss12"' }}>
+            选择虚拟 IP
+          </h2>
+          <p className="text-warm-charcoal text-lg">
+            从你的虚拟IP库中选择一个作为视频主角
+          </p>
+        </div>
         <div className="text-center py-16">
           <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-oat-light flex items-center justify-center">
             <svg className="w-12 h-12 text-warm-silver" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -530,47 +562,59 @@ function SelectIPStep({
             创建虚拟IP
           </button>
         </div>
-      ) : (
-        <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {ips.map((ip) => (
-            <motion.button
-              key={ip.id}
-              variants={itemVariants}
-              onClick={() => onSelect(ip)}
-              className={`
-                relative p-6 rounded-2xl border-2 transition-all duration-300 group
-                ${selectedIp?.id === ip.id
-                  ? 'border-matcha-600 bg-matcha-600/5 shadow-lg'
-                  : 'border-oat bg-white hover:border-matcha-300 hover:shadow-lg'
-                }
-              `}
-            >
-              <div className="aspect-square relative mb-4 rounded-xl overflow-hidden bg-oat-light">
-                {ip.avatarUrl ? (
-                  <Image src={ip.avatarUrl} alt={ip.name} fill className="object-cover" />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-4xl">🎭</span>
-                  </div>
-                )}
-              </div>
-              <h3 className="font-semibold text-warm-charcoal group-hover:text-matcha-600 transition-colors">
-                {ip.name}
-              </h3>
-              <p className="text-sm text-warm-silver">{ip.type}</p>
+      </div>
+    )
+  }
 
-              {selectedIp?.id === ip.id && (
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+  return (
+    <div className="space-y-8">
+      <div className="text-center space-y-4">
+        <h2 className="text-4xl font-semibold tracking-tight" style={{ fontFeatureSettings: '"ss01", "ss03", "ss10", "ss11", "ss12"' }}>
+          选择虚拟 IP
+        </h2>
+        <p className="text-warm-charcoal text-lg">
+          从你的虚拟IP库中选择一个作为视频主角
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {ips.map((ip) => (
+          <button
+            key={ip.id}
+            onClick={() => onSelect(ip)}
+            className={`
+              relative p-6 rounded-2xl border-2 transition-all duration-300 group
+              ${selectedIp?.id === ip.id
+                ? 'border-matcha-600 bg-matcha-600/5 shadow-lg'
+                : 'border-oat bg-white hover:border-matcha-300 hover:shadow-lg'
+              }
+            `}
+          >
+            <div className="aspect-square relative mb-4 rounded-xl overflow-hidden bg-oat-light">
+              {ip.avatarUrl ? (
+                <Image src={ip.avatarUrl} alt={ip.name} fill className="object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-4xl">🎭</span>
                 </div>
               )}
-            </motion.button>
-          ))}
-        </motion.div>
-      )}
-    </motion.div>
+            </div>
+            <h3 className="font-semibold text-warm-charcoal group-hover:text-matcha-600 transition-colors">
+              {ip.name}
+            </h3>
+            <p className="text-sm text-warm-silver">{ip.type}</p>
+
+            {selectedIp?.id === ip.id && (
+              <div className="absolute -top-3 -right-3 w-8 h-8 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 

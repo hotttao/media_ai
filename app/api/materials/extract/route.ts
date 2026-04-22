@@ -27,8 +27,12 @@ export async function POST(request: NextRequest) {
 
     const { images } = parsed.data
 
+    console.log('[extract-material] Starting extraction with', images.length, 'images')
+
     // 使用 MiniMax 模型进行图片分析
     const result = await extractMaterialInfo(images)
+
+    console.log('[extract-material] Extraction result:', result)
 
     if (!result) {
       return NextResponse.json(
@@ -39,7 +43,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error('Extract material info error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[extract-material] Error:', error)
+    console.error('[extract-material] Error message:', error instanceof Error ? error.message : String(error))
+    console.error('[extract-material] Error stack:', error instanceof Error ? error.stack : '')
+    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }, { status: 500 })
   }
 }
