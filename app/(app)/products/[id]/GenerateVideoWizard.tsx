@@ -187,6 +187,11 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
   // Product Materials - stores the current product material ID for API calls
   const [currentProductMaterialId, setCurrentProductMaterialId] = useState<string | null>(null)
 
+  // New ID state variables for API chaining
+  const [currentModelImageId, setCurrentModelImageId] = useState<string | null>(null)
+  const [currentStyleImageId, setCurrentStyleImageId] = useState<string | null>(null)
+  const [currentFirstFrameId, setCurrentFirstFrameId] = useState<string | null>(null)
+
   // Material pools
   const [poses, setPoses] = useState<Material[]>([])
   const [makeups, setMakeups] = useState<Material[]>([])
@@ -355,6 +360,7 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
       if (res.ok) {
         const data = await res.json()
         setModelImageUrl(data.modelImageUrl)
+        setCurrentModelImageId(data.modelImageId)
         setCurrentProductMaterialId(data.productMaterialId)
       } else {
         const errorText = await res.text()
@@ -369,7 +375,7 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
 
   // Step 3: Style Image Generation
   const generateStyleImage = async () => {
-    if (!selectedPose || !currentProductMaterialId) return
+    if (!selectedPose || !currentModelImageId) return
 
     setStyleImageLoading(true)
     setError(null)
@@ -379,7 +385,7 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          productMaterialId: currentProductMaterialId,
+          modelImageId: currentModelImageId,
           pose: selectedPose.name || selectedPose.id, // pose is text description or material ID
           makeupUrl: selectedMakeup?.url,
           accessoryUrl: selectedAccessory?.url,
@@ -389,6 +395,7 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
       if (res.ok) {
         const data = await res.json()
         setStyledImageUrl(data.styledImageUrl)
+        setCurrentStyleImageId(data.styleImageId)
       } else {
         const errorText = await res.text()
         setError(`生成定妆图失败: ${errorText || res.statusText}`)
@@ -408,13 +415,23 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
     setError(null)
 
     try {
-      const res = await fetch(
-        `/api/products/${productId}/generate-video?step=first-frame&productMaterialId=${currentProductMaterialId}&composition=${encodeURIComponent(compositionText)}`
-      )
+      const res = await fetch(`/api/products/${productId}/generate-video`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          step: 'first-frame',
+          ipId: selectedIp?.id,
+          styleImageId: currentStyleImageId,
+          sceneId: selectedScene.id,
+          composition: compositionText,
+          imageUrl: styledImageUrl,
+        }),
+      })
 
       if (res.ok) {
         const data = await res.json()
         setFirstFrameUrl(data.firstFrameUrl)
+        setCurrentFirstFrameId(data.firstFrameId)
       } else {
         // Mock for demo
         setFirstFrameUrl(`https://picsum.photos/seed/firstframe/600/800`)
@@ -446,9 +463,9 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ipId: selectedIp?.id,
+          firstFrameId: currentFirstFrameId,
           firstFrameUrl,
           movementId: selectedMovement.id,
-          productMaterialId: currentProductMaterialId,
         }),
       })
 
@@ -671,8 +688,8 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
               canGenerate={!!selectedMovement && !!firstFrameUrl}
             />}
           </motion.div>
+          </AnimatePresence>
         </div>
-        </AnimatePresence>
       </main>
 
       {/* Navigation Footer - Fixed at bottom */}
