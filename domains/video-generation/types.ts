@@ -29,3 +29,8 @@ export interface StyleImageGenerationResult {
   styledImageUrl: string
   styleImageId: string // NEW
 }
+
+export interface FirstFrameGenerationResult {
+  firstFrameUrl: string
+  firstFrameId: string
+}

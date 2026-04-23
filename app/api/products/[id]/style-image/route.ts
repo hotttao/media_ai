@@ -15,14 +15,14 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { productMaterialId, pose, makeupUrl, accessoryUrl } = body
+    const { modelImageId, pose, makeupUrl, accessoryUrl } = body
 
-    if (!productMaterialId || !pose) {
-      return NextResponse.json({ error: 'Missing required fields: productMaterialId, pose' }, { status: 400 })
+    if (!modelImageId || !pose) {
+      return NextResponse.json({ error: 'Missing required fields: modelImageId, pose' }, { status: 400 })
     }
 
     const result = await generateStyleImage(
-      productMaterialId,
+      modelImageId,
       pose,
       makeupUrl,
       accessoryUrl

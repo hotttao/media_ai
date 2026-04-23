@@ -32,14 +32,24 @@ export async function GET(
     }
 
     if (step === 'first-frame') {
-      const productMaterialId = searchParams.get('productMaterialId')
-      const compositionId = searchParams.get('compositionId')
+      const ipId = searchParams.get('ipId')
+      const styleImageId = searchParams.get('styleImageId')
+      const sceneId = searchParams.get('sceneId')
+      const composition = searchParams.get('composition')
+      const imageUrl = searchParams.get('imageUrl')
 
-      if (!productMaterialId || !compositionId) {
-        return NextResponse.json({ error: 'Missing required params: productMaterialId, compositionId' }, { status: 400 })
+      if (!ipId || !sceneId || !composition || !imageUrl) {
+        return NextResponse.json({ error: 'Missing required params: ipId, sceneId, composition, imageUrl' }, { status: 400 })
       }
 
-      const result = await generateFirstFrame(productMaterialId, compositionId)
+      const result = await generateFirstFrame(
+        params.id,
+        ipId,
+        styleImageId || null,
+        sceneId,
+        composition,
+        imageUrl
+      )
       return NextResponse.json(result)
     }
 

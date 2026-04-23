@@ -5,7 +5,7 @@ import { providerRegistry } from '@/foundation/providers/registry'
 import { ImageBlendTool, SceneReplaceTool, ImageToVideoTool, MotionTransferTool, ModelImageTool, StyleImageTool, MultiImageEditTool } from './tools'
 import { createProductMaterial, updateProductMaterial } from '@/domains/product-material/service'
 import { getMovementMaterialById } from '@/domains/movement-material/service'
-import type { EffectImageGenerationResult, VideoGenerationResult, ModelImageGenerationResult, StyleImageGenerationResult } from './types'
+import type { EffectImageGenerationResult, VideoGenerationResult, ModelImageGenerationResult, StyleImageGenerationResult, FirstFrameGenerationResult } from './types'
 import type { ToolResult } from '@/foundation/providers/ToolProvider'
 
 const PROVIDER_NAME = 'runninghub' as const
@@ -270,53 +270,66 @@ export async function generateEffectImage(
 }
 
 /**
- * 生成首帧图
- * 流程: 效果图 + 构图场景 → 首帧图
+ * 生成首帧图 (新版)
+ * 流程: 定妆图 + 场景图 + 构图 → 首帧图
+ * 使用 first_frames 表 + inputHash 去重
  */
 export async function generateFirstFrame(
-  productMaterialId: string,
-  compositionId: string
-): Promise<{ firstFrameUrl: string; productMaterialId: string }> {
-  // 1. 获取 product_material 的 fullBodyUrl
-  const productMaterial = await db.productMaterial.findUnique({
-    where: { id: productMaterialId },
-    select: { fullBodyUrl: true },
-  })
-  if (!productMaterial?.fullBodyUrl) {
-    throw new Error(`ProductMaterial ${productMaterialId} not found or has no fullBodyUrl`)
-  }
-  const effectImageUrl = productMaterial.fullBodyUrl
+  productId: string,
+  ipId: string,
+  styleImageId: string | null,
+  sceneId: string,
+  composition: string,
+  imageUrl: string
+): Promise<FirstFrameGenerationResult> {
+  // 1. 计算 input hash 用于去重
+  const inputHash = hashStrings(sceneId, composition)
 
-  // 2. 获取构图场景图
-  const composition = await db.material.findUnique({
-    where: { id: compositionId },
-    select: { url: true },
+  // 2. 检查是否已存在相同输入的生成结果
+  const existing = await db.firstFrame.findUnique({
+    where: {
+      productId_ipId_sceneId_inputHash: { productId, ipId, sceneId, inputHash }
+    }
   })
-  if (!composition?.url) {
-    throw new Error(`Composition ${compositionId} not found or has no url`)
+  if (existing) {
+    return { firstFrameUrl: existing.url, firstFrameId: existing.id }
   }
-  const compositionUrl = composition.url
 
-  // 3. 场景替换：效果图 + 构图 → 首帧图
   const provider = getRunningHubProvider()
 
-  const sceneReplaceResult: ToolResult = await provider.execute(
-    SceneReplaceTool.workflowId,
-    {
-      character: effectImageUrl,
-      scene: compositionUrl,
-    }
-  )
-  if (sceneReplaceResult.error || !sceneReplaceResult.outputs.firstFrame) {
-    throw new Error(`Scene replace failed: ${sceneReplaceResult.error}`)
+  // 3. 获取场景图
+  const scene = await db.material.findUnique({
+    where: { id: sceneId },
+    select: { url: true },
+  })
+  if (!scene?.url) {
+    throw new Error(`Scene ${sceneId} not found`)
   }
-  const firstFrameUrl = sceneReplaceResult.outputs.firstFrame
 
-  // 4. 更新 product_material 的 firstFrameUrl
-  await updateProductMaterial(productMaterialId, { firstFrameUrl })
+  // 4. 调用场景替换工具
+  const sceneResult: ToolResult = await provider.execute(SceneReplaceTool.workflowId, {
+    character: imageUrl,
+    scene: scene.url,
+  })
+  if (sceneResult.error || !sceneResult.outputs.firstFrame) {
+    throw new Error(`Scene replace failed: ${sceneResult.error}`)
+  }
 
-  // 5. 返回首帧图 URL 和 productMaterialId
-  return { firstFrameUrl, productMaterialId }
+  // 5. 保存到 first_frames 表
+  const firstFrame = await db.firstFrame.create({
+    data: {
+      id: uuid(),
+      productId,
+      ipId,
+      styleImageId,
+      url: sceneResult.outputs.firstFrame,
+      sceneId,
+      composition,
+      inputHash,
+    }
+  })
+
+  return { firstFrameUrl: firstFrame.url, firstFrameId: firstFrame.id }
 }
 
 /**
