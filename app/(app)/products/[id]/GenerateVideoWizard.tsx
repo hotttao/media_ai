@@ -463,7 +463,6 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ipId: selectedIp?.id,
-          firstFrameId: currentFirstFrameId,
           firstFrameUrl,
           movementId: selectedMovement.id,
         }),

@@ -71,7 +71,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let body: { ipId?: string; firstFrameUrl?: string; movementId?: string; productMaterialId?: string }
+    let body: { ipId?: string; firstFrameUrl?: string; movementId?: string; productMaterialId?: string; step?: string; styleImageId?: string; sceneId?: string; composition?: string; imageUrl?: string }
     try {
       body = await request.json()
     } catch (error) {
@@ -81,6 +81,28 @@ export async function POST(
       throw error
     }
 
+    const { step } = body
+
+    // Handle step-based first-frame generation
+    if (step === 'first-frame') {
+      const { ipId, styleImageId, sceneId, composition, imageUrl } = body
+
+      if (!ipId || !sceneId || !composition || !imageUrl) {
+        return NextResponse.json({ error: 'Missing required params: ipId, sceneId, composition, imageUrl' }, { status: 400 })
+      }
+
+      const result = await generateFirstFrame(
+        params.id,
+        ipId,
+        styleImageId || null,
+        sceneId,
+        composition,
+        imageUrl
+      )
+      return NextResponse.json(result)
+    }
+
+    // Handle video generation
     if (!session.user.teamId) {
       return NextResponse.json({ error: 'No team found' }, { status: 400 })
     }
