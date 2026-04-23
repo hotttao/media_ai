@@ -11,6 +11,8 @@ interface MaterialCardProps {
     url: string
     tags: string | null
     visibility: string
+    description?: string | null
+    createdAt?: string
   }
   onClick?: () => void
 }
