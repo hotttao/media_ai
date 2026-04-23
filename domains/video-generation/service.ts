@@ -18,10 +18,22 @@ function getRunningHubProvider() {
   return provider
 }
 
+// Simple hash function for deduplication
+function hashStrings(...inputs: (string | undefined | null)[]): string {
+  const str = inputs.filter(Boolean).join('|')
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash
+  }
+  return Math.abs(hash).toString(36)
+}
+
 /**
  * 生成模特图 (PRD 4.2 步骤3)
  * 流程: IP 全身图 + 产品主图 + 产品细节图 → 模特图
- * 每个 IP，每个产品，只能有一张模特图。如果已存在则覆盖。
+ * 使用 ModelImage 表 + inputHash 去重
  */
 export async function generateModelImage(
   productId: string,
@@ -37,19 +49,25 @@ export async function generateModelImage(
   if (!ip?.fullBodyUrl) {
     throw new Error(`IP ${ipId} not found or has no fullBodyUrl`)
   }
-  const ipFullBodyUrl = ip.fullBodyUrl
+
+  // 2. 计算 input hash 用于去重
+  const inputHash = hashStrings(productMainImageUrl, ...productDetailImageUrls)
+
+  // 3. 检查是否已存在相同输入的生成结果
+  const existing = await db.modelImage.findUnique({
+    where: {
+      productId_ipId_inputHash: { productId, ipId, inputHash }
+    }
+  })
+  if (existing) {
+    return { modelImageUrl: existing.url, modelImageId: existing.id }
+  }
 
   const provider = getRunningHubProvider()
 
-  // 2. 检查是否已有该 IP+产品的模特图，有则删除（覆盖）
-  const existingMaterial = await db.productMaterial.findFirst({
-    where: { productId, ipId },
-    select: { id: true },
-  })
-
-  // 3. 调用模特图生成工具
+  // 4. 调用模特图生成工具
   const modelInputs: Record<string, string | string[] | null> = {
-    ipFullBodyUrl,
+    ipFullBodyUrl: ip.fullBodyUrl,
     productMainImage: productMainImageUrl,
   }
   if (productDetailImageUrls.length > 0) {
@@ -60,61 +78,85 @@ export async function generateModelImage(
   if (modelResult.error || !modelResult.outputs.modelImage) {
     throw new Error(`Model image generation failed: ${modelResult.error}`)
   }
-  const modelImageUrl = modelResult.outputs.modelImage
 
-  // 4. 如果已存在则更新，否则创建
-  let productMaterialId: string
-  if (existingMaterial) {
-    const updated = await updateProductMaterial(existingMaterial.id, { fullBodyUrl: modelImageUrl })
-    productMaterialId = existingMaterial.id
-  } else {
-    const created = await createProductMaterial({ productId, ipId, fullBodyUrl: modelImageUrl })
-    productMaterialId = created.id
-  }
+  // 5. 保存到 ModelImage 表
+  const modelImage = await db.modelImage.create({
+    data: {
+      id: uuid(),
+      productId,
+      ipId,
+      url: modelResult.outputs.modelImage,
+      inputHash,
+    }
+  })
 
-  return { modelImageUrl, productMaterialId }
+  return { modelImageUrl: modelImage.url, modelImageId: modelImage.id }
 }
 
 /**
  * 生成定妆图 (PRD 4.2 步骤4)
  * 流程: 模特图 + 姿势 + (可选)妆容 + (可选)饰品 → 定妆图
+ * 使用 StyleImage 表 + inputHash 去重
  */
 export async function generateStyleImage(
-  productMaterialId: string,
+  modelImageId: string,
   pose: string,
   makeupUrl?: string,
   accessoryUrl?: string
 ): Promise<StyleImageGenerationResult> {
   // 1. 获取模特图
-  const productMaterial = await db.productMaterial.findUnique({
-    where: { id: productMaterialId },
-    select: { fullBodyUrl: true },
+  const modelImage = await db.modelImage.findUnique({
+    where: { id: modelImageId },
+    include: { styleImages: true }
   })
-  if (!productMaterial?.fullBodyUrl) {
-    throw new Error(`ProductMaterial ${productMaterialId} not found or has no fullBodyUrl`)
+  if (!modelImage) {
+    throw new Error(`ModelImage ${modelImageId} not found`)
   }
-  const modelImageUrl = productMaterial.fullBodyUrl
+
+  // 2. 计算 input hash 用于去重
+  const inputHash = hashStrings(pose, makeupUrl, accessoryUrl)
+
+  // 3. 检查是否已存在相同输入的生成结果
+  const existing = await db.styleImage.findUnique({
+    where: {
+      modelImageId_inputHash: { modelImageId, inputHash }
+    }
+  })
+  if (existing) {
+    return { styledImageUrl: existing.url, styleImageId: existing.id }
+  }
 
   const provider = getRunningHubProvider()
 
-  // 2. 调用定妆图生成工具
+  // 4. 调用定妆图生成工具
   const styleInputs: Record<string, string | string[] | null> = {
-    modelImage: modelImageUrl,
+    modelImage: modelImage.url,
     pose,
   }
   if (makeupUrl) styleInputs.makeup = makeupUrl
   if (accessoryUrl) styleInputs.accessory = accessoryUrl
-  const styleResult: ToolResult = await provider.execute(StyleImageTool.workflowId, styleInputs)
 
+  const styleResult: ToolResult = await provider.execute(StyleImageTool.workflowId, styleInputs)
   if (styleResult.error || !styleResult.outputs.styledImage) {
     throw new Error(`Style image generation failed: ${styleResult.error}`)
   }
-  const styledImageUrl = styleResult.outputs.styledImage
 
-  // 3. 更新 product_materials
-  await updateProductMaterial(productMaterialId, { fullBodyUrl: styledImageUrl })
+  // 5. 保存到 StyleImage 表
+  const styleImage = await db.styleImage.create({
+    data: {
+      id: uuid(),
+      productId: modelImage.productId,
+      ipId: modelImage.ipId,
+      modelImageId,
+      url: styleResult.outputs.styledImage,
+      poseId: undefined, // pose 是文本描述
+      makeupId: undefined,
+      accessoryId: undefined,
+      inputHash,
+    }
+  })
 
-  return { styledImageUrl, productMaterialId }
+  return { styledImageUrl: styleImage.url, styleImageId: styleImage.id }
 }
 
 /**

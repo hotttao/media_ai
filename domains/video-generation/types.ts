@@ -22,10 +22,10 @@ export interface EffectImageGenerationResult {
 
 export interface ModelImageGenerationResult {
   modelImageUrl: string
-  productMaterialId: string
+  modelImageId: string // NEW
 }
 
 export interface StyleImageGenerationResult {
   styledImageUrl: string
-  productMaterialId: string
+  styleImageId: string // NEW
 }
