@@ -8,7 +8,7 @@ import { signOut, useSession } from 'next-auth/react'
 const navigation = [
   { name: '首页', href: '/', icon: '🏠' },
   { name: '商品库', href: '/products', icon: '🛍️' },
-  { name: '视频工具', href: '/workflows', icon: '⚡' },
+  { name: '视频工具', href: '/tools', icon: '⚡' },
   { name: '素材库', href: '/materials', icon: '📦' },
   { name: 'IP库', href: '/ips', icon: '👤' },
   { name: '任务', href: '/tasks', icon: '📋' },

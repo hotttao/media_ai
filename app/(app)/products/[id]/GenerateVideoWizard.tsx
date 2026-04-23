@@ -414,6 +414,7 @@ function ModelImageStep({
   selectedProductImage,
   onProductImageSelect,
   modelImageUrl,
+  onSelectExisting,
   loading,
   onGenerate,
   canGenerate,
@@ -431,134 +432,128 @@ function ModelImageStep({
   onGenerate: () => void
   canGenerate: boolean
 }) {
-  const handleSelectExisting = (url: string) => {
-    onSelectExisting(url)
-  }
-
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-warm-charcoal">生成模特图</h2>
-        <p className="text-warm-silver mt-1">选择产品图和虚拟IP全身图作为输入</p>
+      {/* Row 1: IP Full Body */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-warm-silver w-20">虚拟IP</span>
+        <div className="flex flex-wrap gap-3">
+          <div className={`
+            relative w-28 h-40 rounded-xl overflow-hidden transition-all duration-300
+            ${selectedIp?.fullBodyUrl ? 'ring-4 ring-violet-500' : 'bg-oat-light'}
+          `}>
+            {selectedIp?.fullBodyUrl ? (
+              <>
+                <Image src={selectedIp.fullBodyUrl} alt={selectedIp.nickname} fill className="object-cover" />
+                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                  <span className="text-white text-xs font-medium">{selectedIp.nickname}</span>
+                </div>
+              </>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-warm-silver text-xs">
+                选择IP后显示
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Mode Toggle */}
-      <div className="flex justify-center gap-2">
-        <button
-          onClick={() => onModeChange('select')}
-          disabled={existingImages.length === 0}
-          className={`
-            px-6 py-2 rounded-xl font-medium transition-all
-            ${mode === 'select'
-              ? 'bg-matcha-600 text-white'
-              : 'bg-oat-light text-warm-charcoal hover:bg-oat disabled:opacity-50'
-            }
-          `}
-        >
-          选择已有 ({existingImages.length})
-        </button>
-        <button
-          onClick={() => onModeChange('generate')}
-          className={`
-            px-6 py-2 rounded-xl font-medium transition-all
-            ${mode === 'generate'
-              ? 'bg-matcha-600 text-white'
-              : 'bg-oat-light text-warm-charcoal hover:bg-oat'
-            }
-          `}
-        >
-          生成新模特图
-        </button>
+      {/* Row 2: Product Images */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-warm-silver w-20">产品图</span>
+        <div className="flex flex-wrap gap-3">
+          {product.images.map((img) => (
+            <button
+              key={img.id}
+              onClick={() => onProductImageSelect(img)}
+              className={`
+                relative w-28 h-40 rounded-xl overflow-hidden transition-all duration-300
+                ${selectedProductImage?.id === img.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
+              `}
+            >
+              <Image src={img.url} alt="产品图" fill className="object-cover" />
+              {img.isMain && (
+                <span className="absolute top-2 left-2 px-2 py-0.5 bg-matcha-600 text-white text-xs rounded-full">
+                  主图
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {mode === 'select' ? (
-        // Select existing images
-        <div className="space-y-3">
-          <h3 className="font-medium text-warm-charcoal">已有模特图</h3>
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {existingImages.map((url, i) => (
+      {/* Row 3: Existing Model Images */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-warm-silver w-20">已有模特图</span>
+        <div className="flex flex-wrap gap-3">
+          {existingImages.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-warm-silver bg-oat-light/50 rounded-xl">
+              暂无
+            </div>
+          ) : (
+            existingImages.map((url, i) => (
               <button
                 key={i}
-                onClick={() => handleSelectExisting(url)}
+                onClick={() => {
+                  onSelectExisting(url)
+                  onModeChange('select')
+                }}
                 className={`
-                  relative flex-shrink-0 w-32 h-48 rounded-xl overflow-hidden transition-all duration-300
+                  relative w-28 h-40 rounded-xl overflow-hidden transition-all duration-300
                   ${modelImageUrl === url ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
                 `}
               >
                 <Image src={url} alt={`已有模特图 ${i + 1}`} fill className="object-cover" />
               </button>
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      ) : (
-        // Generate new
-        <>
-          {/* Product Images */}
-          <div className="space-y-3">
-            <h3 className="font-medium text-warm-charcoal">产品图</h3>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {product.images.map((img) => (
-                <button
-                  key={img.id}
-                  onClick={() => onProductImageSelect(img)}
-                  className={`
-                    relative flex-shrink-0 w-32 h-48 rounded-xl overflow-hidden transition-all duration-300
-                    ${selectedProductImage?.id === img.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
-                  `}
-                >
-                  <Image src={img.url} alt="产品图" fill className="object-cover" />
-                  {img.isMain && (
-                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-matcha-600 text-white text-xs rounded-full">
-                      主图
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+      </div>
 
-          {/* IP Full Body */}
-          <div className="space-y-3">
-            <h3 className="font-medium text-warm-charcoal">虚拟IP全身图</h3>
-            <div className="relative w-40 h-60 rounded-2xl overflow-hidden bg-oat-light">
-              {selectedIp?.fullBodyUrl ? (
-                <Image src={selectedIp.fullBodyUrl} alt={selectedIp.nickname} fill className="object-cover" />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-warm-silver text-sm">
-                  选择IP后显示
-                </div>
-              )}
-              {selectedIp && (
-                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
-                  <span className="text-white text-xs font-medium">{selectedIp.nickname}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Generate Button */}
-          <div className="flex justify-center">
-            <button
-              onClick={onGenerate}
-              disabled={!canGenerate || loading}
-              className="px-8 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  生成中...
-                </>
-              ) : (
-                '生成模特图'
-              )}
-            </button>
-          </div>
-        </>
-      )}
+      {/* Row 3: Generate Button */}
+      <div className="flex justify-center gap-3 pt-4 border-t border-oat">
+        <label className="px-6 py-3 rounded-xl bg-white border border-oat text-warm-charcoal font-medium hover:bg-oat-light cursor-pointer flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          上传模特图
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (file) {
+                const formData = new FormData()
+                formData.append('file', file)
+                const res = await fetch('/api/upload', { method: 'POST', body: formData })
+                if (res.ok) {
+                  const data = await res.json()
+                  onSelectExisting(data.url)
+                }
+              }
+            }}
+          />
+        </label>
+        <button
+          onClick={onGenerate}
+          disabled={!canGenerate || loading}
+          className="px-8 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {loading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              生成中...
+            </>
+          ) : (
+            '生成模特图'
+          )}
+        </button>
+      </div>
 
       {/* Result Preview */}
       {modelImageUrl && (
-        <div className="max-w-sm mx-auto">
+        <div className="max-w-sm mx-auto pt-4 border-t border-oat">
           <h3 className="font-medium text-warm-charcoal text-center mb-3">
             {mode === 'select' ? '已选模特图' : '生成的模特图'}
           </h3>

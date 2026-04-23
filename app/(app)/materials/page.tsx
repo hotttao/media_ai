@@ -28,6 +28,7 @@ export default function MaterialsPage() {
   const [filter, setFilter] = useState<string>('ALL')
   const [showUpload, setShowUpload] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const fetchMaterials = () => {
@@ -255,9 +256,99 @@ export default function MaterialsPage() {
                 animationFillMode: 'backwards',
               }}
             >
-              <MaterialCard material={material} />
+              <MaterialCard material={material} onClick={() => setSelectedMaterial(material)} />
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Material Detail Modal */}
+      {selectedMaterial && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setSelectedMaterial(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl"
+            style={{
+              background: 'linear-gradient(180deg, rgba(20,30,35,0.98) 0%, rgba(15,20,25,0.99) 100%)',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative aspect-video bg-black">
+              <img
+                src={selectedMaterial.url}
+                alt={selectedMaterial.name}
+                className="w-full h-full object-contain"
+              />
+              <button
+                onClick={() => setSelectedMaterial(null)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white/70 hover:bg-black/70"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <span
+                  className="text-xs px-2 py-1 rounded-full font-medium"
+                  style={{
+                    background: selectedMaterial.type === 'SCENE' ? 'rgba(52,211,153,0.2)' :
+                               selectedMaterial.type === 'POSE' ? 'rgba(251,146,60,0.2)' :
+                               selectedMaterial.type === 'MAKEUP' ? 'rgba(244,114,182,0.2)' :
+                               selectedMaterial.type === 'ACCESSORY' ? 'rgba(167,139,250,0.2)' :
+                               'rgba(148,163,184,0.2)',
+                    color: selectedMaterial.type === 'SCENE' ? '#34d399' :
+                          selectedMaterial.type === 'POSE' ? '#fb923c' :
+                          selectedMaterial.type === 'MAKEUP' ? '#f472b6' :
+                          selectedMaterial.type === 'ACCESSORY' ? '#a78bfa' :
+                          '#94a3b8',
+                  }}
+                >
+                  {selectedMaterial.type === 'SCENE' ? '场景' :
+                   selectedMaterial.type === 'POSE' ? '姿势' :
+                   selectedMaterial.type === 'MAKEUP' ? '妆容' :
+                   selectedMaterial.type === 'ACCESSORY' ? '配饰' : selectedMaterial.type}
+                </span>
+                <span
+                  className="text-xs px-2 py-1 rounded-full"
+                  style={{
+                    background: selectedMaterial.visibility === 'PUBLIC' ? 'rgba(34,197,94,0.2)' :
+                               selectedMaterial.visibility === 'TEAM' ? 'rgba(59,130,246,0.2)' :
+                               'rgba(156,163,175,0.2)',
+                    color: selectedMaterial.visibility === 'PUBLIC' ? '#22c55e' :
+                          selectedMaterial.visibility === 'TEAM' ? '#3b82f6' :
+                          '#9ca3af',
+                  }}
+                >
+                  {selectedMaterial.visibility === 'PUBLIC' ? '公共' :
+                   selectedMaterial.visibility === 'TEAM' ? '团队' :
+                   selectedMaterial.visibility === 'PERSONAL' ? '私有' : selectedMaterial.visibility}
+                </span>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">{selectedMaterial.name}</h3>
+              {selectedMaterial.description && (
+                <p className="text-white/60 text-sm mb-4">{selectedMaterial.description}</p>
+              )}
+              {selectedMaterial.tags && (
+                <div className="flex flex-wrap gap-2">
+                  {JSON.parse(selectedMaterial.tags).map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="text-xs px-2 py-1 rounded-full"
+                      style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        color: 'rgba(255,255,255,0.7)',
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
