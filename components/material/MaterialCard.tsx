@@ -17,6 +17,7 @@ interface MaterialCardProps {
 
 const typeColors: Record<string, string> = {
   SCENE: 'from-emerald-500/20 to-teal-500/20',
+  POSE: 'from-orange-500/20 to-red-500/20',
   MAKEUP: 'from-pink-500/20 to-rose-500/20',
   ACCESSORY: 'from-violet-500/20 to-purple-500/20',
   default: 'from-gray-500/20 to-slate-500/20',
@@ -91,6 +92,7 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
             }}
           >
             {material.type === 'SCENE' ? '场景' :
+             material.type === 'POSE' ? '姿势' :
              material.type === 'MAKEUP' ? '妆容' :
              material.type === 'ACCESSORY' ? '配饰' : material.type}
           </span>

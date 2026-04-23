@@ -23,6 +23,7 @@ export function MaterialUploader({ onClose, onSuccess }: MaterialUploaderProps) 
 
   const typeOptions = [
     { value: 'SCENE', label: '场景', icon: '🏞️' },
+    { value: 'POSE', label: '姿势', icon: '🧍' },
     { value: 'MAKEUP', label: '妆容', icon: '💄' },
     { value: 'ACCESSORY', label: '配饰', icon: '💍' },
     { value: 'OTHER', label: '其他', icon: '📦' },
