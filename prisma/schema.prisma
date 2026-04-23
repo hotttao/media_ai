@@ -328,3 +328,60 @@ enum TargetAudience {
   WOMENS
   KIDS
 }
+
+// Generation result tables
+model ModelImage {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  productId  String   @map("product_id") @db.VarChar(36)
+  ipId       String   @map("ip_id") @db.VarChar(36)
+  url        String   @db.VarChar(500)
+  inputHash  String   @map("input_hash") @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  styleImages StyleImage[]
+
+  @@unique([productId, ipId, inputHash], name: "uniq_model_images_dedup")
+  @@index([productId], map: "idx_model_images_product")
+  @@index([ipId], map: "idx_model_images_ip")
+  @@map("model_images")
+}
+
+model StyleImage {
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  productId     String   @map("product_id") @db.VarChar(36)
+  ipId          String   @map("ip_id") @db.VarChar(36)
+  modelImageId  String   @map("model_image_id") @db.VarChar(36)
+  url           String   @db.VarChar(500)
+  poseId        String?  @map("pose_id") @db.VarChar(36)
+  makeupId      String?  @map("makeup_id") @db.VarChar(36)
+  accessoryId   String?  @map("accessory_id") @db.VarChar(36)
+  inputHash     String   @map("input_hash") @db.VarChar(64)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  modelImage   ModelImage   @relation(fields: [modelImageId], references: [id])
+  firstFrames FirstFrame[]
+
+  @@unique([modelImageId, inputHash], name: "uniq_style_images_dedup")
+  @@index([productId], map: "idx_style_images_product")
+  @@index([modelImageId], map: "idx_style_images_model_image")
+  @@map("style_images")
+}
+
+model FirstFrame {
+  id           String   @id @default(uuid()) @db.VarChar(36)
+  productId    String   @map("product_id") @db.VarChar(36)
+  ipId         String   @map("ip_id") @db.VarChar(36)
+  styleImageId String?  @map("style_image_id") @db.VarChar(36)
+  url          String   @db.VarChar(500)
+  sceneId      String?  @map("scene_id") @db.VarChar(36)
+  composition  String?  @db.VarChar(500)
+  inputHash    String   @map("input_hash") @db.VarChar(64)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  styleImage   StyleImage? @relation(fields: [styleImageId], references: [id])
+
+  @@unique([productId, ipId, sceneId, inputHash], name: "uniq_first_frames_dedup")
+  @@index([productId], map: "idx_first_frames_product")
+  @@index([styleImageId], map: "idx_first_frames_style_image")
+  @@map("first_frames")
+}
