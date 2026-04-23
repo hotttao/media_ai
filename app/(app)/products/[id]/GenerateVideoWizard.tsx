@@ -13,11 +13,22 @@ interface VirtualIP {
   type: string
 }
 
-interface Material {
+interface Scene {
   id: string
   name: string
   thumbnailUrl: string
-  url: string
+}
+
+interface Pose {
+  id: string
+  name: string
+  thumbnailUrl: string
+}
+
+interface Makeup {
+  id: string
+  name: string
+  thumbnailUrl: string
 }
 
 interface Movement {
@@ -27,13 +38,28 @@ interface Movement {
   clothing: string | null
 }
 
-// Step configuration - PRD 4.2 5-step flow
+interface Composition {
+  id: string
+  name: string
+  thumbnailUrl: string
+}
+
+interface ProductMaterial {
+  id: string
+  fullBodyUrl: string | null
+  threeViewUrl: string | null
+  nineViewUrl: string | null
+  firstFrameUrl: string | null
+}
+
+// Step configuration
 const STEPS = [
   { id: 'select-ip', label: '选择虚拟IP', icon: '🎭' },
-  { id: 'model-image', label: '模特图', icon: '👗' },
-  { id: 'style-image', label: '定妆图', icon: '💄' },
-  { id: 'first-frame', label: '首帧图', icon: '🖼️' },
-  { id: 'video', label: '生成视频', icon: '🎥' },
+  { id: 'select-scene', label: '场景与姿势', icon: '🎬' },
+  { id: 'effect-preview', label: '效果图预览', icon: '✨' },
+  { id: 'select-motion', label: '选择动作', icon: '💃' },
+  { id: 'first-frame-preview', label: '首帧图预览', icon: '🖼️' },
+  { id: 'video-preview', label: '视频预览', icon: '🎥' },
 ]
 
 // Animation variants
@@ -52,137 +78,8 @@ const itemVariants = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const } },
 }
 
-// Selection summary component - shows previous step inputs
-function SelectionSummary({
-  selectedIp,
-  modelImageUrl,
-  styledImageUrl,
-  firstFrameUrl,
-}: {
-  selectedIp: VirtualIP | null
-  modelImageUrl: string | null
-  styledImageUrl: string | null
-  firstFrameUrl: string | null
-}) {
-  const hasAnySelection = selectedIp || modelImageUrl || styledImageUrl || firstFrameUrl
-  if (!hasAnySelection) return null
-
-  return (
-    <div className="flex flex-wrap gap-3 justify-center text-sm">
-      {selectedIp && (
-        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-matcha-100 text-matcha-700">
-          <span>🎭</span> {selectedIp.name}
-        </span>
-      )}
-      {modelImageUrl && (
-        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-100 text-violet-700">
-          <span>👗</span> 模特图
-        </span>
-      )}
-      {styledImageUrl && (
-        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-100 text-pink-700">
-          <span>💄</span> 定妆图
-        </span>
-      )}
-      {firstFrameUrl && (
-        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-700">
-          <span>🖼️</span> 首帧图
-        </span>
-      )}
-    </div>
-  )
-}
-
-// Mode toggle component
-function ModeToggle({
-  mode,
-  onModeChange,
-  canToggle = true
-}: {
-  mode: 'select' | 'generate'
-  onModeChange: (mode: 'select' | 'generate') => void
-  canToggle?: boolean
-}) {
-  return (
-    <div className="inline-flex gap-1 p-1 bg-oat-light/50 rounded-xl">
-      <button
-        onClick={() => onModeChange('select')}
-        disabled={!canToggle}
-        className={`
-          px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300
-          ${mode === 'select'
-            ? 'bg-white text-warm-charcoal shadow-sm'
-            : 'text-warm-silver hover:text-warm-charcoal disabled:opacity-50'
-          }
-        `}
-      >
-        选择已有
-      </button>
-      <button
-        onClick={() => onModeChange('generate')}
-        disabled={!canToggle}
-        className={`
-          px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300
-          ${mode === 'generate'
-            ? 'bg-white text-warm-charcoal shadow-sm'
-            : 'text-warm-silver hover:text-warm-charcoal disabled:opacity-50'
-          }
-        `}
-      >
-        生成新的
-      </button>
-    </div>
-  )
-}
-
-// Image grid selector
-function ImageGridSelector({
-  images,
-  selectedImage,
-  onSelect,
-  columns = 4
-}: {
-  images: { id: string; url: string; name?: string }[]
-  selectedImage: string | null
-  onSelect: (url: string) => void
-  columns?: number
-}) {
-  if (images.length === 0) {
-    return (
-      <div className="text-center py-12 text-warm-silver">
-        <span className="text-4xl mb-3 block">📭</span>
-        <p>暂无已有素材</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className={`grid grid-cols-${columns} gap-4`}>
-      {images.map((img) => (
-        <button
-          key={img.id}
-          onClick={() => onSelect(img.url)}
-          className={`
-            relative aspect-[3/4] rounded-xl overflow-hidden transition-all duration-300
-            ${selectedImage === img.url
-              ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
-              : 'hover:scale-[1.02] hover:shadow-lg'
-            }
-          `}
-        >
-          <Image src={img.url} alt={img.name || ''} fill className="object-cover" />
-          {selectedImage === img.url && (
-            <div className="absolute top-3 right-3 w-6 h-6 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          )}
-        </button>
-      ))}
-    </div>
-  )
-}
+// Card hover effect matching Clay's design
+const cardHoverClass = "transition-all duration-300 hover:shadow-hard hover:-translate-y-1"
 
 // GenerateVideoWizard Component
 export function GenerateVideoWizard({ productId }: { productId: string }) {
@@ -195,63 +92,46 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
   const [ips, setIps] = useState<VirtualIP[]>([])
   const [selectedIp, setSelectedIp] = useState<VirtualIP | null>(null)
 
-  // Step 2: Model Image
-  const [existingModelImage, setExistingModelImage] = useState<string | null>(null)
-  const [modelImageUrl, setModelImageUrl] = useState<string | null>(null)
-  const [modelImageLoading, setModelImageLoading] = useState(false)
-  const [modelImageMode, setModelImageMode] = useState<'select' | 'generate'>('generate')
+  // Step 2: Scene & Pose Selection
+  const [scenes, setScenes] = useState<Scene[]>([])
+  const [poses, setPoses] = useState<Pose[]>([])
+  const [makeups, setMakeups] = useState<Makeup[]>([])
+  const [selectedScene, setSelectedScene] = useState<Scene | null>(null)
+  const [selectedPose, setSelectedPose] = useState<Pose | null>(null)
+  const [selectedMakeup, setSelectedMakeup] = useState<Makeup | null>(null)
 
-  // Step 3: Style Image
-  const [existingStyleImages, setExistingStyleImages] = useState<string[]>([])
-  const [selectedPose, setSelectedPose] = useState<Material | null>(null)
-  const [selectedMakeup, setSelectedMakeup] = useState<Material | null>(null)
-  const [selectedAccessory, setSelectedAccessory] = useState<Material | null>(null)
-  const [styledImageUrl, setStyledImageUrl] = useState<string | null>(null)
-  const [styleImageLoading, setStyleImageLoading] = useState(false)
-  const [styleImageMode, setStyleImageMode] = useState<'select' | 'generate'>('generate')
+  // Step 3: Effect Image Preview
+  const [effectImageUrl, setEffectImageUrl] = useState<string | null>(null)
+  const [effectImageLoading, setEffectImageLoading] = useState(false)
 
-  // Step 4: First Frame
-  const [existingFirstFrames, setExistingFirstFrames] = useState<string[]>([])
-  const [selectedScene, setSelectedScene] = useState<Material | null>(null)
-  const [compositionText, setCompositionText] = useState('')
-  const [firstFrameUrl, setFirstFrameUrl] = useState<string | null>(null)
-  const [firstFrameLoading, setFirstFrameLoading] = useState(false)
-  const [firstFrameMode, setFirstFrameMode] = useState<'select' | 'generate'>('generate')
-
-  // Step 5: Video
+  // Step 4: Motion Selection
   const [movements, setMovements] = useState<Movement[]>([])
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null)
+  const [compositions, setCompositions] = useState<Composition[]>([])
+  const [selectedComposition, setSelectedComposition] = useState<Composition | null>(null)
+
+  // Step 5: First Frame Preview
+  const [firstFrameUrl, setFirstFrameUrl] = useState<string | null>(null)
+  const [firstFrameLoading, setFirstFrameLoading] = useState(false)
+
+  // Step 6: Video Preview
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [videoLoading, setVideoLoading] = useState(false)
   const [videoProgress, setVideoProgress] = useState(0)
 
-  // Product Materials - stores the current product material ID for API calls
-  const [currentProductMaterialId, setCurrentProductMaterialId] = useState<string | null>(null)
+  // Product Materials
+  const [productMaterials, setProductMaterials] = useState<ProductMaterial[]>([])
+  const [selectedProductMaterial, setSelectedProductMaterial] = useState<ProductMaterial | null>(null)
 
-  // New ID state variables for API chaining
-  const [currentModelImageId, setCurrentModelImageId] = useState<string | null>(null)
-  const [currentStyleImageId, setCurrentStyleImageId] = useState<string | null>(null)
-  const [currentFirstFrameId, setCurrentFirstFrameId] = useState<string | null>(null)
-
-  // Material pools
-  const [poses, setPoses] = useState<Material[]>([])
-  const [makeups, setMakeups] = useState<Material[]>([])
-  const [accessories, setAccessories] = useState<Material[]>([])
-  const [scenes, setScenes] = useState<Material[]>([])
-
-  // Fetch IPs and movements on mount
+  // Fetch IPs on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchIPs()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchScenes()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchMovements()
-    fetchMaterials()
   }, [])
-
-  // Fetch existing materials when IP or step changes
-  useEffect(() => {
-    if (selectedIp && productId && currentStep >= 1) {
-      fetchExistingMaterials()
-    }
-  }, [selectedIp, productId, currentStep])
 
   // Keyboard shortcut to go home (Escape key)
   useEffect(() => {
@@ -281,56 +161,47 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
     }
   }
 
-  const fetchMaterials = async () => {
+  const fetchScenes = async () => {
     try {
-      const [posesRes, makeupsRes, accessoriesRes, scenesRes] = await Promise.all([
-        fetch('/api/materials?type=POSE'),
-        fetch('/api/materials?type=MAKEUP'),
-        fetch('/api/materials?type=ACCESSORY'),
-        fetch('/api/materials?type=SCENE'),
-      ])
-
-      if (posesRes.ok) {
-        const data = await posesRes.json()
-        setPoses(data.map((m: any) => ({
-          id: m.id,
-          name: m.name,
-          thumbnailUrl: m.url,
-          url: m.url,
-        })))
-      }
-
-      if (makeupsRes.ok) {
-        const data = await makeupsRes.json()
-        setMakeups(data.map((m: any) => ({
-          id: m.id,
-          name: m.name,
-          thumbnailUrl: m.url,
-          url: m.url,
-        })))
-      }
-
-      if (accessoriesRes.ok) {
-        const data = await accessoriesRes.json()
-        setAccessories(data.map((m: any) => ({
-          id: m.id,
-          name: m.name,
-          thumbnailUrl: m.url,
-          url: m.url,
-        })))
-      }
-
-      if (scenesRes.ok) {
-        const data = await scenesRes.json()
+      const res = await fetch('/api/materials?type=SCENE')
+      if (res.ok) {
+        const data = await res.json()
         setScenes(data.map((m: any) => ({
           id: m.id,
           name: m.name,
           thumbnailUrl: m.url,
-          url: m.url,
         })))
       }
     } catch (err) {
-      console.error('Failed to fetch materials:', err)
+      console.error('Failed to fetch scenes:', err)
+    }
+
+    try {
+      const res = await fetch('/api/materials?type=POSE')
+      if (res.ok) {
+        const data = await res.json()
+        setPoses(data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          thumbnailUrl: m.url,
+        })))
+      }
+    } catch (err) {
+      console.error('Failed to fetch poses:', err)
+    }
+
+    try {
+      const res = await fetch('/api/materials?type=MAKEUP')
+      if (res.ok) {
+        const data = await res.json()
+        setMakeups(data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          thumbnailUrl: m.url,
+        })))
+      }
+    } catch (err) {
+      console.error('Failed to fetch makeups:', err)
     }
   }
 
@@ -349,145 +220,79 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
     } catch (err) {
       console.error('Failed to fetch movements:', err)
     }
+
+    // Compositions are still mock for now - could be from a separate API
+    setCompositions([
+      { id: 'comp-1', name: '全身构图', thumbnailUrl: 'https://picsum.photos/seed/comp1/300/400' },
+      { id: 'comp-2', name: '三分构图', thumbnailUrl: 'https://picsum.photos/seed/comp2/300/400' },
+      { id: 'comp-3', name: '中心构图', thumbnailUrl: 'https://picsum.photos/seed/comp3/300/400' },
+    ])
   }
 
-  const fetchExistingMaterials = async () => {
-    try {
-      const res = await fetch(`/api/product-materials?productId=${productId}&ipId=${selectedIp?.id}`)
-      if (res.ok) {
-        const data = await res.json()
-        // Model image - one per IP+product (fullBodyUrl)
-        const modelImg = data.find((d: any) => d.fullBodyUrl)
-        if (modelImg) {
-          setExistingModelImage(modelImg.fullBodyUrl)
-          setCurrentProductMaterialId(modelImg.id)
-        }
-        // Style images - multiple (using same fullBodyUrl field but different records)
-        setExistingStyleImages(data.map((d: any) => d.fullBodyUrl).filter(Boolean))
-        // First frames
-        setExistingFirstFrames(data.map((d: any) => d.firstFrameUrl).filter(Boolean))
-      }
-    } catch (err) {
-      console.error('Failed to fetch existing materials:', err)
-    }
-  }
+  // Generate effect image
+  const generateEffectImage = useCallback(async () => {
+    if (!selectedIp || !selectedScene) return
 
-  // Step 2: Model Image Generation
-  const generateModelImage = async () => {
-    if (!selectedIp || !productId) return
-
-    setModelImageLoading(true)
+    setEffectImageLoading(true)
     setError(null)
 
     try {
-      // Get product main image and detail images from parent component's product data
-      // Since we don't have direct access, we'll fetch from the product API
-      const productRes = await fetch(`/api/products/${productId}`)
-      if (!productRes.ok) throw new Error('Failed to fetch product')
-      const product = await productRes.json()
-      const mainImage = product.images?.find((img: any) => img.isMain) || product.images?.[0]
-      const detailImages = product.images?.filter((img: any) => !img.isMain).map((img: any) => img.url) || []
-
-      const res = await fetch(`/api/products/${productId}/model-image`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ipId: selectedIp.id,
-          productMainImageUrl: mainImage?.url,
-          productDetailImageUrls: detailImages,
-        }),
+      const params = new URLSearchParams({
+        step: 'effect-image',
+        ipId: selectedIp.id,
+        sceneId: selectedScene.id,
       })
+      if (selectedPose) params.append('poseId', selectedPose.id)
+      if (selectedMakeup) params.append('makeupId', selectedMakeup.id)
 
+      const res = await fetch(`/api/products/${productId}/generate-video?${params}`)
       if (res.ok) {
         const data = await res.json()
-        setModelImageUrl(data.modelImageUrl)
-        setCurrentModelImageId(data.modelImageId)
-        setCurrentProductMaterialId(data.productMaterialId)
+        setEffectImageUrl(data.url)
       } else {
         const errorText = await res.text()
-        setError(`生成模特图失败: ${errorText || res.statusText}`)
+        setError(`生成效果图失败: ${errorText || res.statusText}`)
       }
     } catch (err) {
-      setError('生成模特图失败，请稍后重试')
+      setError('生成效果图失败，请稍后重试')
     } finally {
-      setModelImageLoading(false)
+      setEffectImageLoading(false)
     }
-  }
+  }, [productId, selectedIp, selectedScene, selectedPose, selectedMakeup])
 
-  // Step 3: Style Image Generation
-  const generateStyleImage = async () => {
-    if (!selectedPose || !currentModelImageId) return
-
-    setStyleImageLoading(true)
-    setError(null)
-
-    try {
-      const res = await fetch(`/api/products/${productId}/style-image`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          modelImageId: currentModelImageId,
-          pose: selectedPose.name || selectedPose.id, // pose is text description or material ID
-          makeupUrl: selectedMakeup?.url,
-          accessoryUrl: selectedAccessory?.url,
-        }),
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setStyledImageUrl(data.styledImageUrl)
-        setCurrentStyleImageId(data.styleImageId)
-      } else {
-        const errorText = await res.text()
-        setError(`生成定妆图失败: ${errorText || res.statusText}`)
-      }
-    } catch (err) {
-      setError('生成定妆图失败，请稍后重试')
-    } finally {
-      setStyleImageLoading(false)
-    }
-  }
-
-  // Step 4: First Frame Generation
-  const generateFirstFrame = async () => {
-    if (!selectedScene || !compositionText) return
+  // Generate first frame
+  const generateFirstFrame = useCallback(async () => {
+    if (!selectedProductMaterial || !selectedComposition) return
 
     setFirstFrameLoading(true)
     setError(null)
 
     try {
-      const res = await fetch(`/api/products/${productId}/generate-video`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          step: 'first-frame',
-          ipId: selectedIp?.id,
-          styleImageId: currentStyleImageId,
-          sceneId: selectedScene.id,
-          composition: compositionText,
-          imageUrl: styledImageUrl,
-        }),
+      const params = new URLSearchParams({
+        step: 'first-frame',
+        productMaterialId: selectedProductMaterial.id,
+        compositionId: selectedComposition.id,
       })
 
+      const res = await fetch(`/api/products/${productId}/generate-video?${params}`)
       if (res.ok) {
         const data = await res.json()
-        setFirstFrameUrl(data.firstFrameUrl)
-        setCurrentFirstFrameId(data.firstFrameId)
+        setFirstFrameUrl(data.url)
       } else {
-        // Mock for demo
+        // Mock first frame for demo
         setFirstFrameUrl(`https://picsum.photos/seed/firstframe/600/800`)
       }
     } catch (err) {
-      // Mock for demo
+      // Mock first frame for demo
       setFirstFrameUrl(`https://picsum.photos/seed/firstframe/600/800`)
     } finally {
       setFirstFrameLoading(false)
     }
-  }
+  }, [productId, selectedProductMaterial, selectedComposition])
 
-  // Step 5: Video Generation
-  const generateVideo = async () => {
-    if (!selectedMovement || !firstFrameUrl) return
+  // Generate video
+  const generateVideo = useCallback(async () => {
+    if (!selectedIp || !firstFrameUrl || !selectedMovement) return
 
     setVideoLoading(true)
     setVideoProgress(0)
@@ -503,9 +308,10 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ipId: selectedIp?.id,
+          ipId: selectedIp.id,
           firstFrameUrl,
           movementId: selectedMovement.id,
+          productMaterialId: selectedProductMaterial?.id,
         }),
       })
 
@@ -524,42 +330,21 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
       setVideoProgress(100)
       setVideoLoading(false)
     }
-  }
-
-  // Mutual exclusion: selecting existing clears generated and vice versa
-  const handleSelectExistingModel = (url: string) => {
-    setExistingModelImage(url)
-    setModelImageMode('select')
-    setModelImageUrl(null)
-  }
-
-  const handleSelectExistingStyle = (url: string) => {
-    setStyledImageUrl(url)
-    setStyleImageMode('select')
-  }
-
-  const handleSelectExistingFirstFrame = (url: string) => {
-    setFirstFrameUrl(url)
-    setFirstFrameMode('select')
-  }
+  }, [productId, selectedIp, firstFrameUrl, selectedMovement, selectedProductMaterial])
 
   // Navigation
   const goNext = useCallback(async () => {
-    // Auto-generate when moving to next step if needed
-    if (currentStep === 1 && modelImageMode === 'generate' && !modelImageUrl) {
-      await generateModelImage()
+    if (currentStep === 2 && !effectImageUrl) {
+      await generateEffectImage()
     }
-    if (currentStep === 2 && styleImageMode === 'generate' && !styledImageUrl) {
-      await generateStyleImage()
-    }
-    if (currentStep === 3 && firstFrameMode === 'generate' && !firstFrameUrl) {
+    if (currentStep === 4 && !firstFrameUrl) {
       await generateFirstFrame()
     }
-    if (currentStep === 4 && !videoUrl) {
+    if (currentStep === 5 && !videoUrl) {
       await generateVideo()
     }
     setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1))
-  }, [currentStep, modelImageMode, modelImageUrl, styleImageMode, styledImageUrl, firstFrameMode, firstFrameUrl, videoUrl])
+  }, [currentStep, effectImageUrl, firstFrameUrl, videoUrl, generateEffectImage, generateFirstFrame, generateVideo])
 
   const goBack = () => {
     setCurrentStep(prev => Math.max(prev - 1, 0))
@@ -568,18 +353,14 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
   const canProceed = () => {
     switch (currentStep) {
       case 0: return !!selectedIp
-      case 1: return modelImageMode === 'select' ? !!existingModelImage : !!modelImageUrl
-      case 2: return styleImageMode === 'select' ? !!styledImageUrl : !!styledImageUrl
-      case 3: return firstFrameMode === 'select' ? !!firstFrameUrl : !!firstFrameUrl
-      case 4: return !!videoUrl
+      case 1: return !!selectedScene
+      case 2: return !!effectImageUrl
+      case 3: return !!selectedMovement
+      case 4: return !!firstFrameUrl
+      case 5: return !!videoUrl
       default: return false
     }
   }
-
-  // Determine preview URL for each step
-  const getModelImagePreview = () => modelImageMode === 'select' ? existingModelImage : modelImageUrl
-  const getStyleImagePreview = () => styleImageMode === 'select' ? styledImageUrl : styledImageUrl
-  const getFirstFramePreview = () => firstFrameMode === 'select' ? firstFrameUrl : firstFrameUrl
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -670,78 +451,55 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
               onSelect={setSelectedIp}
             />}
 
-            {currentStep === 1 && <ModelImageStep
-              existingImage={existingModelImage}
-              generatedImage={modelImageUrl}
-              isLoading={modelImageLoading}
-              mode={modelImageMode}
-              onModeChange={setModelImageMode}
-              onSelectExisting={handleSelectExistingModel}
-              onGenerate={generateModelImage}
-              canGenerate={!!selectedIp}
-              selectedIp={selectedIp}
-            />}
-
-            {currentStep === 2 && <StyleImageStep
-              existingImages={existingStyleImages}
-              generatedImage={styledImageUrl}
-              isLoading={styleImageLoading}
-              mode={styleImageMode}
-              onModeChange={setStyleImageMode}
-              onSelectExisting={handleSelectExistingStyle}
-              onGenerate={generateStyleImage}
-              canGenerate={!!selectedPose}
+            {currentStep === 1 && <SelectSceneStep
+              scenes={scenes}
               poses={poses}
               makeups={makeups}
-              accessories={accessories}
+              selectedScene={selectedScene}
               selectedPose={selectedPose}
               selectedMakeup={selectedMakeup}
-              selectedAccessory={selectedAccessory}
+              onSceneSelect={setSelectedScene}
               onPoseSelect={setSelectedPose}
               onMakeupSelect={setSelectedMakeup}
-              onAccessorySelect={setSelectedAccessory}
-              selectedIp={selectedIp}
-              modelImageUrl={modelImageUrl}
             />}
 
-            {currentStep === 3 && <FirstFrameStep
-              existingImages={existingFirstFrames}
-              generatedImage={firstFrameUrl}
-              isLoading={firstFrameLoading}
-              mode={firstFrameMode}
-              onModeChange={setFirstFrameMode}
-              onSelectExisting={handleSelectExistingFirstFrame}
-              onGenerate={generateFirstFrame}
-              canGenerate={!!selectedScene && !!compositionText}
-              scenes={scenes}
+            {currentStep === 2 && <EffectPreviewStep
+              selectedIp={selectedIp}
               selectedScene={selectedScene}
-              onSceneSelect={setSelectedScene}
-              compositionText={compositionText}
-              onCompositionChange={setCompositionText}
-              selectedIp={selectedIp}
-              styledImageUrl={styledImageUrl}
+              selectedPose={selectedPose}
+              selectedMakeup={selectedMakeup}
+              effectImageUrl={effectImageUrl}
+              isLoading={effectImageLoading}
+              onGenerate={generateEffectImage}
+              onRegenerate={generateEffectImage}
+              onUpload={() => {
+                // TODO: Implement upload functionality
+                alert('上传功能开发中...')
+              }}
             />}
 
-            {currentStep === 4 && <VideoStep
+            {currentStep === 3 && <SelectMotionStep
+              movements={movements}
+              compositions={compositions}
+              selectedMovement={selectedMovement}
+              selectedComposition={selectedComposition}
+              onMovementSelect={setSelectedMovement}
+              onCompositionSelect={setSelectedComposition}
+            />}
+
+            {currentStep === 4 && <FirstFramePreviewStep
+              firstFrameUrl={firstFrameUrl}
+              isLoading={firstFrameLoading}
+              onRegenerate={generateFirstFrame}
+            />}
+
+            {currentStep === 5 && <VideoPreviewStep
               videoUrl={videoUrl}
               isLoading={videoLoading}
               progress={videoProgress}
-              movements={movements}
-              selectedMovement={selectedMovement}
-              onMovementSelect={setSelectedMovement}
-              onGenerate={generateVideo}
-              canGenerate={!!selectedMovement && !!firstFrameUrl}
             />}
           </motion.div>
-
-          {/* Selection Summary - shows previous step inputs */}
-          <SelectionSummary
-            selectedIp={selectedIp}
-            modelImageUrl={modelImageUrl}
-            styledImageUrl={styledImageUrl}
-            firstFrameUrl={firstFrameUrl}
-          />
-          </AnimatePresence>
+        </AnimatePresence>
         </div>
       </main>
 
@@ -899,579 +657,360 @@ function SelectIPStep({
   )
 }
 
-// Step 2: Model Image (with mode toggle)
-function ModelImageStep({
-  existingImage,
-  generatedImage,
-  isLoading,
-  mode,
-  onModeChange,
-  onSelectExisting,
-  onGenerate,
-  canGenerate,
-  selectedIp,
-}: {
-  existingImage: string | null
-  generatedImage: string | null
-  isLoading: boolean
-  mode: 'select' | 'generate'
-  onModeChange: (mode: 'select' | 'generate') => void
-  onSelectExisting: (url: string) => void
-  onGenerate: () => void
-  canGenerate: boolean
-  selectedIp: VirtualIP | null
-}) {
-  const previewUrl = mode === 'select' ? existingImage : generatedImage
-
-  return (
-    <motion.div
-      variants={staggerContainer}
-      initial="initial"
-      animate="animate"
-      className="space-y-6"
-    >
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-warm-charcoal">
-          模特图
-        </h2>
-        <p className="text-warm-silver">
-          生成虚拟IP穿着服装的全身模特图
-        </p>
-        {selectedIp && (
-          <p className="text-sm text-matcha-600 font-medium">
-            🎭 已选择虚拟IP: {selectedIp.name}
-          </p>
-        )}
-      </div>
-
-      {/* Mode Toggle */}
-      <div className="flex justify-center">
-        <ModeToggle mode={mode} onModeChange={onModeChange} canToggle={!!existingImage} />
-      </div>
-
-      {/* Content based on mode */}
-      {mode === 'select' ? (
-        <div className="space-y-6">
-          <ImageGridSelector
-            images={existingImage ? [{ id: 'existing', url: existingImage, name: '已有模特图' }] : []}
-            selectedImage={existingImage || null}
-            onSelect={onSelectExisting}
-          />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="bg-oat-light/30 rounded-xl p-6 text-center">
-            <p className="text-warm-charcoal mb-4">
-              基于所选虚拟IP的全身图和产品图片，AI将生成模特图
-            </p>
-            <button
-              onClick={onGenerate}
-              disabled={!canGenerate || isLoading}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  AI 生成模特图
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Preview Area */}
-      <div className="max-w-sm mx-auto">
-        <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-oat-light border-2 border-dashed border-oat">
-          {isLoading ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="w-16 h-16 border-4 border-matcha-600 border-t-transparent rounded-full animate-spin mb-4" />
-              <span className="text-warm-charcoal font-medium">正在生成模特图...</span>
-            </div>
-          ) : previewUrl ? (
-            <>
-              <Image src={previewUrl} alt="模特图" fill className="object-cover" />
-              {mode === 'generate' && (
-                <div className="absolute bottom-4 left-4 right-4 flex gap-3">
-                  <button
-                    onClick={onGenerate}
-                    disabled={!canGenerate}
-                    className="flex-1 py-3 px-4 rounded-xl bg-white/90 backdrop-blur-sm text-warm-charcoal font-medium hover:bg-white transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    重新生成
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <svg className="w-16 h-16 text-warm-silver mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-warm-silver">点击上方按钮生成或选择已有模特图</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-// Step 3: Style Image (with mode toggle)
-function StyleImageStep({
-  existingImages,
-  generatedImage,
-  isLoading,
-  mode,
-  onModeChange,
-  onSelectExisting,
-  onGenerate,
-  canGenerate,
+// Step 2: Select Scene & Pose - Tab-based layout
+function SelectSceneStep({
+  scenes,
   poses,
   makeups,
-  accessories,
+  selectedScene,
   selectedPose,
   selectedMakeup,
-  selectedAccessory,
+  onSceneSelect,
   onPoseSelect,
   onMakeupSelect,
-  onAccessorySelect,
-  selectedIp,
-  modelImageUrl,
 }: {
-  existingImages: string[]
-  generatedImage: string | null
-  isLoading: boolean
-  mode: 'select' | 'generate'
-  onModeChange: (mode: 'select' | 'generate') => void
-  onSelectExisting: (url: string) => void
-  onGenerate: () => void
-  canGenerate: boolean
-  poses: Material[]
-  makeups: Material[]
-  accessories: Material[]
-  selectedPose: Material | null
-  selectedMakeup: Material | null
-  selectedAccessory: Material | null
-  onPoseSelect: (pose: Material | null) => void
-  onMakeupSelect: (makeup: Material | null) => void
-  onAccessorySelect: (accessory: Material | null) => void
-  selectedIp: VirtualIP | null
-  modelImageUrl: string | null
+  scenes: Scene[]
+  poses: Pose[]
+  makeups: Makeup[]
+  selectedScene: Scene | null
+  selectedPose: Pose | null
+  selectedMakeup: Makeup | null
+  onSceneSelect: (scene: Scene) => void
+  onPoseSelect: (pose: Pose | null) => void
+  onMakeupSelect: (makeup: Makeup | null) => void
 }) {
-  const previewUrl = mode === 'select' ? generatedImage : generatedImage
+  const [activeTab, setActiveTab] = useState<'scene' | 'pose' | 'makeup'>('scene')
+
+  const tabs = [
+    { id: 'scene' as const, label: '场景', icon: '🎬', required: true, count: scenes.length, selected: selectedScene },
+    { id: 'pose' as const, label: '姿势', icon: '🧍', required: false, count: poses.length, selected: selectedPose },
+    { id: 'makeup' as const, label: '妆容', icon: '💄', required: false, count: makeups.length, selected: selectedMakeup },
+  ]
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'scene':
+        if (scenes.length === 0) {
+          return (
+            <div className="flex flex-col items-center justify-center py-16">
+              <span className="text-5xl mb-4">🎬</span>
+              <p className="text-warm-charcoal font-medium mb-2">暂无可用场景</p>
+              <p className="text-warm-silver text-sm mb-4">需要先添加场景素材</p>
+              <a href="/materials" className="px-4 py-2 bg-matcha-600 text-white rounded-lg font-medium hover:bg-matcha-800 transition-all">
+                去添加场景
+              </a>
+            </div>
+          )
+        }
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {scenes.map((scene) => (
+              <button
+                key={scene.id}
+                onClick={() => onSceneSelect(scene)}
+                className={`
+                  relative aspect-[3/4] rounded-xl overflow-hidden transition-all duration-300
+                  ${selectedScene?.id === scene.id
+                    ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
+                    : 'hover:scale-[1.02] hover:shadow-lg'
+                  }
+                `}
+              >
+                <Image src={scene.thumbnailUrl} alt={scene.name} fill className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute bottom-0 inset-x-0 p-3">
+                  <span className="text-white font-medium text-sm">{scene.name}</span>
+                </div>
+                {selectedScene?.id === scene.id && (
+                  <div className="absolute top-3 right-3 w-6 h-6 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )
+
+      case 'pose':
+        if (poses.length === 0) {
+          return (
+            <div className="flex flex-col items-center justify-center py-16">
+              <span className="text-5xl mb-4">🧍</span>
+              <p className="text-warm-charcoal font-medium mb-2">暂无可用姿势</p>
+              <p className="text-warm-silver text-sm mb-4">需要先添加姿势素材</p>
+              <a href="/materials" className="px-4 py-2 bg-matcha-600 text-white rounded-lg font-medium hover:bg-matcha-800 transition-all">
+                去添加姿势
+              </a>
+            </div>
+          )
+        }
+        return (
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {poses.map((pose) => (
+              <button
+                key={pose.id}
+                onClick={() => onPoseSelect(pose.id === selectedPose?.id ? null : pose)}
+                className={`
+                  flex-shrink-0 w-36 aspect-[3/4] relative rounded-xl overflow-hidden transition-all duration-300
+                  ${selectedPose?.id === pose.id
+                    ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
+                    : 'hover:scale-[1.02] hover:shadow-lg grayscale hover:grayscale-0'
+                  }
+                `}
+              >
+                <Image src={pose.thumbnailUrl} alt={pose.name} fill className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute bottom-0 inset-x-0 p-2">
+                  <span className="text-white font-medium text-xs">{pose.name}</span>
+                </div>
+                {selectedPose?.id === pose.id && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )
+
+      case 'makeup':
+        if (makeups.length === 0) {
+          return (
+            <div className="flex flex-col items-center justify-center py-16">
+              <span className="text-5xl mb-4">💄</span>
+              <p className="text-warm-charcoal font-medium mb-2">暂无可用妆容</p>
+              <p className="text-warm-silver text-sm mb-4">需要先添加妆容素材</p>
+              <a href="/materials" className="px-4 py-2 bg-matcha-600 text-white rounded-lg font-medium hover:bg-matcha-800 transition-all">
+                去添加妆容
+              </a>
+            </div>
+          )
+        }
+        return (
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {makeups.map((makeup) => (
+              <button
+                key={makeup.id}
+                onClick={() => onMakeupSelect(makeup.id === selectedMakeup?.id ? null : makeup)}
+                className={`
+                  flex-shrink-0 w-36 aspect-[3/4] relative rounded-xl overflow-hidden transition-all duration-300
+                  ${selectedMakeup?.id === makeup.id
+                    ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
+                    : 'hover:scale-[1.02] hover:shadow-lg grayscale hover:grayscale-0'
+                  }
+                `}
+              >
+                <Image src={makeup.thumbnailUrl} alt={makeup.name} fill className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute bottom-0 inset-x-0 p-2">
+                  <span className="text-white font-medium text-xs">{makeup.name}</span>
+                </div>
+                {selectedMakeup?.id === makeup.id && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )
+    }
+  }
 
   return (
-    <motion.div
-      variants={staggerContainer}
-      initial="initial"
-      animate="animate"
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-semibold text-warm-charcoal">
-          定妆图
+          选择场景与姿势
         </h2>
         <p className="text-warm-silver">
-          为虚拟IP选择姿势、妆容和饰品，生成定妆图
+          为你的视频选择合适的场景、姿势和妆容
         </p>
-        <div className="flex flex-wrap gap-2 justify-center text-sm">
-          {selectedIp && (
-            <span className="px-2 py-0.5 rounded-full bg-matcha-100 text-matcha-700">
-              🎭 {selectedIp.name}
-            </span>
-          )}
-          {modelImageUrl && (
-            <span className="px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
-              👗 模特图已生成
-            </span>
-          )}
-        </div>
       </div>
 
-      {/* Mode Toggle */}
-      <div className="flex justify-center">
-        <ModeToggle mode={mode} onModeChange={onModeChange} canToggle={existingImages.length > 0} />
+      {/* Tab Navigation */}
+      <div className="flex gap-2 p-1 bg-oat-light/50 rounded-xl">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`
+              flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-300
+              ${activeTab === tab.id
+                ? 'bg-white text-warm-charcoal shadow-sm'
+                : 'text-warm-silver hover:text-warm-charcoal'
+              }
+            `}
+          >
+            <span>{tab.icon}</span>
+            <span>{tab.label}</span>
+            {tab.required && <span className="text-pomegranate-400">*</span>}
+            {tab.selected && (
+              <span className="w-5 h-5 rounded-full bg-matcha-600 text-white text-xs flex items-center justify-center">
+                ✓
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Content based on mode */}
-      {mode === 'select' ? (
-        <div className="space-y-6">
-          <ImageGridSelector
-            images={existingImages.map((url, i) => ({ id: `style-${i}`, url, name: `定妆图 ${i + 1}` }))}
-            selectedImage={generatedImage || null}
-            onSelect={onSelectExisting}
-          />
-        </div>
-      ) : (
-        <motion.div variants={itemVariants} className="space-y-6">
-          {/* Pose Selection */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-warm-charcoal flex items-center gap-2">
-              <span>🧍</span> 选择姿势 <span className="text-pomegranate-400">*</span>
-            </h3>
-            {poses.length === 0 ? (
-              <div className="text-center py-8 bg-oat-light/30 rounded-xl">
-                <span className="text-3xl mb-2 block">🧍</span>
-                <p className="text-warm-silver">暂无可用姿势</p>
-              </div>
-            ) : (
-              <div className="flex gap-4 overflow-x-auto pb-2">
-                {poses.map((pose) => (
-                  <button
-                    key={pose.id}
-                    onClick={() => onPoseSelect(selectedPose?.id === pose.id ? null : pose)}
-                    className={`
-                      flex-shrink-0 w-28 aspect-[3/4] relative rounded-xl overflow-hidden transition-all duration-300
-                      ${selectedPose?.id === pose.id
-                        ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
-                        : 'hover:scale-[1.02] hover:shadow-lg grayscale hover:grayscale-0'
-                      }
-                    `}
-                  >
-                    <Image src={pose.thumbnailUrl} alt={pose.name} fill className="object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                    <div className="absolute bottom-0 inset-x-0 p-2">
-                      <span className="text-white font-medium text-xs">{pose.name}</span>
-                    </div>
-                    {selectedPose?.id === pose.id && (
-                      <div className="absolute top-2 right-2 w-5 h-5 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Makeup Selection (Optional) */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-warm-charcoal flex items-center gap-2">
-              <span>💄</span> 选择妆容 <span className="text-warm-silver text-sm">(可选)</span>
-            </h3>
-            {makeups.length === 0 ? (
-              <div className="text-center py-6 bg-oat-light/30 rounded-xl text-warm-silver text-sm">
-                暂无可用妆容
-              </div>
-            ) : (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {makeups.map((makeup) => (
-                  <button
-                    key={makeup.id}
-                    onClick={() => onMakeupSelect(selectedMakeup?.id === makeup.id ? null : makeup)}
-                    className={`
-                      flex-shrink-0 w-24 aspect-square relative rounded-xl overflow-hidden transition-all duration-300
-                      ${selectedMakeup?.id === makeup.id
-                        ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
-                        : 'hover:scale-[1.02] hover:shadow-lg grayscale hover:grayscale-0'
-                      }
-                    `}
-                  >
-                    <Image src={makeup.thumbnailUrl} alt={makeup.name} fill className="object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                    <div className="absolute bottom-0 inset-x-0 p-1.5">
-                      <span className="text-white font-medium text-xs">{makeup.name}</span>
-                    </div>
-                    {selectedMakeup?.id === makeup.id && (
-                      <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
-                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Accessory Selection (Optional) */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-warm-charcoal flex items-center gap-2">
-              <span>💎</span> 选择饰品 <span className="text-warm-silver text-sm">(可选)</span>
-            </h3>
-            {accessories.length === 0 ? (
-              <div className="text-center py-6 bg-oat-light/30 rounded-xl text-warm-silver text-sm">
-                暂无可用饰品
-              </div>
-            ) : (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {accessories.map((acc) => (
-                  <button
-                    key={acc.id}
-                    onClick={() => onAccessorySelect(selectedAccessory?.id === acc.id ? null : acc)}
-                    className={`
-                      flex-shrink-0 w-24 aspect-square relative rounded-xl overflow-hidden transition-all duration-300
-                      ${selectedAccessory?.id === acc.id
-                        ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
-                        : 'hover:scale-[1.02] hover:shadow-lg grayscale hover:grayscale-0'
-                      }
-                    `}
-                  >
-                    <Image src={acc.thumbnailUrl} alt={acc.name} fill className="object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                    <div className="absolute bottom-0 inset-x-0 p-1.5">
-                      <span className="text-white font-medium text-xs">{acc.name}</span>
-                    </div>
-                    {selectedAccessory?.id === acc.id && (
-                      <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
-                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Generate Button */}
-          <div className="flex justify-center pt-4">
-            <button
-              onClick={onGenerate}
-              disabled={!canGenerate || isLoading}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  AI 生成定妆图
-                </>
-              )}
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Preview Area */}
-      <div className="max-w-sm mx-auto">
-        <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-oat-light border-2 border-dashed border-oat">
-          {isLoading ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="w-16 h-16 border-4 border-matcha-600 border-t-transparent rounded-full animate-spin mb-4" />
-              <span className="text-warm-charcoal font-medium">正在生成定妆图...</span>
-            </div>
-          ) : previewUrl ? (
-            <>
-              <Image src={previewUrl} alt="定妆图" fill className="object-cover" />
-              {mode === 'generate' && (
-                <div className="absolute bottom-4 left-4 right-4 flex gap-3">
-                  <button
-                    onClick={onGenerate}
-                    disabled={!canGenerate}
-                    className="flex-1 py-3 px-4 rounded-xl bg-white/90 backdrop-blur-sm text-warm-charcoal font-medium hover:bg-white transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    重新生成
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <svg className="w-16 h-16 text-warm-silver mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-warm-silver">选择姿势后点击生成按钮</span>
-            </div>
-          )}
-        </div>
+      {/* Tab Content */}
+      <div className="min-h-[300px]">
+        {renderContent()}
       </div>
-    </motion.div>
+
+      {/* Selected Summary */}
+      <div className="flex gap-4 justify-center text-sm text-warm-silver">
+        {selectedScene && (
+          <span className="flex items-center gap-1">
+            <span className="text-matcha-600">✓</span> 场景: {selectedScene.name}
+          </span>
+        )}
+        {selectedPose && (
+          <span className="flex items-center gap-1">
+            <span className="text-matcha-600">✓</span> 姿势: {selectedPose.name}
+          </span>
+        )}
+        {selectedMakeup && (
+          <span className="flex items-center gap-1">
+            <span className="text-matcha-600">✓</span> 妆容: {selectedMakeup.name}
+          </span>
+        )}
+      </div>
+    </div>
   )
 }
 
-// Step 4: First Frame (with mode toggle)
-function FirstFrameStep({
-  existingImages,
-  generatedImage,
-  isLoading,
-  mode,
-  onModeChange,
-  onSelectExisting,
-  onGenerate,
-  canGenerate,
-  scenes,
-  selectedScene,
-  onSceneSelect,
-  compositionText,
-  onCompositionChange,
+// Step 3: Effect Image Preview (renamed to 首帧图预览)
+function EffectPreviewStep({
   selectedIp,
-  styledImageUrl,
+  selectedScene,
+  selectedPose,
+  selectedMakeup,
+  effectImageUrl,
+  isLoading,
+  onGenerate,
+  onRegenerate,
+  onUpload,
 }: {
-  existingImages: string[]
-  generatedImage: string | null
-  isLoading: boolean
-  mode: 'select' | 'generate'
-  onModeChange: (mode: 'select' | 'generate') => void
-  onSelectExisting: (url: string) => void
-  onGenerate: () => void
-  canGenerate: boolean
-  scenes: Material[]
-  selectedScene: Material | null
-  onSceneSelect: (scene: Material | null) => void
-  compositionText: string
-  onCompositionChange: (text: string) => void
   selectedIp: VirtualIP | null
-  styledImageUrl: string | null
+  selectedScene: Scene | null
+  selectedPose: Pose | null
+  selectedMakeup: Makeup | null
+  effectImageUrl: string | null
+  isLoading: boolean
+  onGenerate: () => void
+  onRegenerate: () => void
+  onUpload: () => void
 }) {
-  const previewUrl = mode === 'select' ? generatedImage : generatedImage
-
   return (
-    <motion.div
-      variants={staggerContainer}
-      initial="initial"
-      animate="animate"
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-semibold text-warm-charcoal">
-          首帧图
+          首帧图预览
         </h2>
         <p className="text-warm-silver">
-          选择场景并描述构图，生成视频的首帧画面
+          选择或上传首帧图，用于视频生成
         </p>
-        <div className="flex flex-wrap gap-2 justify-center text-sm">
-          {selectedIp && (
-            <span className="px-2 py-0.5 rounded-full bg-matcha-100 text-matcha-700">
-              🎭 {selectedIp.name}
-            </span>
+      </div>
+
+      {/* Selected Materials - Show actual images */}
+      <div className="grid grid-cols-4 gap-4">
+        {/* IP */}
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-oat-light">
+          {selectedIp?.avatarUrl ? (
+            <Image src={selectedIp.avatarUrl} alt={selectedIp.name} fill className="object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">🎭</span>
+            </div>
           )}
-          {styledImageUrl && (
-            <span className="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700">
-              💄 定妆图已生成
-            </span>
+          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+            <span className="text-white text-xs font-medium">{selectedIp?.name || '虚拟IP'}</span>
+          </div>
+        </div>
+        {/* Scene */}
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-oat-light">
+          {selectedScene?.thumbnailUrl ? (
+            <Image src={selectedScene.thumbnailUrl} alt={selectedScene.name} fill className="object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">🎬</span>
+            </div>
           )}
+          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+            <span className="text-white text-xs font-medium">{selectedScene?.name || '场景'}</span>
+          </div>
+        </div>
+        {/* Pose */}
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-oat-light">
+          {selectedPose?.thumbnailUrl ? (
+            <Image src={selectedPose.thumbnailUrl} alt={selectedPose.name} fill className="object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">🧍</span>
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+            <span className="text-white text-xs font-medium">{selectedPose?.name || '姿势'}</span>
+          </div>
+        </div>
+        {/* Makeup */}
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-oat-light">
+          {selectedMakeup?.thumbnailUrl ? (
+            <Image src={selectedMakeup.thumbnailUrl} alt={selectedMakeup.name} fill className="object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">💄</span>
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+            <span className="text-white text-xs font-medium">{selectedMakeup?.name || '妆容'}</span>
+          </div>
         </div>
       </div>
 
-      {/* Mode Toggle */}
-      <div className="flex justify-center">
-        <ModeToggle mode={mode} onModeChange={onModeChange} canToggle={existingImages.length > 0} />
+      {/* Action Buttons */}
+      <div className="flex gap-4 justify-center">
+        <button
+          onClick={onGenerate}
+          disabled={!selectedIp || !selectedScene || isLoading}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <>
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              生成中...
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              AI 生成首帧图
+            </>
+          )}
+        </button>
+        <button
+          onClick={onUpload}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-oat text-warm-charcoal font-medium hover:bg-oat-light transition-all duration-300 disabled:opacity-50"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          上传首帧图
+        </button>
       </div>
-
-      {/* Content based on mode */}
-      {mode === 'select' ? (
-        <div className="space-y-6">
-          <ImageGridSelector
-            images={existingImages.map((url, i) => ({ id: `frame-${i}`, url, name: `首帧图 ${i + 1}` }))}
-            selectedImage={generatedImage || null}
-            onSelect={onSelectExisting}
-          />
-        </div>
-      ) : (
-        <motion.div variants={itemVariants} className="space-y-6">
-          {/* Scene Selection */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-warm-charcoal flex items-center gap-2">
-              <span>🎬</span> 选择场景 <span className="text-pomegranate-400">*</span>
-            </h3>
-            {scenes.length === 0 ? (
-              <div className="text-center py-8 bg-oat-light/30 rounded-xl">
-                <span className="text-3xl mb-2 block">🎬</span>
-                <p className="text-warm-silver">暂无可用场景</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {scenes.map((scene) => (
-                  <button
-                    key={scene.id}
-                    onClick={() => onSceneSelect(selectedScene?.id === scene.id ? null : scene)}
-                    className={`
-                      relative aspect-[3/4] rounded-xl overflow-hidden transition-all duration-300
-                      ${selectedScene?.id === scene.id
-                        ? 'ring-4 ring-matcha-600 shadow-xl scale-[1.02]'
-                        : 'hover:scale-[1.02] hover:shadow-lg'
-                      }
-                    `}
-                  >
-                    <Image src={scene.thumbnailUrl} alt={scene.name} fill className="object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                    <div className="absolute bottom-0 inset-x-0 p-3">
-                      <span className="text-white font-medium text-sm">{scene.name}</span>
-                    </div>
-                    {selectedScene?.id === scene.id && (
-                      <div className="absolute top-3 right-3 w-6 h-6 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Composition Text */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-warm-charcoal flex items-center gap-2">
-              <span>📝</span> 构图描述 <span className="text-warm-silver text-sm">(可选)</span>
-            </h3>
-            <textarea
-              value={compositionText}
-              onChange={(e) => onCompositionChange(e.target.value)}
-              placeholder="描述你想要的画面构图，如：人物站在画面中央，背景是城市夜景..."
-              className="w-full h-24 px-4 py-3 rounded-xl border-2 border-oat bg-white text-warm-charcoal placeholder-warm-silver focus:border-matcha-600 focus:outline-none transition-colors resize-none"
-            />
-          </div>
-
-          {/* Generate Button */}
-          <div className="flex justify-center pt-4">
-            <button
-              onClick={onGenerate}
-              disabled={!canGenerate || isLoading}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  AI 生成首帧图
-                </>
-              )}
-            </button>
-          </div>
-        </motion.div>
-      )}
 
       {/* Preview Area */}
       <div className="max-w-sm mx-auto">
@@ -1481,88 +1020,66 @@ function FirstFrameStep({
               <div className="w-16 h-16 border-4 border-matcha-600 border-t-transparent rounded-full animate-spin mb-4" />
               <span className="text-warm-charcoal font-medium">正在生成首帧图...</span>
             </div>
-          ) : previewUrl ? (
+          ) : effectImageUrl ? (
             <>
-              <Image src={previewUrl} alt="首帧图" fill className="object-cover" />
-              {mode === 'generate' && (
-                <div className="absolute bottom-4 left-4 right-4 flex gap-3">
-                  <button
-                    onClick={onGenerate}
-                    disabled={!canGenerate}
-                    className="flex-1 py-3 px-4 rounded-xl bg-white/90 backdrop-blur-sm text-warm-charcoal font-medium hover:bg-white transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    重新生成
-                  </button>
-                </div>
-              )}
+              <Image src={effectImageUrl} alt="首帧图" fill className="object-cover" />
+              <div className="absolute bottom-4 left-4 right-4 flex gap-3">
+                <button
+                  onClick={onRegenerate}
+                  disabled={!selectedIp || !selectedScene}
+                  className="flex-1 py-3 px-4 rounded-xl bg-white/90 backdrop-blur-sm text-warm-charcoal font-medium hover:bg-white transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  重新生成
+                </button>
+              </div>
             </>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <svg className="w-16 h-16 text-warm-silver mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="text-warm-silver">选择场景后点击生成按钮</span>
+              <span className="text-warm-silver">点击上方按钮生成或上传首帧图</span>
             </div>
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
-// Step 5: Video Generation
-function VideoStep({
-  videoUrl,
-  isLoading,
-  progress,
+// Step 4: Select Motion
+function SelectMotionStep({
   movements,
+  compositions,
   selectedMovement,
+  selectedComposition,
   onMovementSelect,
-  onGenerate,
-  canGenerate,
-  selectedIp,
-  firstFrameUrl,
+  onCompositionSelect,
 }: {
-  videoUrl: string | null
-  isLoading: boolean
-  progress: number
   movements: Movement[]
+  compositions: Composition[]
   selectedMovement: Movement | null
+  selectedComposition: Composition | null
   onMovementSelect: (movement: Movement) => void
-  onGenerate: () => void
-  canGenerate: boolean
-  selectedIp: VirtualIP | null
-  firstFrameUrl: string | null
+  onCompositionSelect: (composition: Composition) => void
 }) {
   return (
     <motion.div
       variants={staggerContainer}
       initial="initial"
       animate="animate"
-      className="space-y-8"
+      className="space-y-10"
     >
       <div className="text-center space-y-4">
         <h2 className="text-4xl font-semibold tracking-tight" style={{ fontFeatureSettings: '"ss01", "ss03", "ss10", "ss11", "ss12"' }}>
-          生成视频
+          选择动作
         </h2>
         <p className="text-warm-charcoal text-lg">
-          选择动作，AI将生成带货视频
+          选择视频中的人物动作和构图方式
         </p>
-        <div className="flex flex-wrap gap-2 justify-center text-sm">
-          {selectedIp && (
-            <span className="px-2 py-0.5 rounded-full bg-matcha-100 text-matcha-700">
-              🎭 {selectedIp.name}
-            </span>
-          )}
-          {firstFrameUrl && (
-            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-              🖼️ 首帧图已选择
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Movement Selection */}
@@ -1598,33 +1115,128 @@ function VideoStep({
         </div>
       </motion.div>
 
-      {/* Generate Button */}
-      <motion.div variants={itemVariants} className="flex justify-center">
-        <button
-          onClick={onGenerate}
-          disabled={!canGenerate || isLoading}
-          className="flex items-center gap-2 px-8 py-4 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
-        >
+      {/* Composition Selection */}
+      <motion.div variants={itemVariants} className="space-y-4">
+        <h3 className="text-lg font-semibold text-warm-charcoal flex items-center gap-2">
+          <span className="w-8 h-8 rounded-lg bg-slushie-500/20 text-slushie-800 flex items-center justify-center text-sm">
+            2
+          </span>
+          选择构图
+        </h3>
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {compositions.map((comp) => (
+            <button
+              key={comp.id}
+              onClick={() => onCompositionSelect(comp)}
+              className={`
+                flex-shrink-0 w-40 aspect-[3/4] relative rounded-xl overflow-hidden transition-all duration-300
+                ${selectedComposition?.id === comp.id
+                  ? 'ring-4 ring-matcha-600 ring-offset-4 ring-offset-background'
+                  : 'hover:scale-105 hover:shadow-xl grayscale hover:grayscale-0'
+                }
+              `}
+            >
+              <Image src={comp.thumbnailUrl} alt={comp.name} fill className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute bottom-0 inset-x-0 p-3">
+                <span className="text-white font-medium text-sm">{comp.name}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+// Step 5: First Frame Preview
+function FirstFramePreviewStep({
+  firstFrameUrl,
+  isLoading,
+  onRegenerate,
+}: {
+  firstFrameUrl: string | null
+  isLoading: boolean
+  onRegenerate: () => void
+}) {
+  return (
+    <motion.div
+      variants={staggerContainer}
+      initial="initial"
+      animate="animate"
+      className="space-y-8"
+    >
+      <div className="text-center space-y-4">
+        <h2 className="text-4xl font-semibold tracking-tight" style={{ fontFeatureSettings: '"ss01", "ss03", "ss10", "ss11", "ss12"' }}>
+          首帧图预览
+        </h2>
+        <p className="text-warm-charcoal text-lg">
+          这是视频的第一帧画面，确认后开始生成视频
+        </p>
+      </div>
+
+      <motion.div variants={itemVariants} className="max-w-md mx-auto">
+        <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-oat-light border-2 border-dashed border-oat">
           {isLoading ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="w-16 h-16 border-4 border-matcha-600 border-t-transparent rounded-full animate-spin mb-4" />
+              <span className="text-warm-charcoal font-medium">正在生成首帧图...</span>
+            </div>
+          ) : firstFrameUrl ? (
             <>
-              <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              生成中... {Math.round(progress)}%
+              <Image src={firstFrameUrl} alt="首帧图" fill className="object-cover" />
+              <div className="absolute bottom-4 left-4 right-4 flex gap-3">
+                <button
+                  onClick={onRegenerate}
+                  className="flex-1 py-3 px-4 rounded-xl bg-white/90 backdrop-blur-sm text-warm-charcoal font-medium hover:bg-white transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  重新生成
+                </button>
+              </div>
             </>
           ) : (
-            <>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <svg className="w-16 h-16 text-warm-silver mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              AI 生成视频
-            </>
+              <span className="text-warm-silver">点击&quot;下一步&quot;生成首帧图</span>
+            </div>
           )}
-        </button>
+        </div>
       </motion.div>
+    </motion.div>
+  )
+}
 
-      {/* Video Preview */}
+// Step 6: Video Preview
+function VideoPreviewStep({
+  videoUrl,
+  isLoading,
+  progress,
+}: {
+  videoUrl: string | null
+  isLoading: boolean
+  progress: number
+}) {
+  return (
+    <motion.div
+      variants={staggerContainer}
+      initial="initial"
+      animate="animate"
+      className="space-y-8"
+    >
+      <div className="text-center space-y-4">
+        <h2 className="text-4xl font-semibold tracking-tight" style={{ fontFeatureSettings: '"ss01", "ss03", "ss10", "ss11", "ss12"' }}>
+          视频预览
+        </h2>
+        <p className="text-warm-charcoal text-lg">
+          你的视频已准备就绪，可以下载或重新生成
+        </p>
+      </div>
+
       <motion.div variants={itemVariants} className="max-w-2xl mx-auto">
         <div className="relative aspect-video rounded-2xl overflow-hidden bg-black">
           {isLoading ? (
@@ -1658,7 +1270,7 @@ function VideoStep({
               <svg className="w-20 h-20 text-warm-silver mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
-              <span className="text-warm-silver">选择动作后点击生成视频</span>
+              <span className="text-warm-silver">点击&quot;完成&quot;生成视频</span>
             </div>
           )}
         </div>
