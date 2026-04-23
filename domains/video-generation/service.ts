@@ -2,10 +2,10 @@
 import { db } from '@/foundation/lib/db'
 import { v4 as uuid } from 'uuid'
 import { providerRegistry } from '@/foundation/providers/registry'
-import { ImageBlendTool, SceneReplaceTool, ImageToVideoTool, MotionTransferTool } from './tools'
+import { ImageBlendTool, SceneReplaceTool, ImageToVideoTool, MotionTransferTool, ModelImageTool, StyleImageTool, MultiImageEditTool } from './tools'
 import { createProductMaterial, updateProductMaterial } from '@/domains/product-material/service'
 import { getMovementMaterialById } from '@/domains/movement-material/service'
-import type { EffectImageGenerationResult, VideoGenerationResult } from './types'
+import type { EffectImageGenerationResult, VideoGenerationResult, ModelImageGenerationResult, StyleImageGenerationResult } from './types'
 import type { ToolResult } from '@/foundation/providers/ToolProvider'
 
 const PROVIDER_NAME = 'runninghub' as const
@@ -16,6 +16,105 @@ function getRunningHubProvider() {
     throw new Error(`Provider ${PROVIDER_NAME} not found`)
   }
   return provider
+}
+
+/**
+ * 生成模特图 (PRD 4.2 步骤3)
+ * 流程: IP 全身图 + 产品主图 + 产品细节图 → 模特图
+ * 每个 IP，每个产品，只能有一张模特图。如果已存在则覆盖。
+ */
+export async function generateModelImage(
+  productId: string,
+  ipId: string,
+  productMainImageUrl: string,
+  productDetailImageUrls: string[] = []
+): Promise<ModelImageGenerationResult> {
+  // 1. 获取 IP 的全身图
+  const ip = await db.virtualIp.findUnique({
+    where: { id: ipId },
+    select: { fullBodyUrl: true },
+  })
+  if (!ip?.fullBodyUrl) {
+    throw new Error(`IP ${ipId} not found or has no fullBodyUrl`)
+  }
+  const ipFullBodyUrl = ip.fullBodyUrl
+
+  const provider = getRunningHubProvider()
+
+  // 2. 检查是否已有该 IP+产品的模特图，有则删除（覆盖）
+  const existingMaterial = await db.productMaterial.findFirst({
+    where: { productId, ipId },
+    select: { id: true },
+  })
+
+  // 3. 调用模特图生成工具
+  const modelInputs: Record<string, string | string[] | null> = {
+    ipFullBodyUrl,
+    productMainImage: productMainImageUrl,
+  }
+  if (productDetailImageUrls.length > 0) {
+    modelInputs.productDetailImages = productDetailImageUrls
+  }
+  const modelResult: ToolResult = await provider.execute(ModelImageTool.workflowId, modelInputs)
+
+  if (modelResult.error || !modelResult.outputs.modelImage) {
+    throw new Error(`Model image generation failed: ${modelResult.error}`)
+  }
+  const modelImageUrl = modelResult.outputs.modelImage
+
+  // 4. 如果已存在则更新，否则创建
+  let productMaterialId: string
+  if (existingMaterial) {
+    const updated = await updateProductMaterial(existingMaterial.id, { fullBodyUrl: modelImageUrl })
+    productMaterialId = existingMaterial.id
+  } else {
+    const created = await createProductMaterial({ productId, ipId, fullBodyUrl: modelImageUrl })
+    productMaterialId = created.id
+  }
+
+  return { modelImageUrl, productMaterialId }
+}
+
+/**
+ * 生成定妆图 (PRD 4.2 步骤4)
+ * 流程: 模特图 + 姿势 + (可选)妆容 + (可选)饰品 → 定妆图
+ */
+export async function generateStyleImage(
+  productMaterialId: string,
+  pose: string,
+  makeupUrl?: string,
+  accessoryUrl?: string
+): Promise<StyleImageGenerationResult> {
+  // 1. 获取模特图
+  const productMaterial = await db.productMaterial.findUnique({
+    where: { id: productMaterialId },
+    select: { fullBodyUrl: true },
+  })
+  if (!productMaterial?.fullBodyUrl) {
+    throw new Error(`ProductMaterial ${productMaterialId} not found or has no fullBodyUrl`)
+  }
+  const modelImageUrl = productMaterial.fullBodyUrl
+
+  const provider = getRunningHubProvider()
+
+  // 2. 调用定妆图生成工具
+  const styleInputs: Record<string, string | string[] | null> = {
+    modelImage: modelImageUrl,
+    pose,
+  }
+  if (makeupUrl) styleInputs.makeup = makeupUrl
+  if (accessoryUrl) styleInputs.accessory = accessoryUrl
+  const styleResult: ToolResult = await provider.execute(StyleImageTool.workflowId, styleInputs)
+
+  if (styleResult.error || !styleResult.outputs.styledImage) {
+    throw new Error(`Style image generation failed: ${styleResult.error}`)
+  }
+  const styledImageUrl = styleResult.outputs.styledImage
+
+  // 3. 更新 product_materials
+  await updateProductMaterial(productMaterialId, { fullBodyUrl: styledImageUrl })
+
+  return { styledImageUrl, productMaterialId }
 }
 
 /**

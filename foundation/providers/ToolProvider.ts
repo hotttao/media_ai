@@ -2,7 +2,7 @@
 
 export interface ToolInput {
   name: string
-  type: 'image' | 'text'
+  type: 'image' | 'text' | 'image[]'
   required: boolean
   default?: string
 }
@@ -28,6 +28,6 @@ export interface ToolResult {
 
 export interface ToolProvider {
   providerName: string
-  execute(toolId: string, inputs: Record<string, string | null>): Promise<ToolResult>
+  execute(toolId: string, inputs: Record<string, string | string[] | null>): Promise<ToolResult>
   healthCheck(): Promise<boolean>
 }

@@ -19,3 +19,13 @@ export interface EffectImageGenerationResult {
   fullBodyUrl: string
   productMaterialId: string
 }
+
+export interface ModelImageGenerationResult {
+  modelImageUrl: string
+  productMaterialId: string
+}
+
+export interface StyleImageGenerationResult {
+  styledImageUrl: string
+  productMaterialId: string
+}

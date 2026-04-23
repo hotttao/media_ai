@@ -1,5 +1,5 @@
 export type Visibility = 'PUBLIC' | 'PERSONAL' | 'TEAM'
-export type MaterialType = 'CLOTHING' | 'SCENE' | 'ACTION' | 'MAKEUP' | 'ACCESSORY' | 'OTHER'
+export type MaterialType = 'SCENE' | 'POSE' | 'MAKEUP' | 'ACCESSORY' | 'OTHER'
 
 export interface Material {
   id: string

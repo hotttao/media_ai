@@ -15,16 +15,14 @@ export function MaterialUploader({ onClose, onSuccess }: MaterialUploaderProps) 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    type: 'CLOTHING',
+    type: 'SCENE',
     visibility: 'PERSONAL',
     description: '',
     tags: '',
   })
 
   const typeOptions = [
-    { value: 'CLOTHING', label: '服装', icon: '👕' },
     { value: 'SCENE', label: '场景', icon: '🏞️' },
-    { value: 'ACTION', label: '动作', icon: '🎯' },
     { value: 'MAKEUP', label: '妆容', icon: '💄' },
     { value: 'ACCESSORY', label: '配饰', icon: '💍' },
     { value: 'OTHER', label: '其他', icon: '📦' },

@@ -303,13 +303,11 @@ enum Visibility {
 }
 
 enum MaterialType {
-  CLOTHING
   SCENE
-  ACTION
+  POSE
   MAKEUP
   ACCESSORY
   OTHER
-  POSE
 }
 
 enum IpMaterialType {

@@ -15,9 +15,7 @@ interface Material {
 
 const typeOptions = [
   { value: 'ALL', label: '全部', gradient: 'from-gray-500/20 to-slate-600/20' },
-  { value: 'CLOTHING', label: '服装', gradient: 'from-orange-500/20 to-amber-600/20', accent: '#fb923c' },
   { value: 'SCENE', label: '场景', gradient: 'from-emerald-500/20 to-teal-600/20', accent: '#34d399' },
-  { value: 'ACTION', label: '动作', gradient: 'from-blue-500/20 to-cyan-600/20', accent: '#60a5fa' },
   { value: 'MAKEUP', label: '妆容', gradient: 'from-pink-500/20 to-rose-600/20', accent: '#f472b6' },
   { value: 'ACCESSORY', label: '配饰', gradient: 'from-violet-500/20 to-purple-600/20', accent: '#a78bfa' },
   { value: 'OTHER', label: '其他', gradient: 'from-gray-500/20 to-zinc-600/20', accent: '#94a3b8' },
