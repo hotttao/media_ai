@@ -136,3 +136,55 @@ interface WizardState {
 ## 待确认
 
 - [x] 构图（composition）：作为文字描述输入，非素材类型
+
+---
+
+## 数据模型（更新版）
+
+### 拆分生成结果表
+
+为支持"不重复生成"逻辑，将 `product_materials` 拆分为三张独立表。详见 PRD 5.1 节。
+
+**核心设计原则：**
+- 每种生成结果独立表
+- 通过 `input_hash` 去重（相同输入不重复生成）
+- 链式依赖：model_images → style_images → first_frames
+
+### 去重逻辑
+
+```typescript
+// 1. 计算输入组合的 hash
+const inputHash = hash(productMainImageUrl, ...detailImageUrls)
+
+// 2. 查询是否已存在相同 hash 的记录
+const existing = await db.modelImage.findUnique({
+  where: {
+    product_id_ip_id_input_hash: { productId, ipId, inputHash }
+  }
+})
+
+// 3. 如存在则直接返回，不重新生成
+if (existing) {
+  return { url: existing.url, id: existing.id }
+}
+
+// 4. 否则生成新记录
+const newRecord = await db.modelImage.create({ ... })
+```
+
+### 与现有表的关系
+
+- `model_images` → `style_images` → `first_frames` 形成链式依赖
+- 每种类型独立去重，独立新增
+- 视频生成时从对应表获取最新记录
+
+## 实现计划（更新）
+
+1. ~~数据库迁移：恢复 POSE 枚举类型~~ ✅ 已完成
+2. ~~API 改造：新增 model-image、style-image 端点~~ ✅ 已完成
+3. ~~组件重构：按新步骤改造 GenerateVideoWizard~~ ✅ 已完成
+4. ~~素材库集成：支持 POSE 类型上传~~ ✅ 已完成
+5. **新建生成结果表**：model_images, style_images, first_frames
+6. **更新 service 层**：使用新表 + 去重逻辑
+7. **更新 API 层**：适配新表结构
+8. **更新前端**：适配新的 API 响应格式

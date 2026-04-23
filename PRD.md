@@ -173,19 +173,14 @@
 
 ### 5.1 数据库更新
 #### materials 表更新
-materials 需要更新:
-1. type
-2. 删除 name
-3. 增加 content: 素材的文字描述可为空
-4. url: 图片素材的地址，可为空
-
+materials 表结构：
 ```sql
 CREATE TABLE materials (
   id          VARCHAR(36) PRIMARY KEY,                              -- 唯一标识符 UUID
   user_id     VARCHAR(36),                                          -- 创建者用户 ID，NULL 为系统公共素材
   team_id     VARCHAR(36),                                          -- 所属团队 ID，NULL 为个人素材
   visibility  ENUM('public', 'personal', 'team') NOT NULL,         -- 可见性：public 公共，personal 个人，team 团队
-  type        ENUM('scene', 'makeup', 'accessory', 'other') NOT NULL,  -- 素材类型
+  type        ENUM('scene', 'pose', 'makeup', 'accessory', 'other') NOT NULL,  -- 素材类型
   name        VARCHAR(100) NOT NULL,                                -- 素材名称
   description TEXT,                                                 -- 素材描述（创作过程说明等）
   url         VARCHAR(500) NOT NULL,                                -- 素材文件 URL
@@ -197,15 +192,72 @@ CREATE TABLE materials (
 );
 ```
 
+**素材类型说明：**
+- scene: 场景素材
+- pose: 姿势素材（图片或文字描述）
+- makeup: 妆容素材
+- accessory: 饰品素材
+- other: 其他素材
 
-#### product_materials 表新增
-需要包含如下字段:
-1. product_id: 商品 ID
-2. ip_id: 虚拟 IP ID
-3. scene_id: 场景 ID
-4. full_body_url         全身图 URL（基于该 IP 生成的定妆图/服装图）
-5. three_view_url        三视图 URL（基于该 IP 生成）
-6. nine_view_url         九视图 URL（基于该 IP 生成）
+
+#### 生成结果表设计（拆分方案）
+
+为支持"不重复生成"逻辑，将 `product_materials` 拆分为三张独立表：
+
+**模特图表 (model_images)**
+| 字段 | 类型 | 说明 |
+|-----|------|------|
+| id | VARCHAR(36) | 主键 UUID |
+| product_id | VARCHAR(36) | 商品 ID |
+| ip_id | VARCHAR(36) | 虚拟 IP ID |
+| url | VARCHAR(500) | 生成的模特图 URL |
+| input_hash | VARCHAR(64) | 输入组合 hash，用于去重 |
+| created_at | DATETIME | 创建时间 |
+
+唯一约束: `(product_id, ip_id, input_hash)` - 保证相同输入不重复生成
+
+**定妆图表 (style_images)**
+| 字段 | 类型 | 说明 |
+|-----|------|------|
+| id | VARCHAR(36) | 主键 UUID |
+| product_id | VARCHAR(36) | 商品 ID |
+| ip_id | VARCHAR(36) | 虚拟 IP ID |
+| model_image_id | VARCHAR(36) | 关联模特图 ID |
+| url | VARCHAR(500) | 生成的定妆图 URL |
+| pose_id | VARCHAR(36) | 姿势素材 ID |
+| makeup_id | VARCHAR(36) | 妆容素材 ID |
+| accessory_id | VARCHAR(36) | 饰品素材 ID |
+| input_hash | VARCHAR(64) | 输入组合 hash，用于去重 |
+| created_at | DATETIME | 创建时间 |
+
+唯一约束: `(model_image_id, input_hash)` - 保证相同 pose/makeup/accessory 组合不重复生成
+
+**首帧图表 (first_frames)**
+| 字段 | 类型 | 说明 |
+|-----|------|------|
+| id | VARCHAR(36) | 主键 UUID |
+| product_id | VARCHAR(36) | 商品 ID |
+| ip_id | VARCHAR(36) | 虚拟 IP ID |
+| style_image_id | VARCHAR(36) | 关联定妆图 ID（可选） |
+| url | VARCHAR(500) | 生成的首帧图 URL |
+| scene_id | VARCHAR(36) | 场景素材 ID |
+| composition | VARCHAR(500) | 构图描述文字 |
+| input_hash | VARCHAR(64) | 输入组合 hash，用于去重 |
+| created_at | DATETIME | 创建时间 |
+
+唯一约束: `(product_id, ip_id, scene_id, input_hash)` - 保证相同 scene/composition 组合不重复生成
+
+**去重逻辑**
+```
+1. 计算输入组合的 hash
+   - 模特图: hash(product_main_image + detail_images)
+   - 定妆图: hash(pose + makeup + accessory)
+   - 首帧图: hash(scene + composition)
+
+2. 查询是否已存在相同 hash 的记录
+
+3. 如存在则直接返回，不重新生成
+```
 
 
 #### movement_materials 表新增
