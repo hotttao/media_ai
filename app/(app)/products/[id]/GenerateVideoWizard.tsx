@@ -52,6 +52,47 @@ const itemVariants = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const } },
 }
 
+// Selection summary component - shows previous step inputs
+function SelectionSummary({
+  selectedIp,
+  modelImageUrl,
+  styledImageUrl,
+  firstFrameUrl,
+}: {
+  selectedIp: VirtualIP | null
+  modelImageUrl: string | null
+  styledImageUrl: string | null
+  firstFrameUrl: string | null
+}) {
+  const hasAnySelection = selectedIp || modelImageUrl || styledImageUrl || firstFrameUrl
+  if (!hasAnySelection) return null
+
+  return (
+    <div className="flex flex-wrap gap-3 justify-center text-sm">
+      {selectedIp && (
+        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-matcha-100 text-matcha-700">
+          <span>🎭</span> {selectedIp.name}
+        </span>
+      )}
+      {modelImageUrl && (
+        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-100 text-violet-700">
+          <span>👗</span> 模特图
+        </span>
+      )}
+      {styledImageUrl && (
+        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-100 text-pink-700">
+          <span>💄</span> 定妆图
+        </span>
+      )}
+      {firstFrameUrl && (
+        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-700">
+          <span>🖼️</span> 首帧图
+        </span>
+      )}
+    </div>
+  )
+}
+
 // Mode toggle component
 function ModeToggle({
   mode,
@@ -638,6 +679,7 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
               onSelectExisting={handleSelectExistingModel}
               onGenerate={generateModelImage}
               canGenerate={!!selectedIp}
+              selectedIp={selectedIp}
             />}
 
             {currentStep === 2 && <StyleImageStep
@@ -658,6 +700,8 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
               onPoseSelect={setSelectedPose}
               onMakeupSelect={setSelectedMakeup}
               onAccessorySelect={setSelectedAccessory}
+              selectedIp={selectedIp}
+              modelImageUrl={modelImageUrl}
             />}
 
             {currentStep === 3 && <FirstFrameStep
@@ -674,6 +718,8 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
               onSceneSelect={setSelectedScene}
               compositionText={compositionText}
               onCompositionChange={setCompositionText}
+              selectedIp={selectedIp}
+              styledImageUrl={styledImageUrl}
             />}
 
             {currentStep === 4 && <VideoStep
@@ -687,6 +733,14 @@ export function GenerateVideoWizard({ productId }: { productId: string }) {
               canGenerate={!!selectedMovement && !!firstFrameUrl}
             />}
           </motion.div>
+
+          {/* Selection Summary - shows previous step inputs */}
+          <SelectionSummary
+            selectedIp={selectedIp}
+            modelImageUrl={modelImageUrl}
+            styledImageUrl={styledImageUrl}
+            firstFrameUrl={firstFrameUrl}
+          />
           </AnimatePresence>
         </div>
       </main>
@@ -855,6 +909,7 @@ function ModelImageStep({
   onSelectExisting,
   onGenerate,
   canGenerate,
+  selectedIp,
 }: {
   existingImage: string | null
   generatedImage: string | null
@@ -864,6 +919,7 @@ function ModelImageStep({
   onSelectExisting: (url: string) => void
   onGenerate: () => void
   canGenerate: boolean
+  selectedIp: VirtualIP | null
 }) {
   const previewUrl = mode === 'select' ? existingImage : generatedImage
 
@@ -881,6 +937,11 @@ function ModelImageStep({
         <p className="text-warm-silver">
           生成虚拟IP穿着服装的全身模特图
         </p>
+        {selectedIp && (
+          <p className="text-sm text-matcha-600 font-medium">
+            🎭 已选择虚拟IP: {selectedIp.name}
+          </p>
+        )}
       </div>
 
       {/* Mode Toggle */}
@@ -988,6 +1049,8 @@ function StyleImageStep({
   onPoseSelect,
   onMakeupSelect,
   onAccessorySelect,
+  selectedIp,
+  modelImageUrl,
 }: {
   existingImages: string[]
   generatedImage: string | null
@@ -1006,6 +1069,8 @@ function StyleImageStep({
   onPoseSelect: (pose: Material | null) => void
   onMakeupSelect: (makeup: Material | null) => void
   onAccessorySelect: (accessory: Material | null) => void
+  selectedIp: VirtualIP | null
+  modelImageUrl: string | null
 }) {
   const previewUrl = mode === 'select' ? generatedImage : generatedImage
 
@@ -1023,6 +1088,18 @@ function StyleImageStep({
         <p className="text-warm-silver">
           为虚拟IP选择姿势、妆容和饰品，生成定妆图
         </p>
+        <div className="flex flex-wrap gap-2 justify-center text-sm">
+          {selectedIp && (
+            <span className="px-2 py-0.5 rounded-full bg-matcha-100 text-matcha-700">
+              🎭 {selectedIp.name}
+            </span>
+          )}
+          {modelImageUrl && (
+            <span className="px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
+              👗 模特图已生成
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Mode Toggle */}
@@ -1248,6 +1325,8 @@ function FirstFrameStep({
   onSceneSelect,
   compositionText,
   onCompositionChange,
+  selectedIp,
+  styledImageUrl,
 }: {
   existingImages: string[]
   generatedImage: string | null
@@ -1262,6 +1341,8 @@ function FirstFrameStep({
   onSceneSelect: (scene: Material | null) => void
   compositionText: string
   onCompositionChange: (text: string) => void
+  selectedIp: VirtualIP | null
+  styledImageUrl: string | null
 }) {
   const previewUrl = mode === 'select' ? generatedImage : generatedImage
 
@@ -1279,6 +1360,18 @@ function FirstFrameStep({
         <p className="text-warm-silver">
           选择场景并描述构图，生成视频的首帧画面
         </p>
+        <div className="flex flex-wrap gap-2 justify-center text-sm">
+          {selectedIp && (
+            <span className="px-2 py-0.5 rounded-full bg-matcha-100 text-matcha-700">
+              🎭 {selectedIp.name}
+            </span>
+          )}
+          {styledImageUrl && (
+            <span className="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700">
+              💄 定妆图已生成
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Mode Toggle */}
@@ -1430,6 +1523,8 @@ function VideoStep({
   onMovementSelect,
   onGenerate,
   canGenerate,
+  selectedIp,
+  firstFrameUrl,
 }: {
   videoUrl: string | null
   isLoading: boolean
@@ -1439,6 +1534,8 @@ function VideoStep({
   onMovementSelect: (movement: Movement) => void
   onGenerate: () => void
   canGenerate: boolean
+  selectedIp: VirtualIP | null
+  firstFrameUrl: string | null
 }) {
   return (
     <motion.div
@@ -1454,6 +1551,18 @@ function VideoStep({
         <p className="text-warm-charcoal text-lg">
           选择动作，AI将生成带货视频
         </p>
+        <div className="flex flex-wrap gap-2 justify-center text-sm">
+          {selectedIp && (
+            <span className="px-2 py-0.5 rounded-full bg-matcha-100 text-matcha-700">
+              🎭 {selectedIp.name}
+            </span>
+          )}
+          {firstFrameUrl && (
+            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+              🖼️ 首帧图已选择
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Movement Selection */}
