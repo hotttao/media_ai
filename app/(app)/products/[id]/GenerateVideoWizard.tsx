@@ -74,6 +74,8 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [ipLoading, setIpLoading] = useState(true)
 
   // Step 2: Model Image
+  const [modelImageMode, setModelImageMode] = useState<'select' | 'generate'>('generate')
+  const [existingModelImages, setExistingModelImages] = useState<string[]>([])
   const [selectedProductImage, setSelectedProductImage] = useState<ProductImage | null>(null)
   const [modelImageUrl, setModelImageUrl] = useState<string | null>(null)
   const [modelImageLoading, setModelImageLoading] = useState(false)
@@ -142,16 +144,28 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
     }
   }, [selectedIp])
 
+  // Fetch existing model images when entering step 1
+  useEffect(() => {
+    if (currentStep === 1 && selectedIp) {
+      fetch(`/api/product-materials?productId=${product.id}&ipId=${selectedIp.id}`)
+        .then(res => res.json())
+        .then(data => {
+          const urls = data.filter((d: any) => d.fullBodyUrl).map((d: any) => d.fullBodyUrl)
+          setExistingModelImages(urls)
+        })
+    }
+  }, [currentStep, selectedIp, product.id])
+
   const goNext = () => setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1))
   const goBack = () => setCurrentStep(prev => Math.max(prev - 1, 0))
 
   const canProceed = () => {
     switch (currentStep) {
       case 0: return !!selectedIp
-      case 1: return !!selectedProductImage && !!selectedIp?.fullBodyUrl
-      case 2: return !!selectedPose && !!modelImageUrl
-      case 3: return !!selectedScene && !!composition && !!styledImageUrl
-      case 4: return !!selectedMovement && !!firstFrameUrl
+      case 1: return !!modelImageUrl
+      case 2: return !!selectedPose && !!styledImageUrl
+      case 3: return !!selectedScene && !!composition && !!firstFrameUrl
+      case 4: return !!selectedMovement && !!videoUrl
       default: return false
     }
   }
@@ -212,9 +226,13 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
               <ModelImageStep
                 product={product}
                 selectedIp={selectedIp}
+                mode={modelImageMode}
+                onModeChange={setModelImageMode}
+                existingImages={existingModelImages}
                 selectedProductImage={selectedProductImage}
                 onProductImageSelect={setSelectedProductImage}
                 modelImageUrl={modelImageUrl}
+                onSelectExisting={(url) => setModelImageUrl(url)}
                 loading={modelImageLoading}
                 onGenerate={async () => {
                   if (!selectedIp?.fullBodyUrl || !selectedProductImage) return
@@ -390,6 +408,9 @@ function SelectIPStep({
 function ModelImageStep({
   product,
   selectedIp,
+  mode,
+  onModeChange,
+  existingImages,
   selectedProductImage,
   onProductImageSelect,
   modelImageUrl,
@@ -399,13 +420,21 @@ function ModelImageStep({
 }: {
   product: Product
   selectedIp: VirtualIP | null
+  mode: 'select' | 'generate'
+  onModeChange: (mode: 'select' | 'generate') => void
+  existingImages: string[]
   selectedProductImage: ProductImage | null
   onProductImageSelect: (img: ProductImage) => void
   modelImageUrl: string | null
+  onSelectExisting: (url: string) => void
   loading: boolean
   onGenerate: () => void
   canGenerate: boolean
 }) {
+  const handleSelectExisting = (url: string) => {
+    onSelectExisting(url)
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -413,71 +442,126 @@ function ModelImageStep({
         <p className="text-warm-silver mt-1">选择产品图和虚拟IP全身图作为输入</p>
       </div>
 
-      {/* Mode Selection: Product Image + IP Full Body */}
-      <div className="space-y-3">
-        <h3 className="font-medium text-warm-charcoal">产品图</h3>
-        <div className="flex gap-3 overflow-x-auto pb-2">
-          {product.images.map((img) => (
-            <button
-              key={img.id}
-              onClick={() => onProductImageSelect(img)}
-              className={`
-                relative flex-shrink-0 w-32 h-48 rounded-xl overflow-hidden transition-all duration-300
-                ${selectedProductImage?.id === img.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
-              `}
-            >
-              <Image src={img.url} alt="产品图" fill className="object-cover" />
-              {img.isMain && (
-                <span className="absolute top-2 left-2 px-2 py-0.5 bg-matcha-600 text-white text-xs rounded-full">
-                  主图
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* IP Full Body */}
-      <div className="space-y-3">
-        <h3 className="font-medium text-warm-charcoal">虚拟IP全身图</h3>
-        <div className="relative w-40 h-60 rounded-2xl overflow-hidden bg-oat-light">
-          {selectedIp?.fullBodyUrl ? (
-            <Image src={selectedIp.fullBodyUrl} alt={selectedIp.nickname} fill className="object-cover" />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-warm-silver text-sm">
-              选择IP后显示
-            </div>
-          )}
-          {selectedIp && (
-            <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
-              <span className="text-white text-xs font-medium">{selectedIp.nickname}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Generate Button */}
-      <div className="flex justify-center">
+      {/* Mode Toggle */}
+      <div className="flex justify-center gap-2">
         <button
-          onClick={onGenerate}
-          disabled={!canGenerate || loading}
-          className="px-8 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          onClick={() => onModeChange('select')}
+          disabled={existingImages.length === 0}
+          className={`
+            px-6 py-2 rounded-xl font-medium transition-all
+            ${mode === 'select'
+              ? 'bg-matcha-600 text-white'
+              : 'bg-oat-light text-warm-charcoal hover:bg-oat disabled:opacity-50'
+            }
+          `}
         >
-          {loading ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              生成中...
-            </>
-          ) : (
-            '生成模特图'
-          )}
+          选择已有 ({existingImages.length})
+        </button>
+        <button
+          onClick={() => onModeChange('generate')}
+          className={`
+            px-6 py-2 rounded-xl font-medium transition-all
+            ${mode === 'generate'
+              ? 'bg-matcha-600 text-white'
+              : 'bg-oat-light text-warm-charcoal hover:bg-oat'
+            }
+          `}
+        >
+          生成新模特图
         </button>
       </div>
+
+      {mode === 'select' ? (
+        // Select existing images
+        <div className="space-y-3">
+          <h3 className="font-medium text-warm-charcoal">已有模特图</h3>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {existingImages.map((url, i) => (
+              <button
+                key={i}
+                onClick={() => handleSelectExisting(url)}
+                className={`
+                  relative flex-shrink-0 w-32 h-48 rounded-xl overflow-hidden transition-all duration-300
+                  ${modelImageUrl === url ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
+                `}
+              >
+                <Image src={url} alt={`已有模特图 ${i + 1}`} fill className="object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        // Generate new
+        <>
+          {/* Product Images */}
+          <div className="space-y-3">
+            <h3 className="font-medium text-warm-charcoal">产品图</h3>
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {product.images.map((img) => (
+                <button
+                  key={img.id}
+                  onClick={() => onProductImageSelect(img)}
+                  className={`
+                    relative flex-shrink-0 w-32 h-48 rounded-xl overflow-hidden transition-all duration-300
+                    ${selectedProductImage?.id === img.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
+                  `}
+                >
+                  <Image src={img.url} alt="产品图" fill className="object-cover" />
+                  {img.isMain && (
+                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-matcha-600 text-white text-xs rounded-full">
+                      主图
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* IP Full Body */}
+          <div className="space-y-3">
+            <h3 className="font-medium text-warm-charcoal">虚拟IP全身图</h3>
+            <div className="relative w-40 h-60 rounded-2xl overflow-hidden bg-oat-light">
+              {selectedIp?.fullBodyUrl ? (
+                <Image src={selectedIp.fullBodyUrl} alt={selectedIp.nickname} fill className="object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-warm-silver text-sm">
+                  选择IP后显示
+                </div>
+              )}
+              {selectedIp && (
+                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                  <span className="text-white text-xs font-medium">{selectedIp.nickname}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Generate Button */}
+          <div className="flex justify-center">
+            <button
+              onClick={onGenerate}
+              disabled={!canGenerate || loading}
+              className="px-8 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  生成中...
+                </>
+              ) : (
+                '生成模特图'
+              )}
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Result Preview */}
       {modelImageUrl && (
         <div className="max-w-sm mx-auto">
-          <h3 className="font-medium text-warm-charcoal text-center mb-3">生成的模特图</h3>
+          <h3 className="font-medium text-warm-charcoal text-center mb-3">
+            {mode === 'select' ? '已选模特图' : '生成的模特图'}
+          </h3>
           <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-oat-light">
             <Image src={modelImageUrl} alt="模特图" fill className="object-cover" />
           </div>
