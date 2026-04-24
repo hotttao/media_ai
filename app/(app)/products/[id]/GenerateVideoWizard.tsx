@@ -36,6 +36,7 @@ interface Movement {
   id: string
   content: string
   url: string | null
+  clothing?: string | null
 }
 
 // Step configuration - PRD 4.2
@@ -78,7 +79,9 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [existingModelImages, setExistingModelImages] = useState<string[]>([])
   const [selectedProductImage, setSelectedProductImage] = useState<ProductImage | null>(null)
   const [modelImageUrl, setModelImageUrl] = useState<string | null>(null)
+  const [modelImageId, setModelImageId] = useState<string | null>(null)
   const [modelImageLoading, setModelImageLoading] = useState(false)
+  const [savedModelImageUrl, setSavedModelImageUrl] = useState<string | null>(null)
 
   // Step 3: Style Image
   const [poses, setPoses] = useState<Material[]>([])
@@ -88,14 +91,19 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [selectedMakeup, setSelectedMakeup] = useState<Material | null>(null)
   const [selectedAccessory, setSelectedAccessory] = useState<Material | null>(null)
   const [styledImageUrl, setStyledImageUrl] = useState<string | null>(null)
+  const [styledImageId, setStyledImageId] = useState<string | null>(null)
+  const [styledImageMode, setStyledImageMode] = useState<'select' | 'generate'>('generate')
   const [styleImageLoading, setStyleImageLoading] = useState(false)
+  const [savedStyledImageUrl, setSavedStyledImageUrl] = useState<string | null>(null)
 
   // Step 4: First Frame
   const [scenes, setScenes] = useState<Material[]>([])
   const [selectedScene, setSelectedScene] = useState<Material | null>(null)
   const [composition, setComposition] = useState('')
   const [firstFrameUrl, setFirstFrameUrl] = useState<string | null>(null)
+  const [firstFrameId, setFirstFrameId] = useState<string | null>(null)
   const [firstFrameLoading, setFirstFrameLoading] = useState(false)
+  const [savedFirstFrameUrl, setSavedFirstFrameUrl] = useState<string | null>(null)
 
   // Step 5: Video
   const [movements, setMovements] = useState<Movement[]>([])
@@ -147,24 +155,98 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   // Fetch existing model images when entering step 1
   useEffect(() => {
     if (currentStep === 1 && selectedIp) {
-      fetch(`/api/product-materials?productId=${product.id}&ipId=${selectedIp.id}`)
+      fetch(`/api/products/${product.id}/model-images?ipId=${selectedIp.id}`)
         .then(res => res.json())
-        .then(data => {
-          const urls = data.filter((d: any) => d.fullBodyUrl).map((d: any) => d.fullBodyUrl)
+        .then((data: any[]) => {
+          const urls = [...new Set(data.map(d => d.url).filter(Boolean))] as string[]
           setExistingModelImages(urls)
         })
     }
   }, [currentStep, selectedIp, product.id])
 
-  const goNext = () => setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1))
+  const goNext = async () => {
+    // Step 1: 如果有新的模特图（上传或生成），保存到 ModelImage 表
+    if (currentStep === 1 && modelImageUrl && modelImageUrl !== savedModelImageUrl) {
+      try {
+        // 如果还没有保存过（上传时已保存的情况会跳过）
+        if (!modelImageId) {
+          const res = await fetch(`/api/products/${product.id}/model-image/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ipId: selectedIp?.id,
+              imageUrl: modelImageUrl,
+            }),
+          })
+          if (res.ok) {
+            const data = await res.json()
+            setModelImageId(data.modelImageId)
+          }
+        }
+        setSavedModelImageUrl(modelImageUrl)
+      } catch (err) {
+        console.error('Failed to save model image:', err)
+      }
+    }
+    // Step 2: 保存定妆图
+    if (currentStep === 2 && styledImageUrl && styledImageUrl !== savedStyledImageUrl && modelImageId) {
+      try {
+        if (!styledImageId) {
+          const res = await fetch(`/api/products/${product.id}/style-image/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              modelImageId: modelImageId,
+              poseId: selectedPose?.id,
+              makeupId: selectedMakeup?.id,
+              accessoryId: selectedAccessory?.id,
+              imageUrl: styledImageUrl,
+            }),
+          })
+          if (res.ok) {
+            const data = await res.json()
+            setStyledImageId(data.styleImageId)
+          }
+        }
+        setSavedStyledImageUrl(styledImageUrl)
+      } catch (err) {
+        console.error('Failed to save styled image:', err)
+      }
+    }
+    // Step 3: 保存首帧图
+    if (currentStep === 3 && firstFrameUrl && firstFrameUrl !== savedFirstFrameUrl && styledImageId) {
+      try {
+        if (!firstFrameId) {
+          const res = await fetch(`/api/products/${product.id}/first-frame`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              styleImageId: styledImageId,
+              sceneId: selectedScene?.id,
+              composition: composition,
+              imageUrl: firstFrameUrl,
+            }),
+          })
+          if (res.ok) {
+            const data = await res.json()
+            setFirstFrameId(data.firstFrameId)
+          }
+        }
+        setSavedFirstFrameUrl(firstFrameUrl)
+      } catch (err) {
+        console.error('Failed to save first frame:', err)
+      }
+    }
+    setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1))
+  }
   const goBack = () => setCurrentStep(prev => Math.max(prev - 1, 0))
 
   const canProceed = () => {
     switch (currentStep) {
       case 0: return !!selectedIp
       case 1: return !!modelImageUrl
-      case 2: return !!selectedPose && !!styledImageUrl
-      case 3: return !!selectedScene && !!composition && !!firstFrameUrl
+      case 2: return !!selectedPose && !!styledImageUrl && !!modelImageId
+      case 3: return !!selectedScene && !!firstFrameUrl && !!composition && !!styledImageId
       case 4: return !!selectedMovement && !!videoUrl
       default: return false
     }
@@ -233,6 +315,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 onProductImageSelect={setSelectedProductImage}
                 modelImageUrl={modelImageUrl}
                 onSelectExisting={(url) => setModelImageUrl(url)}
+                onSelectModelImageId={setModelImageId}
                 loading={modelImageLoading}
                 onGenerate={async () => {
                   if (!selectedIp?.fullBodyUrl || !selectedProductImage) return
@@ -251,6 +334,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                     if (res.ok) {
                       const data = await res.json()
                       setModelImageUrl(data.modelImageUrl)
+                      setModelImageId(data.modelImageId)
                     } else {
                       setError('生成失败')
                     }
@@ -266,6 +350,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
 
             {currentStep === 2 && (
               <StyleImageStep
+                productId={product.id}
                 poses={poses}
                 makeups={makeups}
                 accessories={accessories}
@@ -276,29 +361,40 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 onMakeupSelect={setSelectedMakeup}
                 onAccessorySelect={setSelectedAccessory}
                 styledImageUrl={styledImageUrl}
+                styledImageMode={styledImageMode}
+                onModeChange={setStyledImageMode}
+                onSelectExisting={setStyledImageUrl}
+                onSelectStyleImageId={setStyledImageId}
+                modelImageUrl={modelImageUrl}
+                modelImageId={modelImageId}
                 loading={styleImageLoading}
                 onGenerate={async () => {
-                  // TODO: call style image API
+                  // TODO: call style image generation API
                   setStyleImageLoading(false)
                 }}
-                canGenerate={!!selectedPose}
+                canGenerate={!!selectedPose && !!modelImageId}
               />
             )}
 
             {currentStep === 3 && (
               <FirstFrameStep
+                productId={product.id}
                 scenes={scenes}
                 selectedScene={selectedScene}
                 onSceneSelect={setSelectedScene}
                 composition={composition}
                 onCompositionChange={setComposition}
                 firstFrameUrl={firstFrameUrl}
+                styledImageUrl={styledImageUrl}
+                styledImageId={styledImageId}
+                onSelectExisting={setFirstFrameUrl}
+                onSelectFirstFrameId={setFirstFrameId}
                 loading={firstFrameLoading}
                 onGenerate={async () => {
-                  // TODO: call first frame API
+                  // TODO: call first frame generation API
                   setFirstFrameLoading(false)
                 }}
-                canGenerate={!!selectedScene && !!composition}
+                canGenerate={!!selectedScene && !!composition && !!styledImageId}
               />
             )}
 
@@ -415,6 +511,7 @@ function ModelImageStep({
   onProductImageSelect,
   modelImageUrl,
   onSelectExisting,
+  onSelectModelImageId,
   loading,
   onGenerate,
   canGenerate,
@@ -428,10 +525,13 @@ function ModelImageStep({
   onProductImageSelect: (img: ProductImage) => void
   modelImageUrl: string | null
   onSelectExisting: (url: string) => void
+  onSelectModelImageId: (id: string) => void
   loading: boolean
   onGenerate: () => void
   canGenerate: boolean
 }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
   return (
     <div className="space-y-6">
       {/* Row 1: IP Full Body */}
@@ -439,12 +539,18 @@ function ModelImageStep({
         <span className="text-sm text-warm-silver w-20">虚拟IP</span>
         <div className="flex flex-wrap gap-3">
           <div className={`
-            relative w-28 h-40 rounded-xl overflow-hidden transition-all duration-300
+            relative w-28 h-40 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer
             ${selectedIp?.fullBodyUrl ? 'ring-4 ring-violet-500' : 'bg-oat-light'}
           `}>
             {selectedIp?.fullBodyUrl ? (
               <>
-                <Image src={selectedIp.fullBodyUrl} alt={selectedIp.nickname} fill className="object-cover" />
+                <Image
+                  src={selectedIp.fullBodyUrl}
+                  alt={selectedIp.nickname}
+                  fill
+                  className="object-cover"
+                  onDoubleClick={() => setPreviewUrl(selectedIp.fullBodyUrl)}
+                />
                 <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
                   <span className="text-white text-xs font-medium">{selectedIp.nickname}</span>
                 </div>
@@ -471,7 +577,13 @@ function ModelImageStep({
                 ${selectedProductImage?.id === img.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
               `}
             >
-              <Image src={img.url} alt="产品图" fill className="object-cover" />
+              <Image
+                src={img.url}
+                alt="产品图"
+                fill
+                className="object-cover"
+                onDoubleClick={() => setPreviewUrl(img.url)}
+              />
               {img.isMain && (
                 <span className="absolute top-2 left-2 px-2 py-0.5 bg-matcha-600 text-white text-xs rounded-full">
                   主图
@@ -503,12 +615,57 @@ function ModelImageStep({
                   ${modelImageUrl === url ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
                 `}
               >
-                <Image src={url} alt={`已有模特图 ${i + 1}`} fill className="object-cover" />
+                <Image
+                  src={url}
+                  alt={`已有模特图 ${i + 1}`}
+                  fill
+                  className="object-cover"
+                  onDoubleClick={() => setPreviewUrl(url)}
+                />
               </button>
             ))
           )}
         </div>
       </div>
+
+      {/* Result Preview */}
+      {modelImageUrl && (
+        <div className="flex items-start gap-3">
+          <span className="text-sm text-warm-silver w-20 pt-3">生成结果</span>
+          <div
+            className="relative w-28 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            onDoubleClick={() => setPreviewUrl(modelImageUrl)}
+          >
+            <Image src={modelImageUrl} alt="模特图" fill className="object-cover" />
+          </div>
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-8"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div className="relative max-w-full max-h-full">
+            <Image
+              src={previewUrl}
+              alt="预览"
+              width={800}
+              height={1000}
+              className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-2xl"
+            />
+            <button
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
+              onClick={() => setPreviewUrl(null)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Row 3: Generate Button */}
       <div className="flex justify-center gap-3 pt-4 border-t border-oat">
@@ -529,7 +686,20 @@ function ModelImageStep({
                 const res = await fetch('/api/upload', { method: 'POST', body: formData })
                 if (res.ok) {
                   const data = await res.json()
-                  onSelectExisting(data.url)
+                  // 保存到 ModelImage 表
+                  const saveRes = await fetch(`/api/products/${product.id}/model-image/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      ipId: selectedIp?.id,
+                      imageUrl: data.url,
+                    }),
+                  })
+                  if (saveRes.ok) {
+                    const saveData = await saveRes.json()
+                    onSelectExisting(data.url)
+                    onSelectModelImageId(saveData.modelImageId)
+                  }
                 }
               }
             }}
@@ -550,24 +720,13 @@ function ModelImageStep({
           )}
         </button>
       </div>
-
-      {/* Result Preview */}
-      {modelImageUrl && (
-        <div className="max-w-sm mx-auto pt-4 border-t border-oat">
-          <h3 className="font-medium text-warm-charcoal text-center mb-3">
-            {mode === 'select' ? '已选模特图' : '生成的模特图'}
-          </h3>
-          <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-oat-light">
-            <Image src={modelImageUrl} alt="模特图" fill className="object-cover" />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
 
 // Step 3: Style Image (定妆图)
 function StyleImageStep({
+  productId,
   poses,
   makeups,
   accessories,
@@ -578,10 +737,17 @@ function StyleImageStep({
   onMakeupSelect,
   onAccessorySelect,
   styledImageUrl,
+  styledImageMode,
+  onModeChange,
+  onSelectExisting,
+  onSelectStyleImageId,
+  modelImageUrl,
+  modelImageId,
   loading,
   onGenerate,
   canGenerate,
 }: {
+  productId: string
   poses: Material[]
   makeups: Material[]
   accessories: Material[]
@@ -592,10 +758,18 @@ function StyleImageStep({
   onMakeupSelect: (m: Material | null) => void
   onAccessorySelect: (m: Material | null) => void
   styledImageUrl: string | null
+  styledImageMode: 'select' | 'generate'
+  onModeChange: (mode: 'select' | 'generate') => void
+  onSelectExisting: (url: string) => void
+  onSelectStyleImageId: (id: string) => void
+  modelImageUrl: string | null
+  modelImageId: string | null
   loading: boolean
   onGenerate: () => void
   canGenerate: boolean
 }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -603,17 +777,30 @@ function StyleImageStep({
         <p className="text-warm-silver mt-1">选择姿势、妆容和饰品（姿势必选）</p>
       </div>
 
+      {/* Model Image Reference */}
+      {modelImageUrl && (
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-warm-silver w-20">模特图</span>
+          <div
+            className="relative w-28 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            onDoubleClick={() => setPreviewUrl(modelImageUrl)}
+          >
+            <Image src={modelImageUrl} alt="模特图" fill className="object-cover" />
+          </div>
+        </div>
+      )}
+
       {/* Pose Selection */}
-      <div className="space-y-3">
-        <h3 className="font-medium text-warm-charcoal">姿势 <span className="text-red-500">*</span></h3>
-        <div className="grid grid-cols-4 gap-3">
+      <div className="flex items-start gap-3">
+        <span className="text-sm text-warm-silver w-20 pt-3">姿势 <span className="text-red-500">*</span></span>
+        <div className="flex flex-wrap gap-3">
           {poses.map((pose) => (
             <button
               key={pose.id}
               onClick={() => onPoseSelect(selectedPose?.id === pose.id ? null : pose)}
               className={`
-                relative aspect-square rounded-xl overflow-hidden transition-all duration-300
-                ${selectedPose?.id === pose.id ? 'ring-4 ring-matcha-600' : 'hover:scale-105'}
+                relative w-20 h-40 rounded-xl overflow-hidden transition-all duration-300
+                ${selectedPose?.id === pose.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
               `}
             >
               <Image src={pose.url} alt={pose.name} fill className="object-cover" />
@@ -623,16 +810,16 @@ function StyleImageStep({
       </div>
 
       {/* Makeup Selection */}
-      <div className="space-y-3">
-        <h3 className="font-medium text-warm-charcoal">妆容（可选）</h3>
-        <div className="grid grid-cols-4 gap-3">
+      <div className="flex items-start gap-3">
+        <span className="text-sm text-warm-silver w-20 pt-3">妆容</span>
+        <div className="flex flex-wrap gap-3">
           {makeups.map((makeup) => (
             <button
               key={makeup.id}
               onClick={() => onMakeupSelect(selectedMakeup?.id === makeup.id ? null : makeup)}
               className={`
-                relative aspect-square rounded-xl overflow-hidden transition-all duration-300
-                ${selectedMakeup?.id === makeup.id ? 'ring-4 ring-pink-600' : 'hover:scale-105'}
+                relative w-20 h-40 rounded-xl overflow-hidden transition-all duration-300
+                ${selectedMakeup?.id === makeup.id ? 'ring-4 ring-pink-600' : 'hover:ring-2 ring-oat'}
               `}
             >
               <Image src={makeup.url} alt={makeup.name} fill className="object-cover" />
@@ -642,16 +829,16 @@ function StyleImageStep({
       </div>
 
       {/* Accessory Selection */}
-      <div className="space-y-3">
-        <h3 className="font-medium text-warm-charcoal">饰品（可选）</h3>
-        <div className="grid grid-cols-4 gap-3">
+      <div className="flex items-start gap-3">
+        <span className="text-sm text-warm-silver w-20 pt-3">饰品</span>
+        <div className="flex flex-wrap gap-3">
           {accessories.map((acc) => (
             <button
               key={acc.id}
               onClick={() => onAccessorySelect(selectedAccessory?.id === acc.id ? null : acc)}
               className={`
-                relative aspect-square rounded-xl overflow-hidden transition-all duration-300
-                ${selectedAccessory?.id === acc.id ? 'ring-4 ring-violet-600' : 'hover:scale-105'}
+                relative w-20 h-40 rounded-xl overflow-hidden transition-all duration-300
+                ${selectedAccessory?.id === acc.id ? 'ring-4 ring-violet-600' : 'hover:ring-2 ring-oat'}
               `}
             >
               <Image src={acc.url} alt={acc.name} fill className="object-cover" />
@@ -660,23 +847,103 @@ function StyleImageStep({
         </div>
       </div>
 
+      {/* Result Preview */}
+      {styledImageUrl && (
+        <div className="flex items-start gap-3">
+          <span className="text-sm text-warm-silver w-20 pt-3">生成结果</span>
+          <div
+            className="relative w-28 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            onDoubleClick={() => setPreviewUrl(styledImageUrl)}
+          >
+            <Image src={styledImageUrl} alt="定妆图" fill className="object-cover" />
+          </div>
+        </div>
+      )}
+
       {/* Generate Button */}
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-3 pt-4 border-t border-oat">
+        <label className="px-6 py-3 rounded-xl bg-white border border-oat text-warm-charcoal font-medium hover:bg-oat-light cursor-pointer flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          上传定妆图
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (file) {
+                const formData = new FormData()
+                formData.append('file', file)
+                const res = await fetch('/api/upload', { method: 'POST', body: formData })
+                if (res.ok) {
+                  const data = await res.json()
+                  // 保存到 StyleImage 表
+                  if (modelImageId) {
+                    const saveRes = await fetch(`/api/products/${productId}/style-image/save`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        modelImageId: modelImageId,
+                        poseId: selectedPose?.id,
+                        makeupId: selectedMakeup?.id,
+                        accessoryId: selectedAccessory?.id,
+                        imageUrl: data.url,
+                      }),
+                    })
+                    if (saveRes.ok) {
+                      const saveData = await saveRes.json()
+                      onSelectExisting(data.url)
+                      onSelectStyleImageId(saveData.styleImageId)
+                    }
+                  } else {
+                    onSelectExisting(data.url)
+                  }
+                  onModeChange('select')
+                }
+              }
+            }}
+          />
+        </label>
         <button
           onClick={onGenerate}
           disabled={!canGenerate || loading}
-          className="px-8 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-8 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {loading ? '生成中...' : '生成定妆图'}
+          {loading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              生成中...
+            </>
+          ) : (
+            '生成定妆图'
+          )}
         </button>
       </div>
 
-      {/* Result Preview */}
-      {styledImageUrl && (
-        <div className="max-w-sm mx-auto">
-          <h3 className="font-medium text-warm-charcoal text-center mb-3">生成的定妆图</h3>
-          <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-oat-light">
-            <Image src={styledImageUrl} alt="定妆图" fill className="object-cover" />
+      {/* Image Preview Modal */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-8"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div className="relative max-w-full max-h-full">
+            <Image
+              src={previewUrl}
+              alt="预览"
+              width={800}
+              height={1000}
+              className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-2xl"
+            />
+            <button
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
+              onClick={() => setPreviewUrl(null)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
@@ -686,26 +953,38 @@ function StyleImageStep({
 
 // Step 4: First Frame
 function FirstFrameStep({
+  productId,
   scenes,
   selectedScene,
   onSceneSelect,
   composition,
   onCompositionChange,
   firstFrameUrl,
+  styledImageUrl,
+  styledImageId,
+  onSelectExisting,
+  onSelectFirstFrameId,
   loading,
   onGenerate,
   canGenerate,
 }: {
+  productId: string
   scenes: Material[]
   selectedScene: Material | null
   onSceneSelect: (m: Material) => void
   composition: string
   onCompositionChange: (text: string) => void
   firstFrameUrl: string | null
+  styledImageUrl: string | null
+  styledImageId: string | null
+  onSelectExisting: (url: string) => void
+  onSelectFirstFrameId: (id: string) => void
   loading: boolean
   onGenerate: () => void
   canGenerate: boolean
 }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -713,22 +992,33 @@ function FirstFrameStep({
         <p className="text-warm-silver mt-1">选择场景并描述构图</p>
       </div>
 
+      {/* Styled Image Reference */}
+      {styledImageUrl && (
+        <div className="flex items-start gap-3">
+          <span className="text-sm text-warm-silver w-20 pt-3">定妆图</span>
+          <div
+            className="relative w-20 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            onDoubleClick={() => setPreviewUrl(styledImageUrl)}
+          >
+            <Image src={styledImageUrl} alt="定妆图" fill className="object-cover" />
+          </div>
+        </div>
+      )}
+
       {/* Scene Selection */}
-      <div className="space-y-3">
-        <h3 className="font-medium text-warm-charcoal">场景</h3>
-        <div className="grid grid-cols-4 gap-3">
+      <div className="flex items-start gap-3">
+        <span className="text-sm text-warm-silver w-20 pt-3">场景</span>
+        <div className="flex flex-wrap gap-3">
           {scenes.map((scene) => (
             <button
               key={scene.id}
               onClick={() => onSceneSelect(scene)}
               className={`
-                relative aspect-video rounded-xl overflow-hidden transition-all duration-300
-                ${selectedScene?.id === scene.id ? 'ring-4 ring-matcha-600' : 'hover:scale-105'}
+                relative w-20 h-40 rounded-xl overflow-hidden transition-all duration-300
+                ${selectedScene?.id === scene.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
               `}
             >
               <Image src={scene.url} alt={scene.name} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-              <span className="absolute bottom-2 left-2 text-white text-sm font-medium">{scene.name}</span>
             </button>
           ))}
         </div>
@@ -745,23 +1035,101 @@ function FirstFrameStep({
         />
       </div>
 
-      {/* Generate Button */}
-      <div className="flex justify-center">
+      {/* Result Preview */}
+      {firstFrameUrl && (
+        <div className="flex items-start gap-3">
+          <span className="text-sm text-warm-silver w-20 pt-3">生成结果</span>
+          <div
+            className="relative w-20 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            onDoubleClick={() => setPreviewUrl(firstFrameUrl)}
+          >
+            <Image src={firstFrameUrl} alt="首帧图" fill className="object-cover" />
+          </div>
+        </div>
+      )}
+
+      {/* Upload and Generate Button */}
+      <div className="flex justify-center gap-3 pt-4 border-t border-oat">
+        <label className="px-6 py-3 rounded-xl bg-white border border-oat text-warm-charcoal font-medium hover:bg-oat-light cursor-pointer flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          上传首帧图
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (file) {
+                const formData = new FormData()
+                formData.append('file', file)
+                const res = await fetch('/api/upload', { method: 'POST', body: formData })
+                if (res.ok) {
+                  const data = await res.json()
+                  // 保存到 FirstFrame 表
+                  if (styledImageId) {
+                    const saveRes = await fetch(`/api/products/${productId}/first-frame`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        styleImageId: styledImageId,
+                        sceneId: selectedScene?.id,
+                        composition: composition,
+                        imageUrl: data.url,
+                      }),
+                    })
+                    if (saveRes.ok) {
+                      const saveData = await saveRes.json()
+                      onSelectExisting(data.url)
+                      onSelectFirstFrameId(saveData.firstFrameId)
+                    }
+                  } else {
+                    onSelectExisting(data.url)
+                  }
+                }
+              }
+            }}
+          />
+        </label>
         <button
           onClick={onGenerate}
           disabled={!canGenerate || loading}
-          className="px-8 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-8 py-3 rounded-xl bg-matcha-600 text-white font-medium hover:bg-matcha-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {loading ? '生成中...' : '生成首帧图'}
+          {loading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              生成中...
+            </>
+          ) : (
+            '生成首帧图'
+          )}
         </button>
       </div>
 
-      {/* Result Preview */}
-      {firstFrameUrl && (
-        <div className="max-w-sm mx-auto">
-          <h3 className="font-medium text-warm-charcoal text-center mb-3">生成的首帧图</h3>
-          <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-oat-light">
-            <Image src={firstFrameUrl} alt="首帧图" fill className="object-cover" />
+      {/* Image Preview Modal */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-8"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div className="relative max-w-full max-h-full">
+            <Image
+              src={previewUrl}
+              alt="预览"
+              width={800}
+              height={1000}
+              className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-2xl"
+            />
+            <button
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
+              onClick={() => setPreviewUrl(null)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}

@@ -3,9 +3,8 @@ import { db } from '@/foundation/lib/db'
 import { v4 as uuid } from 'uuid'
 import { providerRegistry } from '@/foundation/providers/registry'
 import { ImageBlendTool, SceneReplaceTool, ImageToVideoTool, MotionTransferTool, ModelImageTool, StyleImageTool, MultiImageEditTool } from './tools'
-import { createProductMaterial, updateProductMaterial } from '@/domains/product-material/service'
 import { getMovementMaterialById } from '@/domains/movement-material/service'
-import type { EffectImageGenerationResult, VideoGenerationResult, ModelImageGenerationResult, StyleImageGenerationResult, FirstFrameGenerationResult } from './types'
+import type { VideoGenerationResult, ModelImageGenerationResult, StyleImageGenerationResult, FirstFrameGenerationResult } from './types'
 import type { ToolResult } from '@/foundation/providers/ToolProvider'
 
 const PROVIDER_NAME = 'runninghub' as const
@@ -56,7 +55,7 @@ export async function generateModelImage(
   // 3. 检查是否已存在相同输入的生成结果
   const existing = await db.modelImage.findUnique({
     where: {
-      productId_ipId_inputHash: { productId, ipId, inputHash }
+      uniq_model_images_dedup: { productId, ipId, inputHash }
     }
   })
   if (existing) {
@@ -119,7 +118,7 @@ export async function generateStyleImage(
   // 3. 检查是否已存在相同输入的生成结果
   const existing = await db.styleImage.findUnique({
     where: {
-      modelImageId_inputHash: { modelImageId, inputHash }
+      uniq_style_images_dedup: { modelImageId, inputHash }
     }
   })
   if (existing) {
@@ -160,116 +159,6 @@ export async function generateStyleImage(
 }
 
 /**
- * 生成效果图
- * 流程: 人物图 + 服装图 → 效果图1 → 效果图1 + 场景图 → 效果图2 → (有妆容)效果图2 + 妆容 → 最终效果图
- */
-export async function generateEffectImage(
-  productId: string,
-  ipId: string,
-  sceneId: string,
-  poseId?: string,
-  makeupId?: string
-): Promise<EffectImageGenerationResult> {
-  // 1. 获取 IP 的人物图 (fullBodyUrl)
-  const ip = await db.virtualIp.findUnique({
-    where: { id: ipId },
-    select: { fullBodyUrl: true },
-  })
-  if (!ip?.fullBodyUrl) {
-    throw new Error(`IP ${ipId} not found or has no fullBodyUrl`)
-  }
-  const fullBodyUrl = ip.fullBodyUrl
-
-  // 2. 获取产品服装图（主图）
-  const product = await db.product.findUnique({
-    where: { id: productId },
-    include: { images: { where: { isMain: true }, take: 1 } },
-  })
-  if (!product || product.images.length === 0) {
-    throw new Error(`Product ${productId} has no main image`)
-  }
-  const clothingUrl = product.images[0].url
-
-  // 3. 获取场景图
-  const scene = await db.material.findUnique({
-    where: { id: sceneId },
-    select: { url: true },
-  })
-  if (!scene?.url) {
-    throw new Error(`Scene ${sceneId} not found or has no url`)
-  }
-  const sceneUrl = scene.url
-
-  const provider = getRunningHubProvider()
-
-  // 4. 双图编辑：人物 + 服装 → 效果图1
-  const blendResult1: ToolResult = await provider.execute(
-    ImageBlendTool.workflowId,
-    {
-      imageA: fullBodyUrl,
-      imageB: clothingUrl,
-      prompt: '将服装自然地穿在人物身上，保持人物姿态和面部特征',
-    }
-  )
-  if (blendResult1.error || !blendResult1.outputs.result) {
-    throw new Error(`Image blend 1 failed: ${blendResult1.error}`)
-  }
-  const result1Url = blendResult1.outputs.result
-
-  // 5. 双图编辑：效果图1 + 场景 → 效果图2
-  const blendResult2: ToolResult = await provider.execute(
-    ImageBlendTool.workflowId,
-    {
-      imageA: result1Url,
-      imageB: sceneUrl,
-      prompt: '将人物与场景自然融合，保持光影协调',
-    }
-  )
-  if (blendResult2.error || !blendResult2.outputs.result) {
-    throw new Error(`Image blend 2 failed: ${blendResult2.error}`)
-  }
-  let finalUrl = blendResult2.outputs.result
-
-  // 6. 如果有妆容，双图编辑：效果图2 + 妆容 → 最终效果图
-  if (makeupId) {
-    const makeup = await db.ipMaterial.findUnique({
-      where: { id: makeupId },
-      select: { fullBodyUrl: true },
-    })
-    if (!makeup?.fullBodyUrl) {
-      throw new Error(`Makeup ${makeupId} not found or has no fullBodyUrl`)
-    }
-    const blendResult3: ToolResult = await provider.execute(
-      ImageBlendTool.workflowId,
-      {
-        imageA: finalUrl,
-        imageB: makeup.fullBodyUrl,
-        prompt: '将妆容自然地应用在人物面部，保持整体效果协调',
-      }
-    )
-    if (blendResult3.error || !blendResult3.outputs.result) {
-      throw new Error(`Makeup blend failed: ${blendResult3.error}`)
-    }
-    finalUrl = blendResult3.outputs.result
-  }
-
-  // 7. 保存到 product_materials 表
-  const productMaterial = await createProductMaterial({
-    productId,
-    ipId,
-    sceneId,
-    poseId,
-    fullBodyUrl: finalUrl,
-  })
-
-  // 8. 返回 fullBodyUrl 和 productMaterialId
-  return {
-    fullBodyUrl: finalUrl,
-    productMaterialId: productMaterial.id,
-  }
-}
-
-/**
  * 生成首帧图 (新版)
  * 流程: 定妆图 + 场景图 + 构图 → 首帧图
  * 使用 first_frames 表 + inputHash 去重
@@ -288,7 +177,7 @@ export async function generateFirstFrame(
   // 2. 检查是否已存在相同输入的生成结果
   const existing = await db.firstFrame.findUnique({
     where: {
-      productId_ipId_sceneId_inputHash: { productId, ipId, sceneId, inputHash }
+      uniq_first_frames_dedup: { productId, ipId, sceneId, inputHash }
     }
   })
   if (existing) {
@@ -342,8 +231,7 @@ export async function generateVideo(
   teamId: string,
   ipId: string,
   firstFrameUrl: string,
-  movementId: string,
-  productMaterialId?: string
+  movementId: string
 ): Promise<VideoGenerationResult> {
   // 1. 获取动作信息 (movement)
   const movement = await getMovementMaterialById(movementId)
@@ -403,10 +291,9 @@ export async function generateVideo(
     return video
   })
 
-  // 5. 返回 videoId, videoUrl, productMaterialId
+  // 5. 返回 videoId, videoUrl
   return {
     videoId: video.id,
     videoUrl: video.url,
-    productMaterialId: productMaterialId || '',
   }
 }

@@ -12,22 +12,16 @@ export interface VideoGenerationInput {
 export interface VideoGenerationResult {
   videoId: string
   videoUrl: string
-  productMaterialId: string
-}
-
-export interface EffectImageGenerationResult {
-  fullBodyUrl: string
-  productMaterialId: string
 }
 
 export interface ModelImageGenerationResult {
   modelImageUrl: string
-  modelImageId: string // NEW
+  modelImageId: string
 }
 
 export interface StyleImageGenerationResult {
   styledImageUrl: string
-  styleImageId: string // NEW
+  styleImageId: string
 }
 
 export interface FirstFrameGenerationResult {

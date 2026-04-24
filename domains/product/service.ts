@@ -69,7 +69,7 @@ export async function getProducts(
 export async function getProductById(id: string) {
   return db.product.findUnique({
     where: { id },
-    include: { images: { orderBy: { order: 'asc' } } },
+    include: { images: true },
   })
 }
 
@@ -108,5 +108,23 @@ export async function deleteProduct(id: string, userId: string, teamId: string) 
       userId,
       teamId,
     },
+  })
+}
+
+export async function addProductImage(productId: string, url: string) {
+  return db.productImage.create({
+    data: {
+      id: uuid(),
+      productId,
+      url,
+      isMain: false,
+      order: 0,
+    },
+  })
+}
+
+export async function deleteProductImage(imageId: string) {
+  return db.productImage.delete({
+    where: { id: imageId },
   })
 }

@@ -88,7 +88,6 @@ model VirtualIp {
   smallHabit       String?           @map("small_habit") @db.VarChar(500)
   threeViewUrl     String?           @map("three_view_url") @db.VarChar(500)
   ipMaterials      IpMaterial[]      @relation("VirtualIpToIpMaterials")
-  productMaterials ProductMaterial[] @relation("ProductMaterialToVirtualIp")
   videoTasks       VideoTask[]       @relation("VirtualIpToVideoTasks")
   videos           Video[]           @relation("VirtualIpToVideos")
   team             Team              @relation("TeamToVirtualIps", fields: [teamId], references: [id])
@@ -114,8 +113,6 @@ model Material {
   ipMaterials           IpMaterial[]      @relation("IpMaterialToMaterial")
   team                  Team?             @relation("TeamToMaterials", fields: [teamId], references: [id])
   user                  User?             @relation("UserToMaterials", fields: [userId], references: [id])
-  productMaterialPoses  ProductMaterial[] @relation("PoseMaterial")
-  productMaterialScenes ProductMaterial[] @relation("SceneMaterial")
 
   @@index([teamId], map: "materials_team_id_fkey")
   @@index([userId], map: "materials_user_id_fkey")
@@ -202,7 +199,6 @@ model Product {
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
   images           ProductImage[]    @relation("ProductToImages")
-  productMaterials ProductMaterial[] @relation("ProductToProductMaterials")
   team             Team              @relation("TeamToProducts", fields: [teamId], references: [id])
   user             User              @relation("UserToProducts", fields: [userId], references: [id])
   videos           Video[]           @relation("ProductToVideos")
@@ -249,29 +245,6 @@ model Video {
   @@index([teamId], map: "videos_team_id_fkey")
   @@index([userId], map: "videos_user_id_fkey")
   @@map("videos")
-}
-
-model ProductMaterial {
-  id            String     @id @default(uuid()) @db.VarChar(36)
-  productId     String     @map("product_id") @db.VarChar(36)
-  ipId          String?    @map("ip_id") @db.VarChar(36)
-  sceneId       String?    @map("scene_id") @db.VarChar(36)
-  poseId        String?    @map("pose_id") @db.VarChar(36)
-  fullBodyUrl   String?    @map("full_body_url") @db.VarChar(500)
-  threeViewUrl  String?    @map("three_view_url") @db.VarChar(500)
-  nineViewUrl   String?    @map("nine_view_url") @db.VarChar(500)
-  firstFrameUrl String?    @map("first_frame_url") @db.VarChar(500)
-  createdAt     DateTime   @default(now()) @map("created_at")
-  ip            VirtualIp? @relation("ProductMaterialToVirtualIp", fields: [ipId], references: [id], onUpdate: Restrict, map: "fk_product_materials_ip")
-  pose          Material?  @relation("PoseMaterial", fields: [poseId], references: [id], onUpdate: Restrict, map: "fk_product_materials_pose")
-  product       Product    @relation("ProductToProductMaterials", fields: [productId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_product_materials_product")
-  scene         Material?  @relation("SceneMaterial", fields: [sceneId], references: [id], onUpdate: Restrict, map: "fk_product_materials_scene")
-
-  @@index([ipId], map: "fk_product_materials_ip")
-  @@index([poseId], map: "fk_product_materials_pose")
-  @@index([productId], map: "fk_product_materials_product")
-  @@index([sceneId], map: "fk_product_materials_scene")
-  @@map("product_materials")
 }
 
 model MovementMaterial {
