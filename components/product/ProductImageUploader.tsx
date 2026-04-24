@@ -124,7 +124,7 @@ export function ProductImageUploader({ images, onChange }: ProductImageUploaderP
           {images.map((image, index) => (
             <div
               key={index}
-              className="relative aspect-square rounded-xl overflow-hidden group"
+              className="relative aspect-[9/16] max-w-24 rounded-xl overflow-hidden bg-black/20 group"
               style={{
                 border: image.isMain ? '2px solid #8b5cf6' : '2px solid rgba(255,255,255,0.1)',
               }}
@@ -132,7 +132,7 @@ export function ProductImageUploader({ images, onChange }: ProductImageUploaderP
               <img
                 src={image.url}
                 alt={`Product ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
 
               {/* Overlay */}

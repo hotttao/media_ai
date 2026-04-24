@@ -156,7 +156,7 @@ export function IpImageUploader({ ipId, onUploadSuccess }: IpImageUploaderProps)
                     <img
                       src={preview}
                       alt={field.label}
-                      className="w-full h-36 object-cover"
+                      className="w-full max-h-40 aspect-[9/16] object-contain bg-black/20"
                     />
                     {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
@@ -184,7 +184,7 @@ export function IpImageUploader({ ipId, onUploadSuccess }: IpImageUploaderProps)
                     </div>
                   </>
                 ) : (
-                  <label className="flex flex-col items-center justify-center h-36 cursor-pointer group">
+                  <label className="flex flex-col items-center justify-center aspect-[9/16] max-h-40 cursor-pointer group">
                     <div className={`
                       w-8 h-8 rounded-xl flex items-center justify-center mb-2 transition-all duration-300
                       ${isDragging ? 'bg-fuchsia-500/30 scale-110' : 'bg-white/5 group-hover:bg-white/10'}

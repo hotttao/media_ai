@@ -141,7 +141,7 @@ export function ProductDetail({ product }: { product: any }) {
             <div className="space-y-4">
               {/* Main Image Card */}
               <div
-                className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-gradient-to-br from-white to-gray-100 border border-gray-200/50 cursor-zoom-in group shadow-xl shadow-gray-200/50"
+                className="relative aspect-[9/16] max-w-sm mx-auto rounded-3xl overflow-hidden bg-gradient-to-br from-white to-gray-100 border border-gray-200/50 cursor-zoom-in group shadow-xl shadow-gray-200/50"
                 onClick={() => setIsZoomed(true)}
               >
                 {mainImage ? (
@@ -150,7 +150,7 @@ export function ProductDetail({ product }: { product: any }) {
                       src={mainImage.url}
                       alt={product.name}
                       fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
                       priority
                     />
                     {/* Hover overlay */}
@@ -187,13 +187,13 @@ export function ProductDetail({ product }: { product: any }) {
                   {product.images.map((image: any, index: number) => (
                     <button
                       key={image.id}
-                      className="relative flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-violet-400 transition-all duration-300 group"
+                      className="relative flex-shrink-0 w-16 aspect-[9/16] rounded-xl overflow-hidden bg-gray-100 border-2 border-gray-200 hover:border-violet-400 transition-all duration-300 group"
                     >
                       <Image
                         src={image.url}
                         alt={`${product.name} ${index + 1}`}
                         fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                        className="object-contain group-hover:scale-105 transition-transform duration-300"
                       />
                       {image.isMain && (
                         <div className="absolute bottom-0 inset-x-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-xs text-center py-0.5 font-medium">
@@ -400,7 +400,7 @@ function MaterialsTab({
               <img
                 src={m.url}
                 alt="模特图"
-                className="w-full aspect-[4/5] object-cover rounded-xl cursor-pointer"
+                className="w-full max-w-44 mx-auto aspect-[9/16] object-contain bg-gray-100 rounded-xl cursor-pointer"
                 onClick={() => setPreviewUrl(m.url)}
               />
               <button
@@ -447,7 +447,7 @@ function MaterialsTab({
                 <img
                   src={s.url}
                   alt="定妆图"
-                  className="w-full aspect-[4/5] object-cover rounded-xl cursor-pointer"
+                  className="w-full max-w-44 mx-auto aspect-[9/16] object-contain bg-gray-100 rounded-xl cursor-pointer"
                   onClick={() => setPreviewUrl(s.url)}
                 />
               </div>
@@ -466,7 +466,7 @@ function MaterialsTab({
                 <img
                   src={f.url}
                   alt="首帧图"
-                  className="w-full aspect-video object-cover rounded-xl cursor-pointer"
+                  className="w-full max-w-44 mx-auto aspect-[9/16] object-contain bg-gray-100 rounded-xl cursor-pointer"
                   onClick={() => setPreviewUrl(f.url)}
                 />
               </div>
@@ -569,12 +569,12 @@ function SecondaryImagesSection({
         <div className="grid grid-cols-4 gap-3">
           {secondaryImages.map(image => (
             <div key={image.id} className="relative group">
-              <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
+              <div className="relative aspect-[9/16] max-w-28 rounded-xl overflow-hidden bg-gray-100">
                 <Image
                   src={image.url}
                   alt="副图"
                   fill
-                  className="object-cover"
+                  className="object-contain"
                 />
               </div>
               <button

@@ -45,7 +45,7 @@ export function MaterialSelector({ label, materialType, value, onChange }: Mater
                 value === m.url ? 'border-matcha-600' : 'border-transparent'
               }`}
             >
-              <img src={m.url} alt={m.name} className="w-full aspect-square object-cover" />
+              <img src={m.url} alt={m.name} className="w-full max-h-40 aspect-[9/16] object-contain bg-black/20" />
             </div>
           ))}
         </div>

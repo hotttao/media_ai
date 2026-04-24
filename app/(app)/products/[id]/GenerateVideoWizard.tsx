@@ -482,9 +482,9 @@ function SelectIPStep({
                 ${selectedIp?.id === ip.id ? 'ring-4 ring-matcha-600 scale-105' : 'hover:scale-105 hover:shadow-lg'}
               `}
             >
-              <div className="aspect-[3/4] bg-oat-light">
+              <div className="aspect-[9/16] bg-oat-light">
                 {ip.avatarUrl ? (
-                  <Image src={ip.avatarUrl} alt={ip.nickname} fill className="object-cover" />
+                  <Image src={ip.avatarUrl} alt={ip.nickname} fill className="object-contain" />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-4xl">👤</div>
                 )}
@@ -539,7 +539,7 @@ function ModelImageStep({
         <span className="text-sm text-warm-silver w-20">虚拟IP</span>
         <div className="flex flex-wrap gap-3">
           <div className={`
-            relative w-28 h-40 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer
+            relative w-20 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300 cursor-pointer
             ${selectedIp?.fullBodyUrl ? 'ring-4 ring-violet-500' : 'bg-oat-light'}
           `}>
             {selectedIp?.fullBodyUrl ? (
@@ -548,7 +548,7 @@ function ModelImageStep({
                   src={selectedIp.fullBodyUrl}
                   alt={selectedIp.nickname}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   onDoubleClick={() => setPreviewUrl(selectedIp.fullBodyUrl)}
                 />
                 <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
@@ -573,7 +573,7 @@ function ModelImageStep({
               key={img.id}
               onClick={() => onProductImageSelect(img)}
               className={`
-                relative w-28 h-40 rounded-xl overflow-hidden transition-all duration-300
+                relative w-20 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300
                 ${selectedProductImage?.id === img.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
               `}
             >
@@ -581,7 +581,7 @@ function ModelImageStep({
                 src={img.url}
                 alt="产品图"
                 fill
-                className="object-cover"
+                className="object-contain"
                 onDoubleClick={() => setPreviewUrl(img.url)}
               />
               {img.isMain && (
@@ -611,7 +611,7 @@ function ModelImageStep({
                   onModeChange('select')
                 }}
                 className={`
-                  relative w-28 h-40 rounded-xl overflow-hidden transition-all duration-300
+                  relative w-20 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300
                   ${modelImageUrl === url ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
                 `}
               >
@@ -619,7 +619,7 @@ function ModelImageStep({
                   src={url}
                   alt={`已有模特图 ${i + 1}`}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   onDoubleClick={() => setPreviewUrl(url)}
                 />
               </button>
@@ -633,10 +633,10 @@ function ModelImageStep({
         <div className="flex items-start gap-3">
           <span className="text-sm text-warm-silver w-20 pt-3">生成结果</span>
           <div
-            className="relative w-28 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            className="relative w-20 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(modelImageUrl)}
           >
-            <Image src={modelImageUrl} alt="模特图" fill className="object-cover" />
+            <Image src={modelImageUrl} alt="模特图" fill className="object-contain" />
           </div>
         </div>
       )}
@@ -782,10 +782,10 @@ function StyleImageStep({
         <div className="flex items-center gap-3">
           <span className="text-sm text-warm-silver w-20">模特图</span>
           <div
-            className="relative w-28 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            className="relative w-20 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(modelImageUrl)}
           >
-            <Image src={modelImageUrl} alt="模特图" fill className="object-cover" />
+            <Image src={modelImageUrl} alt="模特图" fill className="object-contain" />
           </div>
         </div>
       )}
@@ -799,11 +799,11 @@ function StyleImageStep({
               key={pose.id}
               onClick={() => onPoseSelect(selectedPose?.id === pose.id ? null : pose)}
               className={`
-                relative w-20 h-40 rounded-xl overflow-hidden transition-all duration-300
+                relative w-16 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300
                 ${selectedPose?.id === pose.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
               `}
             >
-              <Image src={pose.url} alt={pose.name} fill className="object-cover" />
+              <Image src={pose.url} alt={pose.name} fill className="object-contain" />
             </button>
           ))}
         </div>
@@ -818,11 +818,11 @@ function StyleImageStep({
               key={makeup.id}
               onClick={() => onMakeupSelect(selectedMakeup?.id === makeup.id ? null : makeup)}
               className={`
-                relative w-20 h-40 rounded-xl overflow-hidden transition-all duration-300
+                relative w-16 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300
                 ${selectedMakeup?.id === makeup.id ? 'ring-4 ring-pink-600' : 'hover:ring-2 ring-oat'}
               `}
             >
-              <Image src={makeup.url} alt={makeup.name} fill className="object-cover" />
+              <Image src={makeup.url} alt={makeup.name} fill className="object-contain" />
             </button>
           ))}
         </div>
@@ -837,11 +837,11 @@ function StyleImageStep({
               key={acc.id}
               onClick={() => onAccessorySelect(selectedAccessory?.id === acc.id ? null : acc)}
               className={`
-                relative w-20 h-40 rounded-xl overflow-hidden transition-all duration-300
+                relative w-16 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300
                 ${selectedAccessory?.id === acc.id ? 'ring-4 ring-violet-600' : 'hover:ring-2 ring-oat'}
               `}
             >
-              <Image src={acc.url} alt={acc.name} fill className="object-cover" />
+              <Image src={acc.url} alt={acc.name} fill className="object-contain" />
             </button>
           ))}
         </div>
@@ -852,10 +852,10 @@ function StyleImageStep({
         <div className="flex items-start gap-3">
           <span className="text-sm text-warm-silver w-20 pt-3">生成结果</span>
           <div
-            className="relative w-28 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            className="relative w-20 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(styledImageUrl)}
           >
-            <Image src={styledImageUrl} alt="定妆图" fill className="object-cover" />
+            <Image src={styledImageUrl} alt="定妆图" fill className="object-contain" />
           </div>
         </div>
       )}
@@ -997,10 +997,10 @@ function FirstFrameStep({
         <div className="flex items-start gap-3">
           <span className="text-sm text-warm-silver w-20 pt-3">定妆图</span>
           <div
-            className="relative w-20 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            className="relative w-16 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(styledImageUrl)}
           >
-            <Image src={styledImageUrl} alt="定妆图" fill className="object-cover" />
+            <Image src={styledImageUrl} alt="定妆图" fill className="object-contain" />
           </div>
         </div>
       )}
@@ -1014,11 +1014,11 @@ function FirstFrameStep({
               key={scene.id}
               onClick={() => onSceneSelect(scene)}
               className={`
-                relative w-20 h-40 rounded-xl overflow-hidden transition-all duration-300
+                relative w-16 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300
                 ${selectedScene?.id === scene.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
               `}
             >
-              <Image src={scene.url} alt={scene.name} fill className="object-cover" />
+              <Image src={scene.url} alt={scene.name} fill className="object-contain" />
             </button>
           ))}
         </div>
@@ -1040,10 +1040,10 @@ function FirstFrameStep({
         <div className="flex items-start gap-3">
           <span className="text-sm text-warm-silver w-20 pt-3">生成结果</span>
           <div
-            className="relative w-20 h-40 rounded-xl overflow-hidden bg-oat-light cursor-pointer"
+            className="relative w-16 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(firstFrameUrl)}
           >
-            <Image src={firstFrameUrl} alt="首帧图" fill className="object-cover" />
+            <Image src={firstFrameUrl} alt="首帧图" fill className="object-contain" />
           </div>
         </div>
       )}

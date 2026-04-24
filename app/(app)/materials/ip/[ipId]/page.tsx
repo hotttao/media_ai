@@ -31,9 +31,9 @@ function IpMaterialUploader({ ipId, onClose, onSuccess }: IpMaterialUploaderProp
   const fileInputRefs: Record<string, HTMLInputElement | null> = {}
 
   const IMAGE_FIELDS = [
-    { name: 'fullBody', label: '全身图', aspect: '3:4' },
-    { name: 'threeView', label: '三视图', aspect: '1:1' },
-    { name: 'nineView', label: '九视图', aspect: '3:4' },
+    { name: 'fullBody', label: '全身图' },
+    { name: 'threeView', label: '三视图' },
+    { name: 'nineView', label: '九视图' },
   ]
 
   const handleFileChange = (fieldName: string, file: File | null) => {
@@ -120,15 +120,14 @@ function IpMaterialUploader({ ipId, onClose, onSuccess }: IpMaterialUploaderProp
                 <p className="text-xs text-white/40 mb-1">{field.label}</p>
                 <label
                   className={`
-                    relative rounded-xl overflow-hidden cursor-pointer block
+                    relative aspect-[9/16] max-h-40 rounded-xl overflow-hidden cursor-pointer block bg-black/20
                     ring-1 ring-white/10 transition-all
                     ${preview ? 'ring-2 ring-fuchsia-500/40' : 'hover:ring-white/20'}
                   `}
-                  style={{ aspectRatio: field.aspect }}
                 >
                   {preview ? (
                     <>
-                      <img src={preview} alt={field.label} className="w-full h-full object-cover" />
+                      <img src={preview} alt={field.label} className="w-full h-full object-contain" />
                       <div
                         className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center"
                         onClick={(e) => {

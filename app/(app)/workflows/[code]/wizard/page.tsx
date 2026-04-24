@@ -88,11 +88,11 @@ export default function WizardPage({ params }: { params: { code: string } }) {
                       selectedIpId === ip.id ? 'border-matcha-600' : 'border-border'
                     }`}
                   >
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-oat-light mx-auto">
+                    <div className="w-16 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light mx-auto">
                       <img
                         src={ip.avatarUrl || ip.images?.[0]?.fullBodyUrl || '/placeholder.png'}
                         alt={ip.nickname}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     </div>
                     <p className="text-center mt-2 font-medium">{ip.nickname}</p>

@@ -38,7 +38,7 @@ export function IpMaterialCard({ material }: IpMaterialCardProps) {
       >
         {/* Image */}
         <div
-          className="relative aspect-[3/4] cursor-pointer overflow-hidden"
+          className="relative aspect-[9/16] max-h-60 cursor-pointer overflow-hidden bg-black/20"
           onClick={() => {
             const img = material.threeViewUrl || material.fullBodyUrl || material.nineViewUrl
             if (img) setLightboxImage(img)
@@ -48,7 +48,7 @@ export function IpMaterialCard({ material }: IpMaterialCardProps) {
             <img
               src={material.threeViewUrl || material.fullBodyUrl || material.nineViewUrl || ''}
               alt={material.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-white/5">
@@ -89,35 +89,35 @@ export function IpMaterialCard({ material }: IpMaterialCardProps) {
           <div className="flex gap-1 mt-2">
             {material.fullBodyUrl && (
               <div
-                className="w-10 h-10 rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500/50"
+                className="w-8 aspect-[9/16] rounded overflow-hidden bg-black/20 cursor-pointer hover:ring-2 hover:ring-purple-500/50"
                 onClick={(e) => {
                   e.stopPropagation()
                   setLightboxImage(material.fullBodyUrl)
                 }}
               >
-                <img src={material.fullBodyUrl} alt="全身" className="w-full h-full object-cover" />
+                <img src={material.fullBodyUrl} alt="全身" className="w-full h-full object-contain" />
               </div>
             )}
             {material.threeViewUrl && (
               <div
-                className="w-10 h-10 rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500/50"
+                className="w-8 aspect-[9/16] rounded overflow-hidden bg-black/20 cursor-pointer hover:ring-2 hover:ring-purple-500/50"
                 onClick={(e) => {
                   e.stopPropagation()
                   setLightboxImage(material.threeViewUrl)
                 }}
               >
-                <img src={material.threeViewUrl} alt="三视图" className="w-full h-full object-cover" />
+                <img src={material.threeViewUrl} alt="三视图" className="w-full h-full object-contain" />
               </div>
             )}
             {material.nineViewUrl && (
               <div
-                className="w-10 h-10 rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500/50"
+                className="w-8 aspect-[9/16] rounded overflow-hidden bg-black/20 cursor-pointer hover:ring-2 hover:ring-purple-500/50"
                 onClick={(e) => {
                   e.stopPropagation()
                   setLightboxImage(material.nineViewUrl)
                 }}
               >
-                <img src={material.nineViewUrl} alt="九视图" className="w-full h-full object-cover" />
+                <img src={material.nineViewUrl} alt="九视图" className="w-full h-full object-contain" />
               </div>
             )}
           </div>

@@ -42,7 +42,7 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
       className={`
-        relative overflow-hidden rounded-2xl
+        relative w-full overflow-hidden rounded-2xl
         transition-all duration-500 cursor-pointer
         ${isHovered ? 'scale-[1.05] shadow-2xl z-10' : 'shadow-lg'}
       `}
@@ -73,14 +73,14 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
       />
 
       {/* Image container */}
-      <div className="relative aspect-square overflow-hidden">
+      <div className="relative aspect-[9/16] overflow-hidden bg-black/20">
         <img
           src={material.url}
           alt={material.name}
           className={`
-            w-full h-full object-cover
+            w-full h-full object-contain
             transition-transform duration-700
-            ${isHovered ? 'scale-110' : ''}
+            ${isHovered ? 'scale-105' : ''}
           `}
         />
 

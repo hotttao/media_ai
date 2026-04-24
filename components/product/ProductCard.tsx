@@ -33,7 +33,7 @@ export function ProductCard({ product }: ProductCardProps) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={`
-          relative overflow-hidden rounded-3xl
+          relative w-full overflow-hidden rounded-3xl
           transition-all duration-500 cursor-pointer
           group
           ${isHovered ? 'scale-[1.03] z-20' : ''}
@@ -68,16 +68,16 @@ export function ProductCard({ product }: ProductCardProps) {
         />
 
         {/* Image container */}
-        <div className="relative aspect-square overflow-hidden">
+        <div className="relative aspect-[9/16] overflow-hidden bg-black/20">
           {mainImage ? (
             <Image
               src={mainImage.url}
               alt={product.name}
               fill
               className={`
-                object-cover
+                object-contain
                 transition-transform duration-700 ease-out
-                ${isHovered ? 'scale-110' : 'scale-100'}
+                ${isHovered ? 'scale-105' : 'scale-100'}
               `}
             />
           ) : (

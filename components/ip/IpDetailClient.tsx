@@ -92,10 +92,10 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
           {/* Avatar */}
           <div className="relative flex-shrink-0">
             <div
-              className="w-28 h-28 rounded-2xl overflow-hidden ring-2 ring-white/20"
+              className="w-20 aspect-[9/16] rounded-2xl overflow-hidden ring-2 ring-white/20 bg-black/20"
               style={{ boxShadow: '0 0 40px rgba(139, 92, 246, 0.5)' }}
             >
-              <img src={imageUrl} alt={displayIp.nickname} className="w-full h-full object-cover" />
+              <img src={imageUrl} alt={displayIp.nickname} className="w-full h-full object-contain" />
             </div>
             <div className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg">
               <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
@@ -168,9 +168,9 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
           {/* 头像 */}
           <div className="group">
             <p className="text-xs text-white/40 mb-2">头像</p>
-            <div className="relative rounded-xl overflow-hidden ring-1 ring-white/10 aspect-square">
+            <div className="relative rounded-xl overflow-hidden ring-1 ring-white/10 aspect-[9/16] max-h-48 bg-black/20">
               {displayIp.avatarUrl ? (
-                <img src={displayIp.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                <img src={displayIp.avatarUrl} alt="avatar" className="w-full h-full object-contain" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.03)' }}>
                   <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -184,8 +184,7 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
           <div className="group">
             <p className="text-xs text-white/40 mb-2">全身图</p>
             <div
-              className="relative rounded-xl overflow-hidden ring-1 ring-white/10 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
-              style={{ aspectRatio: '3/4' }}
+              className="relative rounded-xl overflow-hidden ring-1 ring-white/10 aspect-[9/16] max-h-48 bg-black/20 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
               onClick={() => displayIp.fullBodyUrl && setLightboxImage(displayIp.fullBodyUrl)}
             >
               {displayIp.fullBodyUrl ? (
@@ -203,11 +202,11 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
           <div className="group">
             <p className="text-xs text-white/40 mb-2">三视图</p>
             <div
-              className="relative rounded-xl overflow-hidden ring-1 ring-white/10 aspect-square cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
+              className="relative rounded-xl overflow-hidden ring-1 ring-white/10 aspect-[9/16] max-h-48 bg-black/20 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
               onClick={() => displayIp.threeViewUrl && setLightboxImage(displayIp.threeViewUrl)}
             >
               {displayIp.threeViewUrl ? (
-                <img src={displayIp.threeViewUrl} alt="three view" className="w-full h-full object-cover" />
+                <img src={displayIp.threeViewUrl} alt="three view" className="w-full h-full object-contain" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.03)' }}>
                   <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -221,8 +220,7 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
           <div className="group">
             <p className="text-xs text-white/40 mb-2">九视图</p>
             <div
-              className="relative rounded-xl overflow-hidden ring-1 ring-white/10 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
-              style={{ aspectRatio: '3/4' }}
+              className="relative rounded-xl overflow-hidden ring-1 ring-white/10 aspect-[9/16] max-h-48 bg-black/20 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
               onClick={() => displayIp.nineViewUrl && setLightboxImage(displayIp.nineViewUrl)}
             >
               {displayIp.nineViewUrl ? (
@@ -301,12 +299,11 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
                     <div key={material.id} className="group">
                       <p className="text-xs text-white/40 mb-2 truncate">{material.name}</p>
                       <div
-                        className="relative rounded-xl overflow-hidden ring-1 ring-white/10 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
-                        style={{ aspectRatio: '3/4' }}
+                        className="relative rounded-xl overflow-hidden ring-1 ring-white/10 aspect-[9/16] max-h-48 bg-black/20 cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
                         onClick={() => imageUrl && setLightboxImage(imageUrl)}
                       >
                         {imageUrl ? (
-                          <img src={imageUrl} alt={material.name} className="w-full h-full object-cover" />
+                          <img src={imageUrl} alt={material.name} className="w-full h-full object-contain" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.03)' }}>
                             <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">

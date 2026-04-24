@@ -65,7 +65,7 @@ export function IpCard({ ip }: IpCardProps) {
             <div className="relative flex-shrink-0">
               <div
                 className={`
-                  w-16 h-16 rounded-full overflow-hidden
+                  w-12 aspect-[9/16] rounded-xl overflow-hidden bg-black/20
                   transition-all duration-300
                   ${isHovered ? 'shadow-lg shadow-purple-500/50' : ''}
                 `}
@@ -73,7 +73,7 @@ export function IpCard({ ip }: IpCardProps) {
                 <img
                   src={imageUrl}
                   alt={ip.nickname}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
               {/* Status ring */}

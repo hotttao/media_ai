@@ -80,10 +80,10 @@ export default function ImageBlendPage() {
             <h3 className="text-warm-charcoal font-medium">图片 A</h3>
             <div
               onClick={() => imageARef.current?.click()}
-              className="relative aspect-[3/4] rounded-2xl border-2 border-dashed border-rose-300/50 bg-white/50 cursor-pointer hover:border-rose-400 hover:bg-white/70 transition-colors overflow-hidden"
+                className="relative aspect-[9/16] max-h-80 rounded-2xl border-2 border-dashed border-rose-300/50 bg-white/50 cursor-pointer hover:border-rose-400 hover:bg-white/70 transition-colors overflow-hidden"
             >
               {imageA ? (
-                <Image src={imageA} alt="图片A" fill className="object-cover" />
+                  <Image src={imageA} alt="图片A" fill className="object-contain" />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-warm-silver">
                   <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,10 +110,10 @@ export default function ImageBlendPage() {
             <h3 className="text-warm-charcoal font-medium">图片 B</h3>
             <div
               onClick={() => imageBRef.current?.click()}
-              className="relative aspect-[3/4] rounded-2xl border-2 border-dashed border-cyan-300/50 bg-white/50 cursor-pointer hover:border-cyan-400 hover:bg-white/70 transition-colors overflow-hidden"
+                className="relative aspect-[9/16] max-h-80 rounded-2xl border-2 border-dashed border-cyan-300/50 bg-white/50 cursor-pointer hover:border-cyan-400 hover:bg-white/70 transition-colors overflow-hidden"
             >
               {imageB ? (
-                <Image src={imageB} alt="图片B" fill className="object-cover" />
+                  <Image src={imageB} alt="图片B" fill className="object-contain" />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-warm-silver">
                   <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +176,7 @@ export default function ImageBlendPage() {
         {result && (
           <div className="mt-8">
             <h3 className="text-warm-charcoal font-medium mb-3 text-center">生成结果</h3>
-            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-white/80 mx-auto max-w-sm">
+          <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-white/80 mx-auto max-w-xs">
               <Image src={result} alt="结果" fill className="object-contain" />
             </div>
           </div>

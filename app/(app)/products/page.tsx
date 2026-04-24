@@ -238,7 +238,7 @@ export default function ProductsPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,180px))] justify-center gap-5">
           {products.map((product, index) => (
             <div
               key={product.id}

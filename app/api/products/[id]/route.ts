@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { getProductById, updateProduct, deleteProduct } from '@/domains/product/service'
-import { createProductSchema } from '@/domains/product/validators'
+import { updateProductSchema } from '@/domains/product/validators'
 
 // GET /api/products/[id]
 export async function GET(
@@ -44,7 +44,7 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const parsed = createProductSchema.partial().safeParse(body)
+    const parsed = updateProductSchema.safeParse(body)
 
     if (!parsed.success) {
       return NextResponse.json(

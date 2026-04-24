@@ -245,7 +245,7 @@ export default function MaterialsPage() {
           <p className="text-white/40">没有找到匹配 {selectedFilter.label} 类型的素材</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,180px))] justify-center gap-5">
           {filteredMaterials.map((material, index) => (
             <div
               key={material.id}
@@ -276,7 +276,7 @@ export default function MaterialsPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative aspect-video bg-black">
+            <div className="relative aspect-[9/16] max-h-[70vh] bg-black">
               <img
                 src={selectedMaterial.url}
                 alt={selectedMaterial.name}
