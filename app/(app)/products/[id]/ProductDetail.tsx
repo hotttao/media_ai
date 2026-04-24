@@ -5,7 +5,41 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { GenerateVideoWizard } from './GenerateVideoWizard'
-import type { ProductMaterial } from '@/domains/product-material/types'
+
+// Types for generated materials
+interface ModelImage {
+  id: string
+  productId: string
+  ipId: string
+  url: string
+  createdAt: string
+}
+
+interface StyleImage {
+  id: string
+  productId: string
+  ipId: string
+  modelImageId: string
+  url: string
+  poseId: string | null
+  createdAt: string
+}
+
+interface FirstFrame {
+  id: string
+  productId: string
+  ipId: string
+  styleImageId: string | null
+  url: string
+  sceneId: string | null
+  createdAt: string
+}
+
+interface GeneratedMaterials {
+  modelImages: ModelImage[]
+  styleImages: StyleImage[]
+  firstFrames: FirstFrame[]
+}
 
 const audienceConfig = {
   MENS: { label: '男装', gradient: 'from-slate-600 to-zinc-700', textColor: 'text-slate-700' },
@@ -18,20 +52,20 @@ export function ProductDetail({ product }: { product: any }) {
   const [isZoomed, setIsZoomed] = useState(false)
   const [showWizard, setShowWizard] = useState(false)
   const [activeTab, setActiveTab] = useState<'detail' | 'materials'>('detail')
-  const [materials, setMaterials] = useState<ProductMaterial[]>([])
+  const [generatedMaterials, setGeneratedMaterials] = useState<GeneratedMaterials | null>(null)
   const [materialsLoading, setMaterialsLoading] = useState(false)
 
-  const fetchMaterials = () => {
+  const fetchGeneratedMaterials = () => {
     setMaterialsLoading(true)
-    fetch(`/api/products/${product.id}/materials`)
+    fetch(`/api/products/${product.id}/generated-materials`)
       .then(res => res.json())
-      .then(setMaterials)
+      .then(setGeneratedMaterials)
       .finally(() => setMaterialsLoading(false))
   }
 
   useEffect(() => {
-    if (activeTab === 'materials' && materials.length === 0) {
-      fetchMaterials()
+    if (activeTab === 'materials' && !generatedMaterials) {
+      fetchGeneratedMaterials()
     }
   }, [activeTab, product.id])
 
@@ -83,9 +117,9 @@ export function ProductDetail({ product }: { product: any }) {
             }`}
           >
             素材
-            {materials.length > 0 && (
+            {(generatedMaterials?.modelImages.length ?? 0) > 0 && (
               <span className="px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 text-xs">
-                {materials.length}
+                {generatedMaterials?.modelImages.length ?? 0}
               </span>
             )}
           </button>
@@ -93,19 +127,12 @@ export function ProductDetail({ product }: { product: any }) {
 
         {activeTab === 'materials' ? (
           <MaterialsTab
-            materials={materials}
+            materials={generatedMaterials}
             loading={materialsLoading}
-            onDelete={(id) => {
-              fetch(`/api/products/${product.id}/materials/${id}`, { method: 'DELETE' })
-                .then(res => {
-                  if (!res.ok) throw new Error('Delete failed')
-                  return res.json()
-                })
-                .then(() => fetchMaterials())
-                .catch(err => {
-                  console.error('Failed to delete material:', err)
-                  alert('删除失败')
-                })
+            onDelete={(type, id) => {
+              // TODO: implement delete for each type
+              console.log('Delete', type, id)
+              fetchGeneratedMaterials()
             }}
           />
         ) : (
@@ -177,6 +204,9 @@ export function ProductDetail({ product }: { product: any }) {
                   ))}
                 </div>
               )}
+
+              {/* Secondary Images */}
+              <SecondaryImagesSection productId={product.id} images={product.images} />
             </div>
 
             {/* Right: Product Info */}
@@ -336,9 +366,9 @@ function MaterialsTab({
   loading,
   onDelete,
 }: {
-  materials: ProductMaterial[]
+  materials: GeneratedMaterials | null
   loading: boolean
-  onDelete: (id: string) => void
+  onDelete: (type: string, id: string) => void
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -351,7 +381,7 @@ function MaterialsTab({
     )
   }
 
-  if (materials.length === 0) {
+  if (!materials || (materials.modelImages.length === 0 && materials.styleImages.length === 0 && materials.firstFrames.length === 0)) {
     return (
       <div className="text-center py-16 text-gray-400">
         还没有生成任何素材
@@ -361,17 +391,17 @@ function MaterialsTab({
 
   return (
     <div className="space-y-8">
-      {/* 效果图 */}
+      {/* 模特图 (效果图) */}
       <div>
-        <h3 className="text-sm font-medium text-gray-500 mb-4">效果图 ({materials.filter(m => m.fullBodyUrl).length})</h3>
+        <h3 className="text-sm font-medium text-gray-500 mb-4">模特图 ({materials.modelImages.length})</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {materials.filter(m => m.fullBodyUrl).map(m => (
+          {materials.modelImages.map(m => (
             <div key={m.id} className="relative group">
               <img
-                src={m.fullBodyUrl!}
-                alt="效果图"
+                src={m.url}
+                alt="模特图"
                 className="w-full aspect-[4/5] object-cover rounded-xl cursor-pointer"
-                onClick={() => setPreviewUrl(m.fullBodyUrl)}
+                onClick={() => setPreviewUrl(m.url)}
               />
               <button
                 onClick={() => setDeletingId(m.id)}
@@ -393,7 +423,7 @@ function MaterialsTab({
                         取消
                       </button>
                       <button
-                        onClick={() => { onDelete(deletingId); setDeletingId(null) }}
+                        onClick={() => { onDelete('modelImage', deletingId); setDeletingId(null) }}
                         className="px-4 py-2 rounded-lg bg-red-600 text-white"
                       >
                         删除
@@ -406,144 +436,44 @@ function MaterialsTab({
           ))}
         </div>
       </div>
+
+      {/* 定妆图 */}
+      {materials.styleImages.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-gray-500 mb-4">定妆图 ({materials.styleImages.length})</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {materials.styleImages.map(s => (
+              <div key={s.id} className="relative group">
+                <img
+                  src={s.url}
+                  alt="定妆图"
+                  className="w-full aspect-[4/5] object-cover rounded-xl cursor-pointer"
+                  onClick={() => setPreviewUrl(s.url)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 首帧图 */}
-      <div>
-        <h3 className="text-sm font-medium text-gray-500 mb-4">首帧图 ({materials.filter(m => m.firstFrameUrl).length})</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {materials.filter(m => m.firstFrameUrl).map(m => (
-            <div key={`first-${m.id}`} className="relative group">
-              <img
-                src={m.firstFrameUrl!}
-                alt="首帧图"
-                className="w-full aspect-video object-cover rounded-xl cursor-pointer"
-                onClick={() => setPreviewUrl(m.firstFrameUrl)}
-              />
-              <button
-                onClick={() => setDeletingId(m.id)}
-                className="absolute top-2 right-2 p-2 rounded-lg bg-black/50 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-              {deletingId === m.id && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-xl" onClick={() => setDeletingId(null)}>
-                  <div className="text-center p-4" onClick={e => e.stopPropagation()}>
-                    <p className="text-white mb-4">确认删除？</p>
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => setDeletingId(null)}
-                        className="px-4 py-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20"
-                      >
-                        取消
-                      </button>
-                      <button
-                        onClick={() => { onDelete(deletingId); setDeletingId(null) }}
-                        className="px-4 py-2 rounded-lg bg-red-600 text-white"
-                      >
-                        删除
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+      {materials.firstFrames.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-gray-500 mb-4">首帧图 ({materials.firstFrames.length})</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {materials.firstFrames.map(f => (
+              <div key={f.id} className="relative group">
+                <img
+                  src={f.url}
+                  alt="首帧图"
+                  className="w-full aspect-video object-cover rounded-xl cursor-pointer"
+                  onClick={() => setPreviewUrl(f.url)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-
-      {/* 三视图 */}
-      <div>
-        <h3 className="text-sm font-medium text-gray-500 mb-4">三视图 ({materials.filter(m => m.threeViewUrl).length})</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {materials.filter(m => m.threeViewUrl).map(m => (
-            <div key={`three-${m.id}`} className="relative group">
-              <img
-                src={m.threeViewUrl!}
-                alt="三视图"
-                className="w-full aspect-square object-cover rounded-xl cursor-pointer"
-                onClick={() => setPreviewUrl(m.threeViewUrl)}
-              />
-              <button
-                onClick={() => setDeletingId(m.id)}
-                className="absolute top-2 right-2 p-2 rounded-lg bg-black/50 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-              {deletingId === m.id && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-xl" onClick={() => setDeletingId(null)}>
-                  <div className="text-center p-4" onClick={e => e.stopPropagation()}>
-                    <p className="text-white mb-4">确认删除？</p>
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => setDeletingId(null)}
-                        className="px-4 py-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20"
-                      >
-                        取消
-                      </button>
-                      <button
-                        onClick={() => { onDelete(deletingId); setDeletingId(null) }}
-                        className="px-4 py-2 rounded-lg bg-red-600 text-white"
-                      >
-                        删除
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 九视图 */}
-      <div>
-        <h3 className="text-sm font-medium text-gray-500 mb-4">九视图 ({materials.filter(m => m.nineViewUrl).length})</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {materials.filter(m => m.nineViewUrl).map(m => (
-            <div key={`nine-${m.id}`} className="relative group">
-              <img
-                src={m.nineViewUrl!}
-                alt="九视图"
-                className="w-full aspect-square object-cover rounded-xl cursor-pointer"
-                onClick={() => setPreviewUrl(m.nineViewUrl)}
-              />
-              <button
-                onClick={() => setDeletingId(m.id)}
-                className="absolute top-2 right-2 p-2 rounded-lg bg-black/50 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-              {deletingId === m.id && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-xl" onClick={() => setDeletingId(null)}>
-                  <div className="text-center p-4" onClick={e => e.stopPropagation()}>
-                    <p className="text-white mb-4">确认删除？</p>
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => setDeletingId(null)}
-                        className="px-4 py-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20"
-                      >
-                        取消
-                      </button>
-                      <button
-                        onClick={() => { onDelete(deletingId); setDeletingId(null) }}
-                        className="px-4 py-2 rounded-lg bg-red-600 text-white"
-                      >
-                        删除
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Preview Modal */}
       {previewUrl && (
@@ -554,6 +484,130 @@ function MaterialsTab({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SecondaryImagesSection({
+  productId,
+  images,
+}: {
+  productId: string
+  images: any[]
+}) {
+  const [secondaryImages, setSecondaryImages] = useState<any[]>(
+    images.filter(img => !img.isMain)
+  )
+  const [uploading, setUploading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleUpload = async (file: File) => {
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      if (!res.ok) throw new Error('Upload failed')
+      const data = await res.json()
+
+      const res2 = await fetch(`/api/products/${productId}/images`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: data.url }),
+      })
+      if (!res2.ok) throw new Error('Failed to save image')
+      const newImage = await res2.json()
+      setSecondaryImages(prev => [...prev, newImage])
+    } catch (err) {
+      console.error(err)
+      alert('上传失败')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDelete = async (imageId: string) => {
+    try {
+      const res = await fetch(`/api/products/${productId}/images/${imageId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      setSecondaryImages(prev => prev.filter(img => img.id !== imageId))
+    } catch (err) {
+      console.error(err)
+      alert('删除失败')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-gray-500">产品副图</h3>
+        <label className="px-3 py-1.5 rounded-lg bg-violet-50 text-violet-600 text-sm font-medium cursor-pointer hover:bg-violet-100 transition-colors flex items-center gap-1.5">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          添加副图
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])}
+          />
+        </label>
+      </div>
+
+      {secondaryImages.length === 0 ? (
+        <div className="py-8 text-center text-gray-400 text-sm bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+          暂无副图
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-3">
+          {secondaryImages.map(image => (
+            <div key={image.id} className="relative group">
+              <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
+                <Image
+                  src={image.url}
+                  alt="副图"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <button
+                onClick={() => setDeletingId(image.id)}
+                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+              {deletingId === image.id && (
+                <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-xl" onClick={() => setDeletingId(null)}>
+                  <div className="text-center p-3" onClick={e => e.stopPropagation()}>
+                    <p className="text-white text-sm mb-2">确认删除？</p>
+                    <div className="flex gap-1.5 justify-center">
+                      <button
+                        onClick={() => setDeletingId(null)}
+                        className="px-3 py-1.5 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 text-sm"
+                      >
+                        取消
+                      </button>
+                      <button
+                        onClick={() => handleDelete(image.id)}
+                        className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm"
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
