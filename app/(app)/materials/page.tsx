@@ -11,6 +11,15 @@ interface Material {
   url: string
   tags: string | null
   visibility: string
+  description?: string | null
+}
+
+interface EditFormData {
+  name: string
+  type: string
+  visibility: string
+  description: string
+  tags: string
 }
 
 const typeOptions = [
@@ -29,6 +38,10 @@ export default function MaterialsPage() {
   const [showUpload, setShowUpload] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null)
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null)
+  const [editForm, setEditForm] = useState<EditFormData>({ name: '', type: '', visibility: '', description: '', tags: '' })
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const fetchMaterials = () => {
@@ -45,6 +58,61 @@ export default function MaterialsPage() {
     fetchMaterials()
     setLoaded(true)
   }, [])
+
+  const handleEdit = (material: Material) => {
+    const tags = material.tags ? JSON.parse(material.tags as string) : []
+    setEditForm({
+      name: material.name,
+      type: material.type,
+      visibility: material.visibility,
+      description: material.description || '',
+      tags: tags.join(', '),
+    })
+    setEditingMaterial(material)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingMaterial) return
+    setIsSaving(true)
+    try {
+      const tags = editForm.tags ? editForm.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+      const res = await fetch(`/api/materials/${editingMaterial.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editForm.name,
+          type: editForm.type,
+          visibility: editForm.visibility,
+          description: editForm.description || null,
+          tags,
+        }),
+      })
+      if (res.ok) {
+        setEditingMaterial(null)
+        fetchMaterials()
+        if (selectedMaterial?.id === editingMaterial.id) {
+          setSelectedMaterial({ ...selectedMaterial, name: editForm.name, type: editForm.type, visibility: editForm.visibility, description: editForm.description, tags: JSON.stringify(tags) })
+        }
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!selectedMaterial) return
+    setIsSaving(true)
+    try {
+      const res = await fetch(`/api/materials/${selectedMaterial.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setShowDeleteConfirm(false)
+        setSelectedMaterial(null)
+        fetchMaterials()
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const filteredMaterials = filter === 'ALL'
     ? materials
@@ -269,28 +337,30 @@ export default function MaterialsPage() {
           onClick={() => setSelectedMaterial(null)}
         >
           <div
-            className="w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl"
+            className="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
             style={{
               background: 'linear-gradient(180deg, rgba(20,30,35,0.98) 0%, rgba(15,20,25,0.99) 100%)',
               border: '1px solid rgba(255,255,255,0.1)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative aspect-[9/16] max-h-[70vh] bg-black">
+            {/* Image - 使用与卡片一致的 aspect-[4/5] 比例 */}
+            <div className="relative aspect-[4/5] bg-black overflow-hidden">
               <img
                 src={selectedMaterial.url}
                 alt={selectedMaterial.name}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover"
               />
               <button
                 onClick={() => setSelectedMaterial(null)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white/70 hover:bg-black/70"
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white/70 hover:bg-black/70 transition-colors"
               >
                 ✕
               </button>
             </div>
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
+            {/* Content */}
+            <div className="p-5">
+              <div className="flex items-center gap-2 mb-3">
                 <span
                   className="text-xs px-2 py-1 rounded-full font-medium"
                   style={{
@@ -327,16 +397,16 @@ export default function MaterialsPage() {
                    selectedMaterial.visibility === 'PERSONAL' ? '私有' : selectedMaterial.visibility}
                 </span>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">{selectedMaterial.name}</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">{selectedMaterial.name}</h3>
               {selectedMaterial.description && (
-                <p className="text-white/60 text-sm mb-4">{selectedMaterial.description}</p>
+                <p className="text-white/60 text-sm mb-3">{selectedMaterial.description}</p>
               )}
               {selectedMaterial.tags && (
-                <div className="flex flex-wrap gap-2">
-                  {JSON.parse(selectedMaterial.tags).map((tag: string) => (
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {JSON.parse(selectedMaterial.tags as string).map((tag: string) => (
                     <span
                       key={tag}
-                      className="text-xs px-2 py-1 rounded-full"
+                      className="text-xs px-2 py-0.5 rounded-full"
                       style={{
                         background: 'rgba(255,255,255,0.1)',
                         color: 'rgba(255,255,255,0.7)',
@@ -347,6 +417,160 @@ export default function MaterialsPage() {
                   ))}
                 </div>
               )}
+              {/* Action buttons */}
+              <div className="flex gap-2 pt-2 border-t border-white/10">
+                <button
+                  onClick={() => handleEdit(selectedMaterial)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  编辑
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingMaterial && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setEditingMaterial(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
+            style={{
+              background: 'linear-gradient(180deg, rgba(20,30,35,0.98) 0%, rgba(15,20,25,0.99) 100%)',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">编辑素材</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-white/60 mb-1.5">名称</label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-white/60 mb-1.5">类型</label>
+                  <select
+                    value={editForm.type}
+                    onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  >
+                    <option value="SCENE">场景</option>
+                    <option value="POSE">姿势</option>
+                    <option value="MAKEUP">妆容</option>
+                    <option value="ACCESSORY">配饰</option>
+                    <option value="OTHER">其他</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-white/60 mb-1.5">可见性</label>
+                  <select
+                    value={editForm.visibility}
+                    onChange={(e) => setEditForm({ ...editForm, visibility: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-500/50"
+                  >
+                    <option value="PUBLIC">公共</option>
+                    <option value="TEAM">团队</option>
+                    <option value="PERSONAL">私有</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-white/60 mb-1.5">描述</label>
+                  <textarea
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/50 resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-white/60 mb-1.5">标签（逗号分隔）</label>
+                  <input
+                    type="text"
+                    value={editForm.tags}
+                    onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+                    placeholder="如: 红色, 服装, 春夏"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setEditingMaterial(null)}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={isSaving || !editForm.name.trim()}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 text-white font-medium hover:shadow-lg hover:shadow-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {isSaving ? '保存中...' : '保存'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {showDeleteConfirm && selectedMaterial && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
+            style={{
+              background: 'linear-gradient(180deg, rgba(20,30,35,0.98) 0%, rgba(15,20,25,0.99) 100%)',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">确认删除</h3>
+              <p className="text-white/60 text-sm mb-6">确定要删除素材 "{selectedMaterial.name}" 吗？此操作无法撤销。</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isSaving}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 disabled:opacity-50 transition-colors"
+                >
+                  {isSaving ? '删除中...' : '删除'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
