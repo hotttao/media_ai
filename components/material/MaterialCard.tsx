@@ -43,7 +43,7 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
       className={`
         relative w-full overflow-hidden rounded-2xl
         transition-all duration-500 cursor-pointer
-        ${isHovered ? 'scale-[1.05] shadow-2xl z-10' : 'shadow-lg'}
+        ${isHovered ? 'scale-[1.02] shadow-2xl z-10' : 'shadow-lg'}
       `}
       style={{
         background: `linear-gradient(180deg, rgba(7,10,14,0.9) 0%, rgba(13,18,24,0.96) 100%)`,
@@ -74,15 +74,17 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
       {/* Image container */}
       <div className="relative aspect-[4/5] overflow-hidden bg-black/30">
         <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
-        <img
-          src={material.url}
-          alt={material.name}
-          className={`
-            relative z-10 w-full h-full object-cover
-            transition-transform duration-700
-            ${isHovered ? 'scale-105' : ''}
-          `}
-        />
+        <div className="absolute inset-0 p-1">
+          <img
+            src={material.url}
+            alt={material.name}
+            className={`
+              relative z-10 h-full w-full rounded-xl object-contain
+              transition-transform duration-700
+              ${isHovered ? 'scale-[1.02]' : 'scale-100'}
+            `}
+          />
+        </div>
 
         {/* Type badge overlay */}
         <div className="absolute top-3 left-3">
@@ -118,7 +120,7 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
 
       {/* Content */}
       <div
-        className="relative z-10 flex min-h-[110px] flex-col justify-between p-4"
+        className="relative z-10 flex min-h-[100px] flex-col justify-between p-3.5"
         style={{
           background: 'rgba(0,0,0,0.45)',
           backdropFilter: 'blur(10px)',

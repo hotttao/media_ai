@@ -150,7 +150,7 @@ export function ProductDetail({ product }: { product: any }) {
       <div className="fixed top-20 left-20 w-96 h-96 bg-violet-300/30 rounded-full blur-[120px] pointer-events-none animate-pulse" />
       <div className="fixed bottom-20 right-20 w-80 h-80 bg-fuchsia-300/30 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
 
-      <div className="relative max-w-7xl mx-auto px-6 py-8">
+      <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {/* Back link */}
         <Link
           href="/products"
@@ -211,12 +211,12 @@ export function ProductDetail({ product }: { product: any }) {
             }}
           />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:gap-10">
             {/* Left: Product Image */}
-            <div className="space-y-4">
+            <div className="space-y-4 xl:sticky xl:top-8">
               {/* Main Image Card */}
               <div
-                className="relative aspect-[9/16] max-w-sm mx-auto rounded-3xl overflow-hidden bg-gradient-to-br from-white to-gray-100 border border-gray-200/50 cursor-zoom-in group shadow-xl shadow-gray-200/50"
+                className="relative mx-auto aspect-[9/16] w-full max-w-[26rem] cursor-zoom-in overflow-hidden rounded-3xl border border-gray-200/70 bg-gradient-to-br from-white to-gray-100 shadow-xl shadow-gray-200/60 group"
                 onClick={() => setIsZoomed(true)}
               >
                 {mainImage ? (
@@ -258,7 +258,7 @@ export function ProductDetail({ product }: { product: any }) {
 
               {/* Thumbnail strip */}
               {product.images && product.images.length > 1 && (
-                <div className="flex gap-3 overflow-x-auto pb-2">
+                <div className="mx-auto flex max-w-[26rem] gap-3 overflow-x-auto pb-2">
                   {product.images.map((image: any, index: number) => (
                     <button
                       key={image.id}
@@ -285,9 +285,9 @@ export function ProductDetail({ product }: { product: any }) {
             </div>
 
             {/* Right: Product Info */}
-            <div className="space-y-8 lg:pt-4">
+            <div className="space-y-6">
               {/* Title & Tags */}
-              <div className="space-y-4">
+              <div className="space-y-4 rounded-3xl border border-gray-200 bg-white p-6 shadow-lg shadow-gray-100">
                 <h1 className="text-4xl font-bold text-gray-900 tracking-tight leading-tight" style={{ fontFeatureSettings: '"ss01", "ss03", "ss10", "ss11", "ss12"' }}>
                   {product.name}
                 </h1>
@@ -309,7 +309,7 @@ export function ProductDetail({ product }: { product: any }) {
 
               {/* Product Details */}
               {product.productDetails && (
-                <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-lg shadow-gray-100">
+                <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-lg shadow-gray-100">
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -322,8 +322,8 @@ export function ProductDetail({ product }: { product: any }) {
                 </div>
               )}
 
-              <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-lg shadow-gray-100">
-                <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-lg shadow-gray-100">
+                <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -367,7 +367,7 @@ export function ProductDetail({ product }: { product: any }) {
 
               {/* Display Actions */}
               {product.displayActions && (
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 shadow-xl">
+                <div className="rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 p-6 shadow-xl">
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-white/80 mb-5 flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -394,10 +394,10 @@ export function ProductDetail({ product }: { product: any }) {
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-2">
+              <div className="grid grid-cols-1 gap-3 rounded-3xl border border-gray-200 bg-white p-4 shadow-lg shadow-gray-100 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                 <button
                   onClick={() => setShowWizard(true)}
-                  className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-matcha-600 to-matcha-700 hover:from-matcha-500 hover:to-matcha-600 text-white font-medium shadow-lg shadow-matcha-500/30 hover:shadow-matcha-500/50 transition-all duration-300 flex items-center justify-center gap-2 group active:scale-[0.98]"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-matcha-600 to-matcha-700 px-6 py-3.5 font-medium text-white shadow-lg shadow-matcha-500/30 transition-all duration-300 hover:from-matcha-500 hover:to-matcha-600 hover:shadow-matcha-500/50 group active:scale-[0.98]"
                 >
                   <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -406,7 +406,7 @@ export function ProductDetail({ product }: { product: any }) {
                 </button>
                 <button
                   onClick={() => router.push(`/products/${product.id}/edit`)}
-                  className="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-medium shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 transition-all duration-300 flex items-center justify-center gap-2 group active:scale-[0.98]"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 py-3.5 font-medium text-white shadow-lg shadow-violet-500/30 transition-all duration-300 hover:from-violet-500 hover:to-fuchsia-500 hover:shadow-violet-500/50 group active:scale-[0.98]"
                 >
                   <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -416,7 +416,7 @@ export function ProductDetail({ product }: { product: any }) {
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   disabled={productDeleting}
-                  className="py-3.5 px-5 rounded-xl border-2 border-red-400 text-red-500 hover:bg-red-50 font-medium transition-all duration-300 flex items-center justify-center gap-2 group active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 rounded-xl border-2 border-red-400 px-5 py-3.5 font-medium text-red-500 transition-all duration-300 hover:bg-red-50 group active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -426,7 +426,7 @@ export function ProductDetail({ product }: { product: any }) {
               </div>
 
               {/* Metadata */}
-              <div className="pt-6 border-t border-gray-200">
+              <div className="border-t border-gray-200 px-1 pt-4">
                 <div className="flex items-center justify-between text-sm text-gray-400">
                   <span className="font-mono">{product.id.slice(0, 8)}...</span>
                   <span>{new Date(product.createdAt).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
@@ -635,11 +635,11 @@ function MaterialsTab({
     }
   }
   const renderGeneratedMaterial = (type: string, id: string, url: string, label: string) => (
-    <div key={id} className="relative group">
+    <div key={id} className="relative group aspect-[9/16] w-full max-w-36">
       <img
         src={url}
         alt={label}
-        className="w-full max-w-44 mx-auto aspect-[9/16] object-contain bg-gray-100 rounded-xl cursor-pointer"
+        className="h-full w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-100 object-contain"
         onClick={() => setPreviewUrl(url)}
       />
       <button
@@ -691,17 +691,17 @@ function MaterialsTab({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7 rounded-3xl border border-gray-200 bg-white p-5 shadow-lg shadow-gray-100 sm:p-6">
       {/* 模特图 (效果图) */}
       <div>
         <h3 className="text-sm font-medium text-gray-500 mb-4">模特图 ({materials.modelImages.length})</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 justify-items-start gap-3 md:grid-cols-3 lg:grid-cols-4">
           {materials.modelImages.map(m => (
-            <div key={m.id} className="relative group">
+            <div key={m.id} className="relative group aspect-[9/16] w-full max-w-36">
               <img
                 src={m.url}
                 alt="模特图"
-                className="w-full max-w-44 mx-auto aspect-[9/16] object-contain bg-gray-100 rounded-xl cursor-pointer"
+                className="h-full w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-100 object-contain"
                 onClick={() => setPreviewUrl(m.url)}
               />
               <button
@@ -742,7 +742,7 @@ function MaterialsTab({
       {materials.styleImages.length > 0 && (
         <div>
           <h3 className="text-sm font-medium text-gray-500 mb-4">定妆图 ({materials.styleImages.length})</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 justify-items-start gap-3 md:grid-cols-3 lg:grid-cols-4">
             {materials.styleImages.map(s => (
               renderGeneratedMaterial('styleImage', s.id, s.url, '定妆图')
             ))}
@@ -754,7 +754,7 @@ function MaterialsTab({
       {materials.firstFrames.length > 0 && (
         <div>
           <h3 className="text-sm font-medium text-gray-500 mb-4">首帧图 ({materials.firstFrames.length})</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 justify-items-start gap-3 md:grid-cols-3 lg:grid-cols-4">
             {materials.firstFrames.map(f => (
               renderGeneratedMaterial('firstFrame', f.id, f.url, '首帧图')
             ))}
@@ -831,10 +831,11 @@ function SecondaryImagesSection({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-lg shadow-gray-100">
+      <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-500">产品副图</h3>
-        <label className="px-3 py-1.5 rounded-lg bg-violet-50 text-violet-600 text-sm font-medium cursor-pointer hover:bg-violet-100 transition-colors flex items-center gap-1.5">
+          <label className="flex items-center gap-1.5 rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-600 transition-colors hover:bg-violet-100 cursor-pointer">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -853,10 +854,10 @@ function SecondaryImagesSection({
           暂无副图
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {secondaryImages.map(image => (
             <div key={image.id} className="relative group">
-              <div className="relative aspect-[9/16] max-w-28 rounded-xl overflow-hidden bg-gray-100">
+              <div className="relative aspect-[9/16] rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
                 <Image
                   src={image.url}
                   alt="副图"
@@ -897,6 +898,7 @@ function SecondaryImagesSection({
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

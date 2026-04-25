@@ -313,7 +313,7 @@ export default function MaterialsPage() {
           <p className="text-white/40">没有找到匹配 {selectedFilter.label} 类型的素材</p>
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,180px))] justify-center gap-5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(128px,150px))] justify-center gap-3.5 sm:gap-4">
           {filteredMaterials.map((material, index) => (
             <div
               key={material.id}
