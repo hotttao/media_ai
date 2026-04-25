@@ -285,6 +285,47 @@
       ]
     },
     {
+      "name": "first-frames",
+      "item": [
+        {
+          "name": "GET first frames",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/first-frames?ipId=%7B%7BipId%7D%7D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "first-frames"
+              ],
+              "query": [
+                {
+                  "key": "ipId",
+                  "value": "{{ipId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getFirstFrames"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "ips",
       "item": [
         {
@@ -452,6 +493,84 @@
           ]
         },
         {
+          "name": "GET ips id scenes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ips/{{ipId}}/scenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ips",
+                "{{ipId}}",
+                "scenes"
+              ],
+              "query": []
+            },
+            "description": "operationId: getIpsIdScenes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT ips id scenes",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ips/{{ipId}}/scenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ips",
+                "{{ipId}}",
+                "scenes"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: putIpsIdScenes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "GET ips",
           "request": {
             "method": "GET",
@@ -550,6 +669,51 @@
               "query": []
             },
             "description": "operationId: getMaterialsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH materials id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/{{materialId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "materials",
+                "{{materialId}}"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: patchMaterialsId"
           },
           "event": [
             {
@@ -841,6 +1005,47 @@
                   "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
                   "let json = {}; try { json = pm.response.json(); } catch (e) {}",
                   "if (json.id) pm.collectionVariables.set('materialId', json.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "model-images",
+      "item": [
+        {
+          "name": "GET model images",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/model-images?ipId=%7B%7BipId%7D%7D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "model-images"
+              ],
+              "query": [
+                {
+                  "key": "ipId",
+                  "value": "{{ipId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getModelImages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
                 ]
               }
             }
@@ -1692,6 +1897,84 @@
           ]
         },
         {
+          "name": "GET products id scenes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/scenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "scenes"
+              ],
+              "query": []
+            },
+            "description": "operationId: getProductsIdScenes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT products id scenes",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/scenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "scenes"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: putProductsIdScenes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "POST products id style image",
           "request": {
             "method": "POST",
@@ -1956,6 +2239,47 @@
                   "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
                   "let json = {}; try { json = pm.response.json(); } catch (e) {}",
                   "if (json.id) pm.collectionVariables.set('productId', json.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "style-images",
+      "item": [
+        {
+          "name": "GET style images",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/style-images?ipId=%7B%7BipId%7D%7D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "style-images"
+              ],
+              "query": [
+                {
+                  "key": "ipId",
+                  "value": "{{ipId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getStyleImages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
                 ]
               }
             }
