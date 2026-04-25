@@ -41,6 +41,16 @@ interface GeneratedMaterials {
   firstFrames: FirstFrame[]
 }
 
+interface SceneMaterial {
+  id: string
+  materialId: string
+  material: {
+    id: string
+    name: string
+    url: string
+  } | null
+}
+
 const audienceConfig = {
   MENS: { label: '男装', gradient: 'from-slate-600 to-zinc-700', textColor: 'text-slate-700' },
   WOMENS: { label: '女装', gradient: 'from-rose-500 to-pink-600', textColor: 'text-rose-700' },
@@ -56,6 +66,10 @@ export function ProductDetail({ product }: { product: any }) {
   const [materialsLoading, setMaterialsLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [productDeleting, setProductDeleting] = useState(false)
+  const [productScenes, setProductScenes] = useState<SceneMaterial[]>(product.productScenes || [])
+  const [availableScenes, setAvailableScenes] = useState<{ id: string; name: string; url: string }[]>([])
+  const [showSceneSelector, setShowSceneSelector] = useState(false)
+  const [sceneSaving, setSceneSaving] = useState(false)
 
   const fetchGeneratedMaterials = () => {
     setMaterialsLoading(true)
@@ -70,6 +84,17 @@ export function ProductDetail({ product }: { product: any }) {
       fetchGeneratedMaterials()
     }
   }, [activeTab, product.id])
+
+  useEffect(() => {
+    if (!showSceneSelector || availableScenes.length > 0) {
+      return
+    }
+
+    fetch('/api/materials?type=SCENE')
+      .then(res => res.json())
+      .then(data => setAvailableScenes(Array.isArray(data) ? data : []))
+      .catch(error => console.error('Load available scenes error:', error))
+  }, [showSceneSelector, availableScenes.length])
 
   const handleDeleteProduct = async () => {
     setProductDeleting(true)
@@ -88,6 +113,30 @@ export function ProductDetail({ product }: { product: any }) {
     } finally {
       setProductDeleting(false)
       setShowDeleteConfirm(false)
+    }
+  }
+
+  const handleSaveScenes = async (selectedIds: string[]) => {
+    setSceneSaving(true)
+    try {
+      const res = await fetch(`/api/products/${product.id}/scenes`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialIds: selectedIds }),
+      })
+
+      if (!res.ok) {
+        throw new Error('Save scenes failed')
+      }
+
+      const data = await res.json()
+      setProductScenes(Array.isArray(data) ? data : [])
+      setShowSceneSelector(false)
+    } catch (error) {
+      console.error(error)
+      alert('保存适配场景失败')
+    } finally {
+      setSceneSaving(false)
     }
   }
 
@@ -273,6 +322,49 @@ export function ProductDetail({ product }: { product: any }) {
                 </div>
               )}
 
+              <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-lg shadow-gray-100">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+                      </svg>
+                      服装适配场景
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      配置这件服装更适合出现在哪些场景里，后续生成首帧时会优先限制在这些场景内。
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowSceneSelector(true)}
+                    className="px-4 py-2 rounded-xl bg-violet-50 text-violet-600 text-sm font-medium hover:bg-violet-100 transition-colors"
+                  >
+                    配置场景
+                  </button>
+                </div>
+
+                {productScenes.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-400">
+                    暂未配置适配场景
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {productScenes.map((scene) => (
+                      <div key={scene.id} className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
+                        {scene.material?.url ? (
+                          <img src={scene.material.url} alt={scene.material.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">?</div>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                          <p className="text-xs text-white truncate">{scene.material?.name || '未知场景'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Display Actions */}
               {product.displayActions && (
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 shadow-xl">
@@ -421,6 +513,102 @@ export function ProductDetail({ product }: { product: any }) {
           <GenerateVideoWizard product={product} />
         </div>
       )}
+
+      {showSceneSelector && (
+        <SceneSelectorModal
+          availableScenes={availableScenes}
+          selectedIds={productScenes.map(scene => scene.materialId)}
+          onSave={handleSaveScenes}
+          onClose={() => setShowSceneSelector(false)}
+          isSaving={sceneSaving}
+        />
+      )}
+    </div>
+  )
+}
+
+function SceneSelectorModal({
+  availableScenes,
+  selectedIds,
+  onSave,
+  onClose,
+  isSaving,
+}: {
+  availableScenes: { id: string; name: string; url: string }[]
+  selectedIds: string[]
+  onSave: (ids: string[]) => void
+  onClose: () => void
+  isSaving: boolean
+}) {
+  const [selected, setSelected] = useState<string[]>(selectedIds)
+
+  const toggleScene = (id: string) => {
+    setSelected(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id])
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6" onClick={onClose}>
+      <div
+        className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">配置服装适配场景</h3>
+            <p className="text-sm text-gray-500 mt-1">选择这件服装适合出现的场景。</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl leading-none">×</button>
+        </div>
+
+        <div className="p-6 max-h-[65vh] overflow-y-auto">
+          {availableScenes.length === 0 ? (
+            <div className="py-10 text-center text-sm text-gray-400">暂无可用场景素材</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {availableScenes.map(scene => (
+                <button
+                  key={scene.id}
+                  type="button"
+                  onClick={() => toggleScene(scene.id)}
+                  className={`relative aspect-[4/3] rounded-xl overflow-hidden text-left transition-all ${
+                    selected.includes(scene.id)
+                      ? 'ring-2 ring-violet-500 shadow-lg shadow-violet-500/20'
+                      : 'hover:ring-2 hover:ring-gray-300'
+                  }`}
+                >
+                  <img src={scene.url} alt={scene.name} className="w-full h-full object-cover" />
+                  {selected.includes(scene.id) && (
+                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-violet-500 text-white flex items-center justify-center">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                    <p className="text-xs text-white truncate">{scene.name}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors"
+          >
+            取消
+          </button>
+          <button
+            onClick={() => onSave(selected)}
+            disabled={isSaving}
+            className="px-5 py-2 rounded-xl bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+          >
+            {isSaving ? '保存中...' : `保存 (${selected.length})`}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

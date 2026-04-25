@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
@@ -30,6 +30,10 @@ interface Material {
   name: string
   url: string
   type: string
+}
+
+interface SceneAssociation {
+  materialId: string
 }
 
 interface Movement {
@@ -112,6 +116,8 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
 
   // Step 4: First Frame
   const [scenes, setScenes] = useState<Material[]>([])
+  const [productScenes, setProductScenes] = useState<SceneAssociation[]>([])
+  const [ipScenes, setIpScenes] = useState<SceneAssociation[]>([])
   const [selectedScene, setSelectedScene] = useState<Material | null>(null)
   const [composition, setComposition] = useState('')
   const [firstFrameUrl, setFirstFrameUrl] = useState<string | null>(null)
@@ -146,15 +152,51 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
         fetch('/api/materials?type=ACCESSORY').then(r => r.json()),
         fetch('/api/materials?type=SCENE').then(r => r.json()),
         fetch('/api/movement-materials').then(r => r.json()),
-      ]).then(([posesData, makeupsData, accessoriesData, scenesData, movementsData]) => {
+        fetch(`/api/products/${product.id}/scenes`).then(r => r.json()),
+      ]).then(([posesData, makeupsData, accessoriesData, scenesData, movementsData, productScenesData]) => {
         setPoses(posesData)
         setMakeups(makeupsData)
         setAccessories(accessoriesData)
         setScenes(scenesData)
         setMovements(movementsData)
+        setProductScenes(Array.isArray(productScenesData) ? productScenesData : [])
       })
     }
-  }, [currentStep])
+  }, [currentStep, product.id])
+
+  useEffect(() => {
+    if (!selectedIp) {
+      setIpScenes([])
+      return
+    }
+
+    fetch(`/api/ips/${selectedIp.id}/scenes`)
+      .then(res => res.json())
+      .then(data => setIpScenes(Array.isArray(data) ? data : []))
+      .catch(() => setIpScenes([]))
+  }, [selectedIp])
+
+  const filteredScenes = useMemo(() => {
+    let nextScenes = scenes
+
+    const productSceneIds = new Set(productScenes.map(scene => scene.materialId))
+    if (productSceneIds.size > 0) {
+      nextScenes = nextScenes.filter(scene => productSceneIds.has(scene.id))
+    }
+
+    const ipSceneIds = new Set(ipScenes.map(scene => scene.materialId))
+    if (ipSceneIds.size > 0) {
+      nextScenes = nextScenes.filter(scene => ipSceneIds.has(scene.id))
+    }
+
+    return nextScenes
+  }, [ipScenes, productScenes, scenes])
+
+  useEffect(() => {
+    if (selectedScene && !filteredScenes.some(scene => scene.id === selectedScene.id)) {
+      setSelectedScene(null)
+    }
+  }, [filteredScenes, selectedScene])
 
   // Fetch IP fullBodyUrl when selected
   useEffect(() => {
@@ -479,7 +521,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
             {currentStep === 3 && (
               <FirstFrameStep
                 productId={product.id}
-                scenes={scenes}
+                scenes={filteredScenes}
                 selectedScene={selectedScene}
                 onSceneSelect={setSelectedScene}
                 composition={composition}
@@ -492,8 +534,40 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 onSelectFirstFrameId={setFirstFrameId}
                 loading={firstFrameLoading}
                 onGenerate={async () => {
-                  // TODO: call first frame generation API
-                  setFirstFrameLoading(false)
+                  if (!selectedIp?.id || !selectedScene?.id || !composition || !styledImageUrl) {
+                    return
+                  }
+
+                  setFirstFrameLoading(true)
+                  setError(null)
+                  try {
+                    const res = await fetch(`/api/products/${product.id}/generate-video`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        step: 'first-frame',
+                        ipId: selectedIp.id,
+                        styleImageId: styledImageId || undefined,
+                        sceneId: selectedScene.id,
+                        composition,
+                        imageUrl: styledImageUrl,
+                      }),
+                    })
+
+                    if (!res.ok) {
+                      const data = await res.json().catch(() => null)
+                      setError(data?.error || '生成首帧图失败')
+                      return
+                    }
+
+                    const data = await res.json()
+                    setFirstFrameUrl(data.firstFrameUrl)
+                    setFirstFrameId(data.firstFrameId)
+                  } catch {
+                    setError('生成首帧图失败')
+                  } finally {
+                    setFirstFrameLoading(false)
+                  }
                 }}
                 canGenerate={!!selectedScene && !!composition && !!styledImageId}
               />

@@ -112,6 +112,7 @@ model Material {
   createdAt             DateTime          @default(now()) @map("created_at")
   updatedAt             DateTime          @updatedAt @map("updated_at")
   ipMaterials           IpMaterial[]      @relation("IpMaterialToMaterial")
+  productScenes         ProductScene[]    @relation("ProductSceneToMaterial")
   team                  Team?             @relation("TeamToMaterials", fields: [teamId], references: [id])
   user                  User?             @relation("UserToMaterials", fields: [userId], references: [id])
   virtualIpScenes       VirtualIpScene[] @relation("VirtualIpSceneToMaterial")
@@ -201,6 +202,7 @@ model Product {
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
   images           ProductImage[]    @relation("ProductToImages")
+  productScenes    ProductScene[]    @relation("ProductToProductScenes")
   team             Team              @relation("TeamToProducts", fields: [teamId], references: [id])
   user             User              @relation("UserToProducts", fields: [userId], references: [id])
   videos           Video[]           @relation("ProductToVideos")
@@ -220,6 +222,20 @@ model ProductImage {
 
   @@index([productId], map: "product_images_product_id_fkey")
   @@map("product_images")
+}
+
+model ProductScene {
+  id         String   @id @default(uuid())
+  productId  String   @map("product_id")
+  materialId String   @map("material_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  product    Product  @relation("ProductToProductScenes", fields: [productId], references: [id], onDelete: Cascade)
+  material   Material @relation("ProductSceneToMaterial", fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, materialId])
+  @@index([productId], map: "idx_product_scenes_product")
+  @@index([materialId], map: "idx_product_scenes_material")
+  @@map("product_scenes")
 }
 
 model Video {

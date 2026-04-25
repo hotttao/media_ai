@@ -1,5 +1,6 @@
 // domains/video-generation/service.ts
 import { db } from '@/foundation/lib/db'
+import { isSceneAllowedForProductAndIp } from '@/domains/product/service'
 import { v4 as uuid } from 'uuid'
 import { providerRegistry } from '@/foundation/providers/registry'
 import { ImageBlendTool, SceneReplaceTool, ImageToVideoTool, MotionTransferTool, ModelImageTool, StyleImageTool, MultiImageEditTool } from './tools'
@@ -172,6 +173,11 @@ export async function generateFirstFrame(
   imageUrl: string
 ): Promise<FirstFrameGenerationResult> {
   // 1. 计算 input hash 用于去重
+  const allowed = await isSceneAllowedForProductAndIp(productId, ipId, sceneId)
+  if (!allowed) {
+    throw new Error(`Scene ${sceneId} is not allowed for product ${productId} and ip ${ipId}`)
+  }
+
   const inputHash = hashStrings(sceneId, composition)
 
   // 2. 检查是否已存在相同输入的生成结果

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
+import { isSceneAllowedForProductAndIp } from '@/domains/product/service'
 import { v4 as uuid } from 'uuid'
 
 // POST /api/products/{id}/first-frame
@@ -28,6 +29,13 @@ export async function POST(
     })
     if (!styleImage) {
       return NextResponse.json({ error: 'StyleImage not found' }, { status: 404 })
+    }
+
+    if (sceneId) {
+      const allowed = await isSceneAllowedForProductAndIp(params.id, styleImage.ipId, sceneId)
+      if (!allowed) {
+        return NextResponse.json({ error: 'Scene is not allowed for this product/IP combination' }, { status: 400 })
+      }
     }
 
     // 计算 input hash 用于去重

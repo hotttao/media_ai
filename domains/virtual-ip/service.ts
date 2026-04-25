@@ -2,21 +2,30 @@ import { db } from '@/foundation/lib/db'
 import { v4 as uuid } from 'uuid'
 import type { CreateIpInput, UpdateIpInput } from './types'
 
+export async function getVirtualIpSummaryById(id: string, teamId: string) {
+  return db.virtualIp.findFirst({
+    where: { id, teamId },
+    select: {
+      id: true,
+      nickname: true,
+    },
+  })
+}
+
 export async function getVirtualIpScenes(virtualIpId: string) {
   return db.virtualIpScene.findMany({
     where: { virtualIpId },
     include: { material: true },
+    orderBy: { createdAt: 'desc' },
   })
 }
 
 export async function setVirtualIpScenes(virtualIpId: string, materialIds: string[]) {
-  // 事务：删除旧关联，创建新关联
   return db.$transaction(async (tx) => {
-    // 删除旧关联
     await tx.virtualIpScene.deleteMany({
       where: { virtualIpId },
     })
-    // 创建新关联
+
     if (materialIds.length > 0) {
       await tx.virtualIpScene.createMany({
         data: materialIds.map((materialId) => ({

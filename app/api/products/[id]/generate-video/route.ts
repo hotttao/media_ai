@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
+import { isSceneAllowedForProductAndIp } from '@/domains/product/service'
 import { generateFirstFrame, generateVideo } from '@/domains/video-generation/service'
 
 // POST /api/products/[id]/generate-video
@@ -32,6 +33,11 @@ export async function POST(
 
       if (!ipId || !sceneId || !composition || !imageUrl) {
         return NextResponse.json({ error: 'Missing required params: ipId, sceneId, composition, imageUrl' }, { status: 400 })
+      }
+
+      const allowed = await isSceneAllowedForProductAndIp(params.id, ipId, sceneId)
+      if (!allowed) {
+        return NextResponse.json({ error: 'Scene is not allowed for this product/IP combination' }, { status: 400 })
       }
 
       const result = await generateFirstFrame(

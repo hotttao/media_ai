@@ -2,6 +2,16 @@ import { db } from '@/foundation/lib/db'
 import { v4 as uuid } from 'uuid'
 import type { CreateProductInput, ProductFilterInput } from './types'
 
+export async function getProductSummaryById(id: string, teamId: string) {
+  return db.product.findFirst({
+    where: { id, teamId },
+    select: {
+      id: true,
+      name: true,
+    },
+  })
+}
+
 export async function createProduct(
   userId: string,
   teamId: string,
@@ -69,8 +79,53 @@ export async function getProducts(
 export async function getProductById(id: string) {
   return db.product.findUnique({
     where: { id },
-    include: { images: true },
+    include: {
+      images: true,
+      productScenes: {
+        include: { material: true },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
   })
+}
+
+export async function getProductScenes(productId: string) {
+  return db.productScene.findMany({
+    where: { productId },
+    include: { material: true },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+export async function setProductScenes(productId: string, materialIds: string[]) {
+  return db.$transaction(async (tx) => {
+    await tx.productScene.deleteMany({
+      where: { productId },
+    })
+
+    if (materialIds.length > 0) {
+      await tx.productScene.createMany({
+        data: materialIds.map((materialId) => ({
+          productId,
+          materialId,
+        })),
+      })
+    }
+  })
+}
+
+export async function isSceneAllowedForProductAndIp(productId: string, ipId: string, sceneId: string) {
+  const [productSceneCount, productSceneMatch, ipSceneCount, ipSceneMatch] = await Promise.all([
+    db.productScene.count({ where: { productId } }),
+    db.productScene.count({ where: { productId, materialId: sceneId } }),
+    db.virtualIpScene.count({ where: { virtualIpId: ipId } }),
+    db.virtualIpScene.count({ where: { virtualIpId: ipId, materialId: sceneId } }),
+  ])
+
+  const allowedByProduct = productSceneCount === 0 || productSceneMatch > 0
+  const allowedByIp = ipSceneCount === 0 || ipSceneMatch > 0
+
+  return allowedByProduct && allowedByIp
 }
 
 export async function updateProduct(
