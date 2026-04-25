@@ -15,5 +15,14 @@ export const materialFilterSchema = z.object({
   search: z.string().optional().describe('Keyword used to search material names and metadata.'),
 }).describe('Query filters for listing materials.')
 
+export const updateMaterialSchema = createMaterialSchema
+  .omit({ url: true })
+  .extend({
+    url: z.string().min(1, 'URL is required').optional().describe('Public or internal URL of the material asset.'),
+  })
+  .partial()
+  .describe('Payload for partially updating a material asset.')
+
 export type CreateMaterialInput = z.infer<typeof createMaterialSchema>
 export type MaterialFilterInput = z.infer<typeof materialFilterSchema>
+export type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>

@@ -1,6 +1,6 @@
 import { db } from '@/foundation/lib/db'
 import { v4 as uuid } from 'uuid'
-import type { CreateMaterialInput, IpMaterialInput } from './types'
+import type { CreateMaterialInput, IpMaterialInput, UpdateMaterialInput } from './types'
 import { Visibility, MaterialType } from '@prisma/client'
 
 export async function createMaterial(
@@ -63,6 +63,37 @@ export async function deleteMaterial(id: string, userId: string, teamId: string)
         { visibility: 'TEAM', teamId },
         { visibility: 'PUBLIC' },
       ],
+    },
+  })
+}
+
+export async function updateMaterial(id: string, userId: string, teamId: string, input: UpdateMaterialInput) {
+  const existing = await db.material.findFirst({
+    where: {
+      id,
+      OR: [
+        { userId },
+        { visibility: 'TEAM', teamId },
+        { visibility: 'PUBLIC' },
+      ],
+    },
+  })
+
+  if (!existing) {
+    return null
+  }
+
+  return db.material.update({
+    where: { id },
+    data: {
+      name: input.name,
+      type: input.type,
+      visibility: input.visibility,
+      description: input.description,
+      url: input.url,
+      tags: input.tags ? JSON.stringify(input.tags) : input.tags === undefined ? undefined : null,
+      userId: input.visibility === 'PERSONAL' ? userId : null,
+      teamId: input.visibility === 'TEAM' ? teamId : null,
     },
   })
 }

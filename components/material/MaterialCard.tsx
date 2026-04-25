@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 
 interface MaterialCardProps {
   material: {
@@ -47,7 +46,7 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
         ${isHovered ? 'scale-[1.05] shadow-2xl z-10' : 'shadow-lg'}
       `}
       style={{
-        background: `linear-gradient(135deg, ${gradient}, rgba(255,255,255,0.05))`,
+        background: `linear-gradient(180deg, rgba(7,10,14,0.9) 0%, rgba(13,18,24,0.96) 100%)`,
         border: '1px solid rgba(255,255,255,0.1)',
       }}
     >
@@ -73,12 +72,13 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
       />
 
       {/* Image container */}
-      <div className="relative aspect-[9/16] overflow-hidden bg-black/20">
+      <div className="relative aspect-[4/5] overflow-hidden bg-black/30">
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
         <img
           src={material.url}
           alt={material.name}
           className={`
-            w-full h-full object-contain
+            relative z-10 w-full h-full object-cover
             transition-transform duration-700
             ${isHovered ? 'scale-105' : ''}
           `}
@@ -117,17 +117,22 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
       </div>
 
       {/* Content */}
-      <CardContent
-        className="p-3 relative z-10"
+      <div
+        className="relative z-10 flex min-h-[110px] flex-col justify-between p-4"
         style={{
-          background: 'rgba(0,0,0,0.3)',
+          background: 'rgba(0,0,0,0.45)',
           backdropFilter: 'blur(10px)',
         }}
       >
-        <h3 className="font-medium text-white truncate">{material.name}</h3>
+        <div>
+          <h3 className="font-medium text-white line-clamp-1">{material.name}</h3>
+          {material.description && (
+            <p className="mt-2 line-clamp-2 text-sm text-white/55">{material.description}</p>
+          )}
+        </div>
 
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
+          <div className="mt-3 flex flex-wrap gap-1">
             {tags.slice(0, 3).map((tag: string) => (
               <span
                 key={tag}
@@ -142,7 +147,7 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
             ))}
           </div>
         )}
-      </CardContent>
+      </div>
     </div>
   )
 }

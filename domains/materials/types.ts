@@ -52,3 +52,12 @@ export interface IpMaterialInput {
   sourceIpMaterialId?: string
   materialId?: string
 }
+
+export interface UpdateMaterialInput {
+  visibility?: Visibility
+  type?: MaterialType
+  name?: string
+  description?: string
+  url?: string
+  tags?: string[]
+}
