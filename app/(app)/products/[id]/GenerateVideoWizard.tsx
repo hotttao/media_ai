@@ -39,6 +39,19 @@ interface Movement {
   clothing?: string | null
 }
 
+interface GeneratedImage {
+  id: string
+  url: string
+}
+
+interface StyleImage extends GeneratedImage {
+  modelImageId: string
+}
+
+interface FirstFrameImage extends GeneratedImage {
+  styleImageId: string | null
+}
+
 // Step configuration - PRD 4.2
 const STEPS = [
   { id: 'select-ip', label: '选择虚拟IP', icon: '🎭' },
@@ -76,7 +89,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
 
   // Step 2: Model Image
   const [modelImageMode, setModelImageMode] = useState<'select' | 'generate'>('generate')
-  const [existingModelImages, setExistingModelImages] = useState<string[]>([])
+  const [existingModelImages, setExistingModelImages] = useState<GeneratedImage[]>([])
   const [selectedProductImage, setSelectedProductImage] = useState<ProductImage | null>(null)
   const [modelImageUrl, setModelImageUrl] = useState<string | null>(null)
   const [modelImageId, setModelImageId] = useState<string | null>(null)
@@ -93,6 +106,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [styledImageUrl, setStyledImageUrl] = useState<string | null>(null)
   const [styledImageId, setStyledImageId] = useState<string | null>(null)
   const [styledImageMode, setStyledImageMode] = useState<'select' | 'generate'>('generate')
+  const [existingStyleImages, setExistingStyleImages] = useState<StyleImage[]>([])
   const [styleImageLoading, setStyleImageLoading] = useState(false)
   const [savedStyledImageUrl, setSavedStyledImageUrl] = useState<string | null>(null)
 
@@ -102,6 +116,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [composition, setComposition] = useState('')
   const [firstFrameUrl, setFirstFrameUrl] = useState<string | null>(null)
   const [firstFrameId, setFirstFrameId] = useState<string | null>(null)
+  const [existingFirstFrames, setExistingFirstFrames] = useState<FirstFrameImage[]>([])
   const [firstFrameLoading, setFirstFrameLoading] = useState(false)
   const [savedFirstFrameUrl, setSavedFirstFrameUrl] = useState<string | null>(null)
 
@@ -158,11 +173,53 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
       fetch(`/api/products/${product.id}/model-images?ipId=${selectedIp.id}`)
         .then(res => res.json())
         .then((data: any[]) => {
-          const urls = [...new Set(data.map(d => d.url).filter(Boolean))] as string[]
-          setExistingModelImages(urls)
+          const images = data
+            .filter(d => d.id && d.url)
+            .map(d => ({ id: d.id, url: d.url }))
+          setExistingModelImages(images)
         })
     }
   }, [currentStep, selectedIp, product.id])
+
+  // Fetch existing style images when entering step 2
+  useEffect(() => {
+    if (currentStep === 2 && selectedIp && modelImageId) {
+      fetch(`/api/products/${product.id}/style-images?ipId=${selectedIp.id}&modelImageId=${modelImageId}`)
+        .then(res => res.json())
+        .then((data: any[]) => {
+          const images = data
+            .filter((image: any) => image.id && image.url)
+            .map((image: any) => ({
+              id: image.id,
+              url: image.url,
+              modelImageId: image.modelImageId,
+            }))
+          setExistingStyleImages(images)
+        })
+    } else if (currentStep === 2) {
+      setExistingStyleImages([])
+    }
+  }, [currentStep, selectedIp, modelImageId, product.id])
+
+  // Fetch existing first frames when entering step 3
+  useEffect(() => {
+    if (currentStep === 3 && selectedIp && styledImageId) {
+      fetch(`/api/products/${product.id}/first-frames?ipId=${selectedIp.id}&styleImageId=${styledImageId}`)
+        .then(res => res.json())
+        .then((data: any[]) => {
+          const images = data
+            .filter((image: any) => image.id && image.url)
+            .map((image: any) => ({
+              id: image.id,
+              url: image.url,
+              styleImageId: image.styleImageId,
+            }))
+          setExistingFirstFrames(images)
+        })
+    } else if (currentStep === 3) {
+      setExistingFirstFrames([])
+    }
+  }, [currentStep, selectedIp, styledImageId, product.id])
 
   const goNext = async () => {
     // Step 1: 如果有新的模特图（上传或生成），保存到 ModelImage 表
@@ -245,8 +302,8 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
     switch (currentStep) {
       case 0: return !!selectedIp
       case 1: return !!modelImageUrl
-      case 2: return !!selectedPose && !!styledImageUrl && !!modelImageId
-      case 3: return !!selectedScene && !!firstFrameUrl && !!composition && !!styledImageId
+      case 2: return !!styledImageUrl && (!!styledImageId || (!!selectedPose && !!modelImageId))
+      case 3: return !!firstFrameUrl && (!!firstFrameId || (!!selectedScene && !!composition && !!styledImageId))
       case 4: return !!selectedMovement && !!videoUrl
       default: return false
     }
@@ -314,7 +371,14 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 selectedProductImage={selectedProductImage}
                 onProductImageSelect={setSelectedProductImage}
                 modelImageUrl={modelImageUrl}
-                onSelectExisting={(url) => setModelImageUrl(url)}
+                onSelectExisting={(image) => {
+                  setModelImageUrl(image.url)
+                  setModelImageId(image.id)
+                  setStyledImageUrl(null)
+                  setStyledImageId(null)
+                  setFirstFrameUrl(null)
+                  setFirstFrameId(null)
+                }}
                 onSelectModelImageId={setModelImageId}
                 loading={modelImageLoading}
                 onGenerate={async () => {
@@ -335,6 +399,10 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                       const data = await res.json()
                       setModelImageUrl(data.modelImageUrl)
                       setModelImageId(data.modelImageId)
+                      setStyledImageUrl(null)
+                      setStyledImageId(null)
+                      setFirstFrameUrl(null)
+                      setFirstFrameId(null)
                     } else {
                       setError('生成失败')
                     }
@@ -362,15 +430,47 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 onAccessorySelect={setSelectedAccessory}
                 styledImageUrl={styledImageUrl}
                 styledImageMode={styledImageMode}
+                existingImages={existingStyleImages}
                 onModeChange={setStyledImageMode}
-                onSelectExisting={setStyledImageUrl}
+                onSelectExisting={(image) => {
+                  setStyledImageUrl(image.url)
+                  setStyledImageId(image.id)
+                  setFirstFrameUrl(null)
+                  setFirstFrameId(null)
+                }}
                 onSelectStyleImageId={setStyledImageId}
                 modelImageUrl={modelImageUrl}
                 modelImageId={modelImageId}
                 loading={styleImageLoading}
                 onGenerate={async () => {
-                  // TODO: call style image generation API
-                  setStyleImageLoading(false)
+                  if (!modelImageId || !selectedPose) return
+                  setStyleImageLoading(true)
+                  setError(null)
+                  try {
+                    const res = await fetch(`/api/products/${product.id}/style-image`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        modelImageId,
+                        pose: selectedPose.url,
+                        makeupUrl: selectedMakeup?.url,
+                        accessoryUrl: selectedAccessory?.url,
+                      }),
+                    })
+                    if (res.ok) {
+                      const data = await res.json()
+                      setStyledImageUrl(data.styledImageUrl)
+                      setStyledImageId(data.styleImageId)
+                      setFirstFrameUrl(null)
+                      setFirstFrameId(null)
+                    } else {
+                      setError('生成失败')
+                    }
+                  } catch {
+                    setError('生成失败')
+                  } finally {
+                    setStyleImageLoading(false)
+                  }
                 }}
                 canGenerate={!!selectedPose && !!modelImageId}
               />
@@ -387,6 +487,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 firstFrameUrl={firstFrameUrl}
                 styledImageUrl={styledImageUrl}
                 styledImageId={styledImageId}
+                existingImages={existingFirstFrames}
                 onSelectExisting={setFirstFrameUrl}
                 onSelectFirstFrameId={setFirstFrameId}
                 loading={firstFrameLoading}
@@ -520,11 +621,11 @@ function ModelImageStep({
   selectedIp: VirtualIP | null
   mode: 'select' | 'generate'
   onModeChange: (mode: 'select' | 'generate') => void
-  existingImages: string[]
+  existingImages: GeneratedImage[]
   selectedProductImage: ProductImage | null
   onProductImageSelect: (img: ProductImage) => void
   modelImageUrl: string | null
-  onSelectExisting: (url: string) => void
+  onSelectExisting: (image: GeneratedImage) => void
   onSelectModelImageId: (id: string) => void
   loading: boolean
   onGenerate: () => void
@@ -603,24 +704,24 @@ function ModelImageStep({
               暂无
             </div>
           ) : (
-            existingImages.map((url, i) => (
+            existingImages.map((image, i) => (
               <button
-                key={i}
+                key={image.id}
                 onClick={() => {
-                  onSelectExisting(url)
+                  onSelectExisting(image)
                   onModeChange('select')
                 }}
                 className={`
                   relative w-20 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300
-                  ${modelImageUrl === url ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
+                  ${modelImageUrl === image.url ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
                 `}
               >
                 <Image
-                  src={url}
+                  src={image.url}
                   alt={`已有模特图 ${i + 1}`}
                   fill
                   className="object-contain"
-                  onDoubleClick={() => setPreviewUrl(url)}
+                  onDoubleClick={() => setPreviewUrl(image.url)}
                 />
               </button>
             ))
@@ -697,7 +798,7 @@ function ModelImageStep({
                   })
                   if (saveRes.ok) {
                     const saveData = await saveRes.json()
-                    onSelectExisting(data.url)
+                    onSelectExisting({ id: saveData.modelImageId, url: data.url })
                     onSelectModelImageId(saveData.modelImageId)
                   }
                 }
@@ -738,6 +839,7 @@ function StyleImageStep({
   onAccessorySelect,
   styledImageUrl,
   styledImageMode,
+  existingImages,
   onModeChange,
   onSelectExisting,
   onSelectStyleImageId,
@@ -759,8 +861,9 @@ function StyleImageStep({
   onAccessorySelect: (m: Material | null) => void
   styledImageUrl: string | null
   styledImageMode: 'select' | 'generate'
+  existingImages: GeneratedImage[]
   onModeChange: (mode: 'select' | 'generate') => void
-  onSelectExisting: (url: string) => void
+  onSelectExisting: (image: GeneratedImage) => void
   onSelectStyleImageId: (id: string) => void
   modelImageUrl: string | null
   modelImageId: string | null
@@ -789,6 +892,40 @@ function StyleImageStep({
           </div>
         </div>
       )}
+
+      {/* Existing Style Images */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-warm-silver w-20">已有定妆图</span>
+        <div className="flex flex-wrap gap-3">
+          {existingImages.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-warm-silver bg-oat-light/50 rounded-xl">
+              暂无
+            </div>
+          ) : (
+            existingImages.map((image, i) => (
+              <button
+                key={image.id}
+                onClick={() => {
+                  onSelectExisting(image)
+                  onModeChange('select')
+                }}
+                className={`
+                  relative w-20 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300
+                  ${styledImageUrl === image.url ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
+                `}
+              >
+                <Image
+                  src={image.url}
+                  alt={`已有定妆图 ${i + 1}`}
+                  fill
+                  className="object-contain"
+                  onDoubleClick={() => setPreviewUrl(image.url)}
+                />
+              </button>
+            ))
+          )}
+        </div>
+      </div>
 
       {/* Pose Selection */}
       <div className="flex items-start gap-3">
@@ -894,11 +1031,11 @@ function StyleImageStep({
                     })
                     if (saveRes.ok) {
                       const saveData = await saveRes.json()
-                      onSelectExisting(data.url)
+                      onSelectExisting({ id: saveData.styleImageId, url: data.url })
                       onSelectStyleImageId(saveData.styleImageId)
                     }
                   } else {
-                    onSelectExisting(data.url)
+                    onSelectExisting({ id: data.url, url: data.url })
                   }
                   onModeChange('select')
                 }
@@ -962,6 +1099,7 @@ function FirstFrameStep({
   firstFrameUrl,
   styledImageUrl,
   styledImageId,
+  existingImages,
   onSelectExisting,
   onSelectFirstFrameId,
   loading,
@@ -977,6 +1115,7 @@ function FirstFrameStep({
   firstFrameUrl: string | null
   styledImageUrl: string | null
   styledImageId: string | null
+  existingImages: GeneratedImage[]
   onSelectExisting: (url: string) => void
   onSelectFirstFrameId: (id: string) => void
   loading: boolean
@@ -1004,6 +1143,40 @@ function FirstFrameStep({
           </div>
         </div>
       )}
+
+      {/* Existing First Frames */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-warm-silver w-20">已有首帧图</span>
+        <div className="flex flex-wrap gap-3">
+          {existingImages.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-warm-silver bg-oat-light/50 rounded-xl">
+              暂无
+            </div>
+          ) : (
+            existingImages.map((image, i) => (
+              <button
+                key={image.id}
+                onClick={() => {
+                  onSelectExisting(image.url)
+                  onSelectFirstFrameId(image.id)
+                }}
+                className={`
+                  relative w-20 aspect-[9/16] rounded-xl overflow-hidden transition-all duration-300
+                  ${firstFrameUrl === image.url ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
+                `}
+              >
+                <Image
+                  src={image.url}
+                  alt={`已有首帧图 ${i + 1}`}
+                  fill
+                  className="object-contain"
+                  onDoubleClick={() => setPreviewUrl(image.url)}
+                />
+              </button>
+            ))
+          )}
+        </div>
+      </div>
 
       {/* Scene Selection */}
       <div className="flex items-start gap-3">

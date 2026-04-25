@@ -54,6 +54,8 @@ export function ProductDetail({ product }: { product: any }) {
   const [activeTab, setActiveTab] = useState<'detail' | 'materials'>('detail')
   const [generatedMaterials, setGeneratedMaterials] = useState<GeneratedMaterials | null>(null)
   const [materialsLoading, setMaterialsLoading] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [productDeleting, setProductDeleting] = useState(false)
 
   const fetchGeneratedMaterials = () => {
     setMaterialsLoading(true)
@@ -68,6 +70,26 @@ export function ProductDetail({ product }: { product: any }) {
       fetchGeneratedMaterials()
     }
   }, [activeTab, product.id])
+
+  const handleDeleteProduct = async () => {
+    setProductDeleting(true)
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        throw new Error('Delete failed')
+      }
+      router.push('/products')
+      router.refresh()
+    } catch (error) {
+      console.error(error)
+      alert('删除产品失败')
+    } finally {
+      setProductDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
 
   const audience = audienceConfig[product.targetAudience as keyof typeof audienceConfig] || audienceConfig.WOMENS
   const mainImage = product.images?.find((img: any) => img.isMain) || product.images?.[0]
@@ -129,9 +151,13 @@ export function ProductDetail({ product }: { product: any }) {
           <MaterialsTab
             materials={generatedMaterials}
             loading={materialsLoading}
-            onDelete={(type, id) => {
-              // TODO: implement delete for each type
-              console.log('Delete', type, id)
+            onDelete={async (type, id) => {
+              const res = await fetch(`/api/products/${product.id}/generated-materials/${type}/${id}`, {
+                method: 'DELETE',
+              })
+              if (!res.ok) {
+                throw new Error('Delete failed')
+              }
               fetchGeneratedMaterials()
             }}
           />
@@ -295,11 +321,15 @@ export function ProductDetail({ product }: { product: any }) {
                   </svg>
                   编辑产品
                 </button>
-                <button className="py-3.5 px-5 rounded-xl border-2 border-red-400 text-red-500 hover:bg-red-50 font-medium transition-all duration-300 flex items-center justify-center gap-2 group active:scale-[0.98]">
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={productDeleting}
+                  className="py-3.5 px-5 rounded-xl border-2 border-red-400 text-red-500 hover:bg-red-50 font-medium transition-all duration-300 flex items-center justify-center gap-2 group active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  删除
+                  {productDeleting ? '删除中...' : '删除'}
                 </button>
               </div>
 
@@ -314,6 +344,40 @@ export function ProductDetail({ product }: { product: any }) {
           </div>
         )}
       </div>
+
+      {/* Zoom Modal */}
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6"
+          onClick={() => !productDeleting && setShowDeleteConfirm(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">确认删除产品？</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              删除后会移除该产品及关联的产品图、模特图、定妆图、首帧图，已生成视频会保留但不再关联此产品。
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={productDeleting}
+                className="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleDeleteProduct}
+                disabled={productDeleting}
+                className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {productDeleting ? '删除中...' : '确认删除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Zoom Modal */}
       {isZoomed && mainImage && (
@@ -368,10 +432,59 @@ function MaterialsTab({
 }: {
   materials: GeneratedMaterials | null
   loading: boolean
-  onDelete: (type: string, id: string) => void
+  onDelete: (type: string, id: string) => Promise<void>
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const handleDelete = async (type: string, id: string) => {
+    try {
+      await onDelete(type, id)
+    } catch (error) {
+      console.error(error)
+      alert('删除失败')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+  const renderGeneratedMaterial = (type: string, id: string, url: string, label: string) => (
+    <div key={id} className="relative group">
+      <img
+        src={url}
+        alt={label}
+        className="w-full max-w-44 mx-auto aspect-[9/16] object-contain bg-gray-100 rounded-xl cursor-pointer"
+        onClick={() => setPreviewUrl(url)}
+      />
+      <button
+        onClick={() => setDeletingId(id)}
+        className="absolute top-2 right-2 p-2 rounded-lg bg-black/50 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </button>
+      {deletingId === id && (
+        <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-xl" onClick={() => setDeletingId(null)}>
+          <div className="text-center p-4" onClick={e => e.stopPropagation()}>
+            <p className="text-white mb-4">确认删除？</p>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => setDeletingId(null)}
+                className="px-4 py-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => handleDelete(type, id)}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white"
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 
   if (loading) {
     return (
@@ -423,7 +536,7 @@ function MaterialsTab({
                         取消
                       </button>
                       <button
-                        onClick={() => { onDelete('modelImage', deletingId); setDeletingId(null) }}
+                        onClick={() => handleDelete('modelImage', deletingId)}
                         className="px-4 py-2 rounded-lg bg-red-600 text-white"
                       >
                         删除
@@ -443,14 +556,7 @@ function MaterialsTab({
           <h3 className="text-sm font-medium text-gray-500 mb-4">定妆图 ({materials.styleImages.length})</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {materials.styleImages.map(s => (
-              <div key={s.id} className="relative group">
-                <img
-                  src={s.url}
-                  alt="定妆图"
-                  className="w-full max-w-44 mx-auto aspect-[9/16] object-contain bg-gray-100 rounded-xl cursor-pointer"
-                  onClick={() => setPreviewUrl(s.url)}
-                />
-              </div>
+              renderGeneratedMaterial('styleImage', s.id, s.url, '定妆图')
             ))}
           </div>
         </div>
@@ -462,14 +568,7 @@ function MaterialsTab({
           <h3 className="text-sm font-medium text-gray-500 mb-4">首帧图 ({materials.firstFrames.length})</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {materials.firstFrames.map(f => (
-              <div key={f.id} className="relative group">
-                <img
-                  src={f.url}
-                  alt="首帧图"
-                  className="w-full max-w-44 mx-auto aspect-[9/16] object-contain bg-gray-100 rounded-xl cursor-pointer"
-                  onClick={() => setPreviewUrl(f.url)}
-                />
-              </div>
+              renderGeneratedMaterial('firstFrame', f.id, f.url, '首帧图')
             ))}
           </div>
         </div>

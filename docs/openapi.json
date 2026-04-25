@@ -1544,6 +1544,73 @@
         }
       }
     },
+    "/api/products/{id}/first-frames": {
+      "get": {
+        "tags": [
+          "products"
+        ],
+        "summary": "GET products id first frames",
+        "operationId": "getProductsIdFirstFrames",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ipId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "styleImageId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirstFrameList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/products/{id}/generate-video": {
       "post": {
         "tags": [
@@ -1620,6 +1687,93 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/{id}/generated-materials/{type}/{materialId}": {
+      "delete": {
+        "tags": [
+          "products"
+        ],
+        "summary": "DELETE products id generated materials type materialId",
+        "operationId": "deleteProductsIdGeneratedMaterialsTypeMaterialId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "materialId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2414,6 +2568,73 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/{id}/style-images": {
+      "get": {
+        "tags": [
+          "products"
+        ],
+        "summary": "GET products id style images",
+        "operationId": "getProductsIdStyleImages",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ipId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "modelImageId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleImageList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -5249,6 +5470,68 @@
         ],
         "description": "Saved styled image response."
       },
+      "StyleImageList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "productId": {
+              "type": "string"
+            },
+            "ipId": {
+              "type": "string"
+            },
+            "modelImageId": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "poseId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "makeupId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "accessoryId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "inputHash": {
+              "type": "string"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "productId",
+            "ipId",
+            "modelImageId",
+            "url",
+            "poseId",
+            "makeupId",
+            "accessoryId",
+            "inputHash",
+            "createdAt"
+          ],
+          "description": "Generated styled image."
+        }
+      },
       "FirstFrameSaveResponse": {
         "type": "object",
         "properties": {
@@ -5264,6 +5547,64 @@
           "firstFrameId"
         ],
         "description": "Saved first frame response."
+      },
+      "FirstFrameList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "productId": {
+              "type": "string"
+            },
+            "ipId": {
+              "type": "string"
+            },
+            "styleImageId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "url": {
+              "type": "string"
+            },
+            "sceneId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "composition": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "inputHash": {
+              "type": "string"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "productId",
+            "ipId",
+            "styleImageId",
+            "url",
+            "sceneId",
+            "composition",
+            "inputHash",
+            "createdAt"
+          ],
+          "description": "Generated first frame."
+        }
       },
       "GeneratedMaterialsResponse": {
         "type": "object",

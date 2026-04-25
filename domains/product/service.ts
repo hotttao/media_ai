@@ -102,12 +102,27 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: string, userId: string, teamId: string) {
-  return db.product.deleteMany({
-    where: {
-      id,
-      userId,
-      teamId,
-    },
+  return db.$transaction(async (tx) => {
+    const product = await tx.product.findFirst({
+      where: { id, userId, teamId },
+      select: { id: true },
+    })
+
+    if (!product) {
+      return { count: 0 }
+    }
+
+    await tx.firstFrame.deleteMany({ where: { productId: id } })
+    await tx.styleImage.deleteMany({ where: { productId: id } })
+    await tx.modelImage.deleteMany({ where: { productId: id } })
+    await tx.video.updateMany({
+      where: { productId: id },
+      data: { productId: null },
+    })
+
+    await tx.product.delete({ where: { id } })
+
+    return { count: 1 }
   })
 }
 

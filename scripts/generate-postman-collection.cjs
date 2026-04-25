@@ -20,6 +20,7 @@ const collectionVariables = [
   ['ipId', 'REPLACE_WITH_IP_ID'],
   ['productId', 'REPLACE_WITH_PRODUCT_ID'],
   ['materialId', 'REPLACE_WITH_MATERIAL_ID'],
+  ['generatedMaterialType', 'modelImage'],
   ['movementId', 'REPLACE_WITH_MOVEMENT_ID'],
   ['taskId', 'REPLACE_WITH_TASK_ID'],
   ['imageId', 'REPLACE_WITH_IMAGE_ID'],
@@ -40,6 +41,7 @@ const variableByParam = {
   id: 'id',
   ipId: 'ipId',
   imageId: 'imageId',
+  type: 'generatedMaterialType',
   code: 'workflowCode',
 }
 
@@ -185,6 +187,8 @@ function querySample(param) {
   if (name === 'targetaudience') return 'MENS'
   if (name === 'where') return 'all'
   if (name === 'ipid') return '{{ipId}}'
+  if (name === 'modelimageid') return '{{modelImageId}}'
+  if (name === 'styleimageid') return '{{styleImageId}}'
   return sampleFromSchema(param.schema, param.name)
 }
 
