@@ -92,6 +92,7 @@ model VirtualIp {
   videos           Video[]           @relation("VirtualIpToVideos")
   team             Team              @relation("TeamToVirtualIps", fields: [teamId], references: [id])
   user             User              @relation("UserToVirtualIps", fields: [userId], references: [id])
+  virtualIpScenes  VirtualIpScene[]  @relation("VirtualIpToVirtualIpScenes")
 
   @@index([teamId], map: "virtual_ips_team_id_fkey")
   @@index([userId], map: "virtual_ips_user_id_fkey")
@@ -113,6 +114,7 @@ model Material {
   ipMaterials           IpMaterial[]      @relation("IpMaterialToMaterial")
   team                  Team?             @relation("TeamToMaterials", fields: [teamId], references: [id])
   user                  User?             @relation("UserToMaterials", fields: [userId], references: [id])
+  virtualIpScenes       VirtualIpScene[] @relation("VirtualIpSceneToMaterial")
 
   @@index([teamId], map: "materials_team_id_fkey")
   @@index([userId], map: "materials_user_id_fkey")
@@ -357,4 +359,18 @@ model FirstFrame {
   @@index([productId], map: "idx_first_frames_product")
   @@index([styleImageId], map: "idx_first_frames_style_image")
   @@map("first_frames")
+}
+
+model VirtualIpScene {
+  id          String    @id @default(uuid())
+  virtualIpId String   @map("virtual_ip_id")
+  materialId  String   @map("material_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  virtualIp   VirtualIp @relation("VirtualIpToVirtualIpScenes", fields: [virtualIpId], references: [id], onDelete: Cascade)
+  material    Material  @relation("VirtualIpSceneToMaterial", fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@unique([virtualIpId, materialId])
+  @@index([virtualIpId], map: "idx_virtual_ip_scenes_ip")
+  @@index([materialId], map: "idx_virtual_ip_scenes_material")
+  @@map("virtual_ip_scenes")
 }
