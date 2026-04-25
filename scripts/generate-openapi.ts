@@ -12,6 +12,30 @@ import {
   updateProductSchema,
 } from '../domains/product/validators'
 import { createIpSchema, updateIpSchema } from '../domains/virtual-ip/validators'
+import {
+  credentialsLoginResponseSchema,
+  csrfResponseSchema,
+  errorResponseSchema,
+  firstFrameSaveResponseSchema,
+  generatedMaterialsResponseSchema,
+  generationJobResponseSchema,
+  inviteCodeResponseSchema,
+  ipMaterialResponseSchema,
+  materialResponseSchema,
+  modelImageResponseSchema,
+  modelImageSaveResponseSchema,
+  movementMaterialResponseSchema,
+  movementResponseSchema,
+  productImageResponseSchema,
+  productResponseSchema,
+  registerResponseSchema,
+  styleImageSaveResponseSchema,
+  successResponseSchema,
+  uploadResponseSchema,
+  videoTaskResponseSchema,
+  virtualIpResponseSchema,
+  workflowResponseSchema,
+} from '../domains/api/response-validators'
 
 extendZodWithOpenApi(z)
 
@@ -33,6 +57,38 @@ const schemas = {
   ExtractProductInfo: registry.register('ExtractProductInfo', extractProductInfoSchema),
   CreateVirtualIp: registry.register('CreateVirtualIp', createIpSchema),
   UpdateVirtualIp: registry.register('UpdateVirtualIp', updateIpSchema),
+  CsrfResponse: registry.register('CsrfResponse', csrfResponseSchema),
+  CredentialsLoginResponse: registry.register('CredentialsLoginResponse', credentialsLoginResponseSchema),
+  ErrorResponse: registry.register('ErrorResponse', errorResponseSchema),
+  SuccessResponse: registry.register('SuccessResponse', successResponseSchema),
+  RegisterResponse: registry.register('RegisterResponse', registerResponseSchema),
+  InviteCode: registry.register('InviteCode', inviteCodeResponseSchema),
+  InviteCodeList: registry.register('InviteCodeList', z.array(inviteCodeResponseSchema)),
+  VirtualIp: registry.register('VirtualIp', virtualIpResponseSchema),
+  VirtualIpList: registry.register('VirtualIpList', z.array(virtualIpResponseSchema)),
+  Material: registry.register('Material', materialResponseSchema),
+  MaterialList: registry.register('MaterialList', z.array(materialResponseSchema)),
+  IpMaterial: registry.register('IpMaterial', ipMaterialResponseSchema),
+  IpMaterialList: registry.register('IpMaterialList', z.array(ipMaterialResponseSchema)),
+  Product: registry.register('Product', productResponseSchema),
+  ProductList: registry.register('ProductList', z.array(productResponseSchema)),
+  ProductImage: registry.register('ProductImage', productImageResponseSchema),
+  ModelImage: registry.register('ModelImage', modelImageResponseSchema),
+  ModelImageList: registry.register('ModelImageList', z.array(modelImageResponseSchema)),
+  ModelImageSaveResponse: registry.register('ModelImageSaveResponse', modelImageSaveResponseSchema),
+  StyleImageSaveResponse: registry.register('StyleImageSaveResponse', styleImageSaveResponseSchema),
+  FirstFrameSaveResponse: registry.register('FirstFrameSaveResponse', firstFrameSaveResponseSchema),
+  GeneratedMaterialsResponse: registry.register('GeneratedMaterialsResponse', generatedMaterialsResponseSchema),
+  VideoTask: registry.register('VideoTask', videoTaskResponseSchema),
+  VideoTaskList: registry.register('VideoTaskList', z.array(videoTaskResponseSchema)),
+  Workflow: registry.register('Workflow', workflowResponseSchema),
+  WorkflowList: registry.register('WorkflowList', z.array(workflowResponseSchema)),
+  Movement: registry.register('Movement', movementResponseSchema),
+  MovementList: registry.register('MovementList', z.array(movementResponseSchema)),
+  MovementMaterial: registry.register('MovementMaterial', movementMaterialResponseSchema),
+  MovementMaterialList: registry.register('MovementMaterialList', z.array(movementMaterialResponseSchema)),
+  UploadResponse: registry.register('UploadResponse', uploadResponseSchema),
+  GenerationJobResponse: registry.register('GenerationJobResponse', generationJobResponseSchema),
 }
 
 const schemaRefBySchema = new Map<ZodTypeAny, string>([
@@ -44,6 +100,38 @@ const schemaRefBySchema = new Map<ZodTypeAny, string>([
   [schemas.ExtractProductInfo, 'ExtractProductInfo'],
   [schemas.CreateVirtualIp, 'CreateVirtualIp'],
   [schemas.UpdateVirtualIp, 'UpdateVirtualIp'],
+  [schemas.CsrfResponse, 'CsrfResponse'],
+  [schemas.CredentialsLoginResponse, 'CredentialsLoginResponse'],
+  [schemas.ErrorResponse, 'ErrorResponse'],
+  [schemas.SuccessResponse, 'SuccessResponse'],
+  [schemas.RegisterResponse, 'RegisterResponse'],
+  [schemas.InviteCode, 'InviteCode'],
+  [schemas.InviteCodeList, 'InviteCodeList'],
+  [schemas.VirtualIp, 'VirtualIp'],
+  [schemas.VirtualIpList, 'VirtualIpList'],
+  [schemas.Material, 'Material'],
+  [schemas.MaterialList, 'MaterialList'],
+  [schemas.IpMaterial, 'IpMaterial'],
+  [schemas.IpMaterialList, 'IpMaterialList'],
+  [schemas.Product, 'Product'],
+  [schemas.ProductList, 'ProductList'],
+  [schemas.ProductImage, 'ProductImage'],
+  [schemas.ModelImage, 'ModelImage'],
+  [schemas.ModelImageList, 'ModelImageList'],
+  [schemas.ModelImageSaveResponse, 'ModelImageSaveResponse'],
+  [schemas.StyleImageSaveResponse, 'StyleImageSaveResponse'],
+  [schemas.FirstFrameSaveResponse, 'FirstFrameSaveResponse'],
+  [schemas.GeneratedMaterialsResponse, 'GeneratedMaterialsResponse'],
+  [schemas.VideoTask, 'VideoTask'],
+  [schemas.VideoTaskList, 'VideoTaskList'],
+  [schemas.Workflow, 'Workflow'],
+  [schemas.WorkflowList, 'WorkflowList'],
+  [schemas.Movement, 'Movement'],
+  [schemas.MovementList, 'MovementList'],
+  [schemas.MovementMaterial, 'MovementMaterial'],
+  [schemas.MovementMaterialList, 'MovementMaterialList'],
+  [schemas.UploadResponse, 'UploadResponse'],
+  [schemas.GenerationJobResponse, 'GenerationJobResponse'],
 ])
 
 const requestBodySchemas: Record<string, MethodSchemaMap> = {
@@ -58,6 +146,43 @@ const requestBodySchemas: Record<string, MethodSchemaMap> = {
 const querySchemas: Record<string, MethodSchemaMap> = {
   '/api/materials': { GET: schemas.MaterialFilter },
   '/api/products': { GET: schemas.ProductFilter },
+}
+
+const responseSchemas: Record<string, MethodSchemaMap> = {
+  '/api/auth/register': { POST: schemas.RegisterResponse },
+  '/api/ips': { GET: schemas.VirtualIpList, POST: schemas.VirtualIp },
+  '/api/ips/{id}': { GET: schemas.VirtualIp, PUT: schemas.VirtualIp, DELETE: schemas.SuccessResponse },
+  '/api/ips/{id}/images': { POST: schemas.VirtualIp },
+  '/api/materials': { GET: schemas.MaterialList, POST: schemas.Material },
+  '/api/materials/{id}': { GET: schemas.Material, DELETE: schemas.SuccessResponse },
+  '/api/materials/extract': { POST: schemas.GenerationJobResponse },
+  '/api/materials/ip/{ipId}': { GET: schemas.IpMaterialList, POST: schemas.IpMaterial },
+  '/api/movement-materials': { GET: schemas.MovementMaterialList, POST: schemas.MovementMaterial },
+  '/api/movements': { GET: schemas.MovementList, POST: schemas.Movement },
+  '/api/movements/{id}': { GET: schemas.Movement, PATCH: schemas.Movement, DELETE: schemas.SuccessResponse },
+  '/api/products': { GET: schemas.ProductList, POST: schemas.Product },
+  '/api/products/{id}': { GET: schemas.Product, PATCH: schemas.Product, DELETE: schemas.SuccessResponse },
+  '/api/products/{id}/first-frame': { GET: schemas.FirstFrameSaveResponse, POST: schemas.FirstFrameSaveResponse },
+  '/api/products/{id}/generate-video': { POST: schemas.GenerationJobResponse },
+  '/api/products/{id}/generated-materials': { GET: schemas.GeneratedMaterialsResponse },
+  '/api/products/{id}/images': { POST: schemas.ProductImage },
+  '/api/products/{id}/images/{imageId}': { DELETE: schemas.SuccessResponse },
+  '/api/products/{id}/model-image': { POST: schemas.GenerationJobResponse },
+  '/api/products/{id}/model-image/save': { POST: schemas.ModelImageSaveResponse },
+  '/api/products/{id}/model-images': { GET: schemas.ModelImageList },
+  '/api/products/{id}/style-image': { POST: schemas.GenerationJobResponse },
+  '/api/products/{id}/style-image/save': { POST: schemas.StyleImageSaveResponse },
+  '/api/products/extract': { POST: schemas.GenerationJobResponse },
+  '/api/tasks': { GET: schemas.VideoTaskList },
+  '/api/tasks/{id}': { GET: schemas.VideoTask },
+  '/api/teams/invite-codes': { GET: schemas.InviteCodeList, POST: schemas.InviteCode },
+  '/api/tools': { GET: schemas.GenerationJobResponse },
+  '/api/tools/image-blend': { POST: schemas.GenerationJobResponse },
+  '/api/upload': { POST: schemas.UploadResponse },
+  '/api/webhooks/runninghub': { POST: schemas.SuccessResponse },
+  '/api/workflows': { GET: schemas.WorkflowList },
+  '/api/workflows/{code}': { GET: schemas.Workflow },
+  '/api/workflows/{code}/execute': { POST: schemas.VideoTask },
 }
 
 function walk(dir: string): string[] {
@@ -256,14 +381,16 @@ function buildRequestBody(source: string, schema?: ZodTypeAny) {
   }
 }
 
-function buildResponses(source: string, method: HttpMethod) {
+function buildResponses(source: string, method: HttpMethod, successSchema?: ZodTypeAny) {
   return Object.fromEntries(findStatuses(source, method).map((status) => [
     status,
     {
       description: status.startsWith('2') ? 'Success' : 'Error',
       content: {
         'application/json': {
-          schema: {},
+          schema: status.startsWith('2')
+            ? getSchemaRef(successSchema ?? schemas.SuccessResponse) ?? {}
+            : getSchemaRef(schemas.ErrorResponse) ?? {},
         },
       },
     },
@@ -298,12 +425,13 @@ for (const routeFile of routeFiles) {
     const methodBlock = findMethodBlock(source, method)
     const querySchema = querySchemas[openApiPath]?.[method]
     const bodySchema = requestBodySchemas[openApiPath]?.[method]
+    const responseSchema = responseSchemas[openApiPath]?.[method]
     const operation: Record<string, unknown> = {
       tags: [openApiPath.split('/')[2] ?? 'api'],
       summary: `${method} ${titleFromPath(openApiPath) || 'api'}`,
       operationId: `${method.toLowerCase()}${openApiPath.replace(/\/api|\{|\}/g, '').replace(/[^a-zA-Z0-9]+(.)/g, (_, char: string) => char.toUpperCase())}`,
       parameters: buildParameters(openApiPath, methodBlock, querySchema),
-      responses: buildResponses(methodBlock, method),
+      responses: buildResponses(methodBlock, method, responseSchema),
     }
 
     const requestBody = buildRequestBody(methodBlock, bodySchema)
@@ -317,6 +445,67 @@ for (const routeFile of routeFiles) {
 
     paths[openApiPath][method.toLowerCase()] = operation
   }
+}
+
+paths['/api/auth/csrf'] = {
+  get: {
+    tags: ['auth'],
+    summary: 'GET NextAuth CSRF token',
+    operationId: 'getAuthCsrf',
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: getSchemaRef(schemas.CsrfResponse),
+          },
+        },
+      },
+    },
+  },
+}
+
+paths['/api/auth/callback/credentials'] = {
+  post: {
+    tags: ['auth'],
+    summary: 'POST NextAuth credentials login',
+    operationId: 'postAuthCallbackCredentials',
+    requestBody: {
+      required: true,
+      content: {
+        'application/x-www-form-urlencoded': {
+          schema: {
+            type: 'object',
+            required: ['csrfToken', 'email', 'password'],
+            properties: {
+              csrfToken: { type: 'string' },
+              email: { type: 'string', format: 'email' },
+              password: { type: 'string', format: 'password' },
+              json: { type: 'string', default: 'true' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: getSchemaRef(schemas.CredentialsLoginResponse),
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+        content: {
+          'application/json': {
+            schema: getSchemaRef(schemas.ErrorResponse),
+          },
+        },
+      },
+    },
+  },
 }
 
 const generator = new OpenApiGeneratorV31(registry.definitions)

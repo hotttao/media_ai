@@ -1,0 +1,2283 @@
+{
+  "info": {
+    "name": "Media AI API Postman Tests",
+    "description": "Generated from docs/openapi.json. Collection variables include ready-to-edit sample IDs, URLs, and file path placeholders. Requests include example bodies and basic tests that capture created IDs where possible.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "postman-user-{{$timestamp}}@example.com",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "password123",
+      "type": "string"
+    },
+    {
+      "key": "nickname",
+      "value": "Postman Tester",
+      "type": "string"
+    },
+    {
+      "key": "teamName",
+      "value": "Postman Test Team",
+      "type": "string"
+    },
+    {
+      "key": "teamId",
+      "value": "REPLACE_WITH_TEAM_ID",
+      "type": "string"
+    },
+    {
+      "key": "inviteCode",
+      "value": "REPLACE_WITH_INVITE_CODE",
+      "type": "string"
+    },
+    {
+      "key": "ipId",
+      "value": "REPLACE_WITH_IP_ID",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "REPLACE_WITH_PRODUCT_ID",
+      "type": "string"
+    },
+    {
+      "key": "materialId",
+      "value": "REPLACE_WITH_MATERIAL_ID",
+      "type": "string"
+    },
+    {
+      "key": "movementId",
+      "value": "REPLACE_WITH_MOVEMENT_ID",
+      "type": "string"
+    },
+    {
+      "key": "taskId",
+      "value": "REPLACE_WITH_TASK_ID",
+      "type": "string"
+    },
+    {
+      "key": "imageId",
+      "value": "REPLACE_WITH_IMAGE_ID",
+      "type": "string"
+    },
+    {
+      "key": "modelImageId",
+      "value": "REPLACE_WITH_MODEL_IMAGE_ID",
+      "type": "string"
+    },
+    {
+      "key": "styleImageId",
+      "value": "REPLACE_WITH_STYLE_IMAGE_ID",
+      "type": "string"
+    },
+    {
+      "key": "firstFrameId",
+      "value": "REPLACE_WITH_FIRST_FRAME_ID",
+      "type": "string"
+    },
+    {
+      "key": "workflowCode",
+      "value": "product-video",
+      "type": "string"
+    },
+    {
+      "key": "productMainImageUrl",
+      "value": "https://example.com/images/product-main.jpg",
+      "type": "string"
+    },
+    {
+      "key": "productDetailImageUrl",
+      "value": "https://example.com/images/product-detail.jpg",
+      "type": "string"
+    },
+    {
+      "key": "avatarUrl",
+      "value": "https://example.com/images/avatar.jpg",
+      "type": "string"
+    },
+    {
+      "key": "materialUrl",
+      "value": "https://example.com/images/material.jpg",
+      "type": "string"
+    },
+    {
+      "key": "generatedImageUrl",
+      "value": "https://example.com/images/generated.jpg",
+      "type": "string"
+    },
+    {
+      "key": "runningHubTaskId",
+      "value": "REPLACE_WITH_RUNNINGHUB_TASK_ID",
+      "type": "string"
+    },
+    {
+      "key": "sampleImagePath",
+      "value": "C:\\path\\to\\sample.jpg",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "POST auth register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"nickname\": \"{{nickname}}\",\n  \"teamName\": \"{{teamName}}\",\n  \"inviteCode\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postAuthRegister"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.user && json.user.teamId) pm.collectionVariables.set('teamId', json.user && json.user.teamId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET NextAuth CSRF token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/csrf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "csrf"
+              ],
+              "query": []
+            },
+            "description": "operationId: getAuthCsrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.csrfToken) pm.collectionVariables.set('csrfToken', json.csrfToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST NextAuth credentials login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/callback/credentials",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "callback",
+                "credentials"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "csrfToken",
+                  "value": "{{csrfToken}}",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "{{email}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}",
+                  "type": "text"
+                },
+                {
+                  "key": "json",
+                  "value": "true",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "operationId: postAuthCallbackCredentials"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ips",
+      "item": [
+        {
+          "name": "POST ips id images",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ips/{{ipId}}/images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ips",
+                "{{ipId}}",
+                "images"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}"
+                },
+                {
+                  "key": "fullBody",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}"
+                },
+                {
+                  "key": "threeView",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}"
+                },
+                {
+                  "key": "nineView",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}"
+                }
+              ]
+            },
+            "description": "operationId: postIpsIdImages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ips id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ips/{{ipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ips",
+                "{{ipId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: getIpsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT ips id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ips/{{ipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ips",
+                "{{ipId}}"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nickname\": \"Postman nickname\",\n  \"avatarUrl\": \"{{avatarUrl}}\",\n  \"fullBodyUrl\": \"sample-fullBodyUrl\",\n  \"threeViewUrl\": \"sample-threeViewUrl\",\n  \"nineViewUrl\": \"sample-nineViewUrl\",\n  \"age\": 1,\n  \"gender\": \"MALE\",\n  \"height\": 170,\n  \"weight\": 170,\n  \"bust\": 170,\n  \"waist\": 170,\n  \"hip\": 170,\n  \"education\": \"sample-education\",\n  \"major\": \"sample-major\",\n  \"city\": \"sample-city\",\n  \"occupation\": \"sample-occupation\",\n  \"basicSetting\": \"sample-basicSetting\",\n  \"personality\": \"sample-personality\",\n  \"catchphrase\": \"sample-catchphrase\",\n  \"smallHabit\": \"sample-smallHabit\",\n  \"familyBackground\": \"sample-familyBackground\",\n  \"incomeLevel\": \"sample-incomeLevel\",\n  \"hobbies\": \"sample-hobbies\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: putIpsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE ips id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ips/{{ipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ips",
+                "{{ipId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: deleteIpsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ips",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ips"
+              ],
+              "query": []
+            },
+            "description": "operationId: getIps"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST ips",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ips"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nickname\": \"Postman nickname\",\n  \"avatarUrl\": \"{{avatarUrl}}\",\n  \"fullBodyUrl\": \"sample-fullBodyUrl\",\n  \"threeViewUrl\": \"sample-threeViewUrl\",\n  \"nineViewUrl\": \"sample-nineViewUrl\",\n  \"age\": 1,\n  \"gender\": \"MALE\",\n  \"height\": 170,\n  \"weight\": 170,\n  \"bust\": 170,\n  \"waist\": 170,\n  \"hip\": 170,\n  \"education\": \"sample-education\",\n  \"major\": \"sample-major\",\n  \"city\": \"sample-city\",\n  \"occupation\": \"sample-occupation\",\n  \"basicSetting\": \"sample-basicSetting\",\n  \"personality\": \"sample-personality\",\n  \"catchphrase\": \"sample-catchphrase\",\n  \"smallHabit\": \"sample-smallHabit\",\n  \"familyBackground\": \"sample-familyBackground\",\n  \"incomeLevel\": \"sample-incomeLevel\",\n  \"hobbies\": \"sample-hobbies\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postIps"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id) pm.collectionVariables.set('ipId', json.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "materials",
+      "item": [
+        {
+          "name": "GET materials id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/{{materialId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "materials",
+                "{{materialId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: getMaterialsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE materials id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/{{materialId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "materials",
+                "{{materialId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: deleteMaterialsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST materials extract",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/extract",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "materials",
+                "extract"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"红色连衣裙，适合夏季通勤，优雅轻熟风。\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postMaterialsExtract"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET materials ip ipId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/ip/{{ipId}}?type=SCENE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "materials",
+                "ip",
+                "{{ipId}}"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "SCENE",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getMaterialsIpIpId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST materials ip ipId",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/ip/{{ipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "materials",
+                "ip",
+                "{{ipId}}"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "type",
+                  "type": "text",
+                  "value": "MAKEUP"
+                },
+                {
+                  "key": "name",
+                  "type": "text",
+                  "value": "Postman Material"
+                },
+                {
+                  "key": "description",
+                  "type": "text",
+                  "value": "Uploaded from Postman collection."
+                },
+                {
+                  "key": "tags",
+                  "type": "text",
+                  "value": "[\"postman\",\"sample\"]"
+                },
+                {
+                  "key": "fullBody",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}"
+                },
+                {
+                  "key": "threeView",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}"
+                },
+                {
+                  "key": "nineView",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}"
+                },
+                {
+                  "key": "sourceIpMaterialId",
+                  "type": "text",
+                  "value": "sample-sourceIpMaterialId"
+                },
+                {
+                  "key": "materialId",
+                  "type": "text",
+                  "value": "sample-materialId"
+                }
+              ]
+            },
+            "description": "operationId: postMaterialsIpIpId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET materials",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials?type=SCENE&search=postman",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "materials"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "SCENE",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "postman",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getMaterials"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST materials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "materials"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"visibility\": \"PUBLIC\",\n  \"type\": \"SCENE\",\n  \"name\": \"Postman name\",\n  \"description\": \"Created from Postman collection.\",\n  \"url\": \"{{generatedImageUrl}}\",\n  \"tags\": [\n    \"postman\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postMaterials"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id) pm.collectionVariables.set('materialId', json.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "movement-materials",
+      "item": [
+        {
+          "name": "GET movement materials",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/movement-materials",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "movement-materials"
+              ],
+              "query": []
+            },
+            "description": "operationId: getMovementMaterials"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST movement materials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/movement-materials",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "movement-materials"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postMovementMaterials"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "movements",
+      "item": [
+        {
+          "name": "GET movements id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/movements/{{movementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "movements",
+                "{{movementId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: getMovementsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH movements id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/movements/{{movementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "movements",
+                "{{movementId}}"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: patchMovementsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE movements id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/movements/{{movementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "movements",
+                "{{movementId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: deleteMovementsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET movements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/movements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "movements"
+              ],
+              "query": []
+            },
+            "description": "operationId: getMovements"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST movements",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/movements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "movements"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postMovements"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id) pm.collectionVariables.set('movementId', json.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "products",
+      "item": [
+        {
+          "name": "GET products id first frame",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/first-frame?ipId=%7B%7BipId%7D%7D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "first-frame"
+              ],
+              "query": [
+                {
+                  "key": "ipId",
+                  "value": "{{ipId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getProductsIdFirstFrame"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST products id first frame",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/first-frame",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "first-frame"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"styleImageId\": \"{{styleImageId}}\",\n  \"sceneId\": \"{{materialId}}\",\n  \"composition\": \"full body centered, clean product showcase\",\n  \"imageUrl\": \"{{generatedImageUrl}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postProductsIdFirstFrame"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.firstFrameId) pm.collectionVariables.set('firstFrameId', json.firstFrameId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST products id generate video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/generate-video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "generate-video"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstFrameId\": \"{{firstFrameId}}\",\n  \"prompt\": \"A smooth fashion product video with confident walking pose.\",\n  \"duration\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postProductsIdGenerateVideo"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET products id generated materials",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/generated-materials?ipId=%7B%7BipId%7D%7D&where=all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "generated-materials"
+              ],
+              "query": [
+                {
+                  "key": "ipId",
+                  "value": "{{ipId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "where",
+                  "value": "all",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getProductsIdGeneratedMaterials"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE products id images imageId",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/images/{{imageId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "images",
+                "{{imageId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: deleteProductsIdImagesImageId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST products id images",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "images"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{productDetailImageUrl}}\",\n  \"isMain\": false,\n  \"order\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postProductsIdImages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id) pm.collectionVariables.set('imageId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST products id model image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/model-image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "model-image"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ipId\": \"{{ipId}}\",\n  \"productMainImageUrl\": \"{{productMainImageUrl}}\",\n  \"productDetailImageUrls\": [\n    \"{{productDetailImageUrl}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postProductsIdModelImage"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST products id model image save",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/model-image/save",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "model-image",
+                "save"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ipId\": \"{{ipId}}\",\n  \"imageUrl\": \"{{generatedImageUrl}}\",\n  \"inputHash\": \"postman-model-image-hash\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postProductsIdModelImageSave"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id) pm.collectionVariables.set('modelImageId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET products id model images",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/model-images?ipId=%7B%7BipId%7D%7D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "model-images"
+              ],
+              "query": [
+                {
+                  "key": "ipId",
+                  "value": "{{ipId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getProductsIdModelImages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET products id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: getProductsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH products id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman name\",\n  \"targetAudience\": \"MENS\",\n  \"productDetails\": \"sample-productDetails\",\n  \"displayActions\": \"sample-displayActions\",\n  \"tags\": [\n    \"postman\"\n  ],\n  \"images\": [\n    {\n      \"url\": \"{{generatedImageUrl}}\",\n      \"isMain\": false,\n      \"order\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: patchProductsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE products id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: deleteProductsId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST products id style image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/style-image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "style-image"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelImageId\": \"{{modelImageId}}\",\n  \"pose\": \"standing front view\",\n  \"makeupUrl\": \"{{materialUrl}}\",\n  \"accessoryUrl\": \"{{materialUrl}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postProductsIdStyleImage"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST products id style image save",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/style-image/save",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "style-image",
+                "save"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelImageId\": \"{{modelImageId}}\",\n  \"pose\": \"standing front view\",\n  \"makeupUrl\": \"{{materialUrl}}\",\n  \"accessoryUrl\": \"{{materialUrl}}\",\n  \"imageUrl\": \"{{generatedImageUrl}}\",\n  \"taskId\": \"{{taskId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postProductsIdStyleImageSave"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id) pm.collectionVariables.set('styleImageId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST products extract",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/extract",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "extract"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"男士黑色运动夹克，防风面料，适合户外跑步。\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postProductsExtract"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?targetAudience=MENS&search=postman",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "targetAudience",
+                  "value": "MENS",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "postman",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getProducts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST products",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman name\",\n  \"targetAudience\": \"MENS\",\n  \"productDetails\": \"sample-productDetails\",\n  \"displayActions\": \"sample-displayActions\",\n  \"tags\": [\n    \"postman\"\n  ],\n  \"images\": [\n    {\n      \"url\": \"{{generatedImageUrl}}\",\n      \"isMain\": false,\n      \"order\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postProducts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id) pm.collectionVariables.set('productId', json.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tasks",
+      "item": [
+        {
+          "name": "GET tasks id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: getTasksId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks"
+              ],
+              "query": []
+            },
+            "description": "operationId: getTasks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "teams",
+      "item": [
+        {
+          "name": "GET teams invite codes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/teams/invite-codes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teams",
+                "invite-codes"
+              ],
+              "query": []
+            },
+            "description": "operationId: getTeamsInviteCodes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST teams invite codes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teams/invite-codes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teams",
+                "invite-codes"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teamId\": \"{{teamId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postTeamsInviteCodes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.code) pm.collectionVariables.set('inviteCode', json.code);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tools",
+      "item": [
+        {
+          "name": "POST tools image blend",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tools/image-blend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tools",
+                "image-blend"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imageUrls\": [\n    \"{{productMainImageUrl}}\",\n    \"{{avatarUrl}}\"\n  ],\n  \"prompt\": \"Blend the product naturally onto the model.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postToolsImageBlend"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET tools",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tools",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tools"
+              ],
+              "query": []
+            },
+            "description": "operationId: getTools"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "upload",
+      "item": [
+        {
+          "name": "POST upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "upload"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{sampleImagePath}}"
+                },
+                {
+                  "key": "subDir",
+                  "type": "text",
+                  "value": "postman"
+                }
+              ]
+            },
+            "description": "operationId: postUpload"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "webhooks",
+      "item": [
+        {
+          "name": "POST webhooks runninghub",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/runninghub",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "runninghub"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskId\": \"{{runningHubTaskId}}\",\n  \"status\": \"SUCCESS\",\n  \"output\": {\n    \"imageUrl\": \"{{generatedImageUrl}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postWebhooksRunninghub"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "workflows",
+      "item": [
+        {
+          "name": "POST workflows code execute",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workflows/{{workflowCode}}/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workflows",
+                "{{workflowCode}}",
+                "execute"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"ipId\": \"{{ipId}}\",\n  \"materialIds\": [\n    \"{{materialId}}\"\n  ],\n  \"inputs\": {\n    \"prompt\": \"Generate a short fashion product video.\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postWorkflowsCodeExecute"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET workflows code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workflows/{{workflowCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workflows",
+                "{{workflowCode}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: getWorkflowsCode"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET workflows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workflows",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workflows"
+              ],
+              "query": []
+            },
+            "description": "operationId: getWorkflows"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

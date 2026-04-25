@@ -23,7 +23,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
               }
             }
           },
@@ -31,7 +33,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
               }
             }
           },
@@ -39,7 +43,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -47,7 +53,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -87,7 +95,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualIp"
+                }
               }
             }
           },
@@ -95,7 +105,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualIp"
+                }
               }
             }
           },
@@ -103,7 +115,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -111,7 +125,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -164,7 +180,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualIp"
+                }
               }
             }
           },
@@ -172,7 +190,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -180,7 +200,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -188,7 +210,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -196,7 +220,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -223,7 +249,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualIp"
+                }
               }
             }
           },
@@ -231,7 +259,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -239,7 +269,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -247,7 +279,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -255,7 +289,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -292,7 +328,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
               }
             }
           },
@@ -300,7 +338,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -308,7 +348,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -316,7 +358,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -324,7 +368,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -343,7 +389,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualIpList"
+                }
               }
             }
           },
@@ -351,7 +399,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -359,7 +409,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -367,7 +419,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -384,7 +438,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualIp"
+                }
               }
             }
           },
@@ -392,7 +448,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualIp"
+                }
               }
             }
           },
@@ -400,7 +458,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -408,7 +468,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -416,7 +478,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -455,7 +519,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Material"
+                }
               }
             }
           },
@@ -463,7 +529,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -471,7 +539,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -498,7 +568,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
               }
             }
           },
@@ -506,7 +578,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -514,7 +588,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -522,7 +598,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -541,7 +619,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -549,7 +629,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -557,7 +639,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -565,7 +649,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -573,7 +659,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -621,7 +709,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/IpMaterialList"
+                }
               }
             }
           },
@@ -629,7 +719,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -637,7 +729,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -664,7 +758,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/IpMaterial"
+                }
               }
             }
           },
@@ -672,7 +768,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/IpMaterial"
+                }
               }
             }
           },
@@ -680,7 +778,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -688,7 +788,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -773,7 +875,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialList"
+                }
               }
             }
           },
@@ -781,7 +885,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -789,7 +895,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -806,7 +914,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Material"
+                }
               }
             }
           },
@@ -814,7 +924,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Material"
+                }
               }
             }
           },
@@ -822,7 +934,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -830,7 +944,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -838,7 +954,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -867,7 +985,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MovementMaterialList"
+                }
               }
             }
           },
@@ -875,7 +995,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -883,7 +1005,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -900,7 +1024,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MovementMaterial"
+                }
               }
             }
           },
@@ -908,7 +1034,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MovementMaterial"
+                }
               }
             }
           },
@@ -916,7 +1044,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -924,7 +1054,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -932,7 +1064,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -972,7 +1106,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
               }
             }
           },
@@ -980,7 +1116,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -988,7 +1126,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -996,7 +1136,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1023,7 +1165,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
               }
             }
           },
@@ -1031,7 +1175,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1039,7 +1185,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1047,7 +1195,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1055,7 +1205,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1093,7 +1245,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
               }
             }
           },
@@ -1101,7 +1255,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1109,7 +1265,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1117,7 +1275,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1136,7 +1296,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MovementList"
+                }
               }
             }
           },
@@ -1144,7 +1306,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1152,7 +1316,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1169,7 +1335,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
               }
             }
           },
@@ -1177,7 +1345,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
               }
             }
           },
@@ -1185,7 +1355,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1193,7 +1365,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1201,7 +1375,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1249,7 +1425,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/FirstFrameSaveResponse"
+                }
               }
             }
           },
@@ -1257,7 +1435,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1265,7 +1445,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1292,7 +1474,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/FirstFrameSaveResponse"
+                }
               }
             }
           },
@@ -1300,7 +1484,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/FirstFrameSaveResponse"
+                }
               }
             }
           },
@@ -1308,7 +1494,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1316,7 +1504,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1324,7 +1514,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1332,7 +1524,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1372,7 +1566,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -1380,7 +1576,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -1388,7 +1586,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1396,7 +1596,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1404,7 +1606,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1460,7 +1664,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedMaterialsResponse"
+                }
               }
             }
           },
@@ -1468,7 +1674,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1476,7 +1684,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1513,7 +1723,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
               }
             }
           },
@@ -1521,7 +1733,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1529,7 +1743,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1558,7 +1774,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImage"
+                }
               }
             }
           },
@@ -1566,7 +1784,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImage"
+                }
               }
             }
           },
@@ -1574,7 +1794,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1582,7 +1804,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1590,7 +1814,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1630,7 +1856,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -1638,7 +1866,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -1646,7 +1876,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1654,7 +1886,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1662,7 +1896,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1702,7 +1938,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ModelImageSaveResponse"
+                }
               }
             }
           },
@@ -1710,7 +1948,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ModelImageSaveResponse"
+                }
               }
             }
           },
@@ -1718,7 +1958,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1726,7 +1968,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1734,7 +1978,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1782,7 +2028,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ModelImageList"
+                }
               }
             }
           },
@@ -1790,7 +2038,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1798,7 +2048,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1827,7 +2079,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
               }
             }
           },
@@ -1835,7 +2089,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1843,7 +2099,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1851,7 +2109,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1878,7 +2138,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
               }
             }
           },
@@ -1886,7 +2148,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1894,7 +2158,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1902,7 +2168,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1939,7 +2207,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
               }
             }
           },
@@ -1947,7 +2217,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1955,7 +2227,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -1963,7 +2237,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1992,7 +2268,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -2000,7 +2278,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -2008,7 +2288,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2016,7 +2298,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2024,7 +2308,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2064,7 +2350,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/StyleImageSaveResponse"
+                }
               }
             }
           },
@@ -2072,7 +2360,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/StyleImageSaveResponse"
+                }
               }
             }
           },
@@ -2080,7 +2370,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2088,7 +2380,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2096,7 +2390,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2104,7 +2400,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2134,7 +2432,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -2142,7 +2442,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -2150,7 +2452,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2158,7 +2462,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2166,7 +2472,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2220,7 +2528,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProductList"
+                }
               }
             }
           },
@@ -2228,7 +2538,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2236,7 +2548,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2253,7 +2567,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
               }
             }
           },
@@ -2261,7 +2577,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
               }
             }
           },
@@ -2269,7 +2587,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2277,7 +2597,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2285,7 +2607,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2324,7 +2648,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VideoTask"
+                }
               }
             }
           },
@@ -2332,7 +2658,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2340,7 +2668,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2348,7 +2678,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2356,7 +2688,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2375,7 +2709,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VideoTaskList"
+                }
               }
             }
           },
@@ -2383,7 +2719,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2391,7 +2729,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2399,7 +2739,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2418,7 +2760,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodeList"
+                }
               }
             }
           },
@@ -2426,7 +2770,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2434,7 +2780,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2442,7 +2790,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2450,7 +2800,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2467,7 +2819,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCode"
+                }
               }
             }
           },
@@ -2475,7 +2829,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCode"
+                }
               }
             }
           },
@@ -2483,7 +2839,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2491,7 +2849,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2499,7 +2859,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2507,7 +2869,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2537,7 +2901,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -2545,7 +2911,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           },
@@ -2553,7 +2921,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2561,7 +2931,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2569,7 +2941,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2599,7 +2973,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobResponse"
+                }
               }
             }
           }
@@ -2618,7 +2994,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                }
               }
             }
           },
@@ -2626,7 +3004,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                }
               }
             }
           },
@@ -2634,7 +3014,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2642,7 +3024,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2650,7 +3034,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2687,7 +3073,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
               }
             }
           },
@@ -2695,7 +3083,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
               }
             }
           },
@@ -2703,7 +3093,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2711,7 +3103,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2719,7 +3113,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2759,7 +3155,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VideoTask"
+                }
               }
             }
           },
@@ -2767,7 +3165,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VideoTask"
+                }
               }
             }
           },
@@ -2775,7 +3175,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2783,7 +3185,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2791,7 +3195,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2799,7 +3205,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2839,7 +3247,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Workflow"
+                }
               }
             }
           },
@@ -2847,7 +3257,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2855,7 +3267,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2863,7 +3277,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2882,7 +3298,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowList"
+                }
               }
             }
           },
@@ -2890,7 +3308,9 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2898,7 +3318,93 @@
             "description": "Error",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/csrf": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "GET NextAuth CSRF token",
+        "operationId": "getAuthCsrf",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsrfResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/callback/credentials": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "POST NextAuth credentials login",
+        "operationId": "postAuthCallbackCredentials",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "csrfToken",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "csrfToken": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "json": {
+                    "type": "string",
+                    "default": "true"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialsLoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -3414,6 +3920,1993 @@
           }
         },
         "description": "Payload for partially updating a virtual IP character."
+      },
+      "CsrfResponse": {
+        "type": "object",
+        "properties": {
+          "csrfToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "csrfToken"
+        ],
+        "description": "NextAuth CSRF token response."
+      },
+      "CredentialsLoginResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "description": "NextAuth credentials login response."
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "details": {}
+        },
+        "required": [
+          "error"
+        ],
+        "description": "Standard error response."
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ],
+        "description": "Standard success response."
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "nickname": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "teamId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "ADMIN",
+                  "MEMBER"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "nickname",
+              "teamId",
+              "role"
+            ],
+            "description": "User account returned by the API."
+          }
+        },
+        "required": [
+          "user"
+        ],
+        "description": "Registration response."
+      },
+      "InviteCode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "used": {
+            "type": "boolean"
+          },
+          "usedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teamName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "expiresAt"
+        ],
+        "description": "Team invite code."
+      },
+      "InviteCodeList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "teamId": {
+              "type": "string"
+            },
+            "code": {
+              "type": "string"
+            },
+            "used": {
+              "type": "boolean"
+            },
+            "usedBy": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "teamName": {
+              "type": "string"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "code",
+            "expiresAt"
+          ],
+          "description": "Team invite code."
+        }
+      },
+      "VirtualIp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fullBodyUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "threeViewUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nineViewUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "age": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "gender": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHER"
+            ]
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bust": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "waist": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hip": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "education": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "major": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occupation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "basicSetting": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "personality": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "catchphrase": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "smallHabit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "familyBackground": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "incomeLevel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hobbies": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "teamId",
+          "nickname",
+          "avatarUrl",
+          "fullBodyUrl",
+          "threeViewUrl",
+          "nineViewUrl",
+          "age",
+          "gender",
+          "height",
+          "weight",
+          "bust",
+          "waist",
+          "hip",
+          "education",
+          "major",
+          "city",
+          "occupation",
+          "basicSetting",
+          "personality",
+          "catchphrase",
+          "smallHabit",
+          "familyBackground",
+          "incomeLevel",
+          "hobbies",
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "Virtual IP character."
+      },
+      "VirtualIpList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "userId": {
+              "type": "string"
+            },
+            "teamId": {
+              "type": "string"
+            },
+            "nickname": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "fullBodyUrl": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "threeViewUrl": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nineViewUrl": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "age": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "gender": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "MALE",
+                "FEMALE",
+                "OTHER"
+              ]
+            },
+            "height": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "weight": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "bust": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "waist": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "hip": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "education": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "major": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "city": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "occupation": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "basicSetting": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "personality": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "catchphrase": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "smallHabit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "familyBackground": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "incomeLevel": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "hobbies": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "userId",
+            "teamId",
+            "nickname",
+            "avatarUrl",
+            "fullBodyUrl",
+            "threeViewUrl",
+            "nineViewUrl",
+            "age",
+            "gender",
+            "height",
+            "weight",
+            "bust",
+            "waist",
+            "hip",
+            "education",
+            "major",
+            "city",
+            "occupation",
+            "basicSetting",
+            "personality",
+            "catchphrase",
+            "smallHabit",
+            "familyBackground",
+            "incomeLevel",
+            "hobbies",
+            "createdAt",
+            "updatedAt"
+          ],
+          "description": "Virtual IP character."
+        }
+      },
+      "Material": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "teamId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "PERSONAL",
+              "TEAM"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SCENE",
+              "POSE",
+              "MAKEUP",
+              "ACCESSORY",
+              "OTHER"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "tags": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "teamId",
+          "visibility",
+          "type",
+          "name",
+          "description",
+          "url",
+          "tags",
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "Material asset."
+      },
+      "MaterialList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "userId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "teamId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "PUBLIC",
+                "PERSONAL",
+                "TEAM"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "SCENE",
+                "POSE",
+                "MAKEUP",
+                "ACCESSORY",
+                "OTHER"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "url": {
+              "type": "string"
+            },
+            "tags": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "userId",
+            "teamId",
+            "visibility",
+            "type",
+            "name",
+            "description",
+            "url",
+            "tags",
+            "createdAt",
+            "updatedAt"
+          ],
+          "description": "Material asset."
+        }
+      },
+      "IpMaterial": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ipId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "MAKEUP",
+              "ACCESSORY",
+              "CUSTOMIZED_CLOTHING"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fullBodyUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "threeViewUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nineViewUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "materialId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceIpMaterialId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          }
+        },
+        "required": [
+          "id",
+          "ipId",
+          "userId",
+          "type",
+          "name",
+          "description",
+          "tags",
+          "fullBodyUrl",
+          "threeViewUrl",
+          "nineViewUrl",
+          "materialId",
+          "sourceIpMaterialId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "Material associated with a virtual IP."
+      },
+      "IpMaterialList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "ipId": {
+              "type": "string"
+            },
+            "userId": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "MAKEUP",
+                "ACCESSORY",
+                "CUSTOMIZED_CLOTHING"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tags": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "fullBodyUrl": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "threeViewUrl": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nineViewUrl": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "materialId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sourceIpMaterialId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "ipId",
+            "userId",
+            "type",
+            "name",
+            "description",
+            "tags",
+            "fullBodyUrl",
+            "threeViewUrl",
+            "nineViewUrl",
+            "materialId",
+            "sourceIpMaterialId",
+            "createdAt",
+            "updatedAt"
+          ],
+          "description": "Material associated with a virtual IP."
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "targetAudience": {
+            "type": "string",
+            "enum": [
+              "MENS",
+              "WOMENS",
+              "KIDS"
+            ]
+          },
+          "productDetails": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "displayActions": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "isMain": {
+                  "type": "boolean"
+                },
+                "order": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "id",
+                "productId",
+                "url",
+                "isMain",
+                "order"
+              ],
+              "description": "Product image."
+            }
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "teamId",
+          "name",
+          "targetAudience",
+          "productDetails",
+          "displayActions",
+          "tags",
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "Product."
+      },
+      "ProductList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "userId": {
+              "type": "string"
+            },
+            "teamId": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "targetAudience": {
+              "type": "string",
+              "enum": [
+                "MENS",
+                "WOMENS",
+                "KIDS"
+              ]
+            },
+            "productDetails": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "displayActions": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tags": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "productId": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "isMain": {
+                    "type": "boolean"
+                  },
+                  "order": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "id",
+                  "productId",
+                  "url",
+                  "isMain",
+                  "order"
+                ],
+                "description": "Product image."
+              }
+            }
+          },
+          "required": [
+            "id",
+            "userId",
+            "teamId",
+            "name",
+            "targetAudience",
+            "productDetails",
+            "displayActions",
+            "tags",
+            "createdAt",
+            "updatedAt"
+          ],
+          "description": "Product."
+        }
+      },
+      "ProductImage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "isMain": {
+            "type": "boolean"
+          },
+          "order": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "url",
+          "isMain",
+          "order"
+        ],
+        "description": "Product image."
+      },
+      "ModelImage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "ipId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "inputHash": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "ipId",
+          "url",
+          "inputHash",
+          "createdAt"
+        ],
+        "description": "Generated model image."
+      },
+      "ModelImageList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "productId": {
+              "type": "string"
+            },
+            "ipId": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "inputHash": {
+              "type": "string"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "productId",
+            "ipId",
+            "url",
+            "inputHash",
+            "createdAt"
+          ],
+          "description": "Generated model image."
+        }
+      },
+      "ModelImageSaveResponse": {
+        "type": "object",
+        "properties": {
+          "modelImageUrl": {
+            "type": "string"
+          },
+          "modelImageId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "modelImageUrl",
+          "modelImageId"
+        ],
+        "description": "Saved model image response."
+      },
+      "StyleImageSaveResponse": {
+        "type": "object",
+        "properties": {
+          "styledImageUrl": {
+            "type": "string"
+          },
+          "styleImageId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "styledImageUrl",
+          "styleImageId"
+        ],
+        "description": "Saved styled image response."
+      },
+      "FirstFrameSaveResponse": {
+        "type": "object",
+        "properties": {
+          "firstFrameUrl": {
+            "type": "string"
+          },
+          "firstFrameId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstFrameUrl",
+          "firstFrameId"
+        ],
+        "description": "Saved first frame response."
+      },
+      "GeneratedMaterialsResponse": {
+        "type": "object",
+        "properties": {
+          "modelImages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "ipId": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "inputHash": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 date-time string."
+                }
+              },
+              "required": [
+                "id",
+                "productId",
+                "ipId",
+                "url",
+                "inputHash",
+                "createdAt"
+              ],
+              "description": "Generated model image."
+            }
+          },
+          "styleImages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "ipId": {
+                  "type": "string"
+                },
+                "modelImageId": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "poseId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "makeupId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "accessoryId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "inputHash": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 date-time string."
+                }
+              },
+              "required": [
+                "id",
+                "productId",
+                "ipId",
+                "modelImageId",
+                "url",
+                "poseId",
+                "makeupId",
+                "accessoryId",
+                "inputHash",
+                "createdAt"
+              ],
+              "description": "Generated styled image."
+            }
+          },
+          "firstFrames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "ipId": {
+                  "type": "string"
+                },
+                "styleImageId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "url": {
+                  "type": "string"
+                },
+                "sceneId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "composition": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "inputHash": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 date-time string."
+                }
+              },
+              "required": [
+                "id",
+                "productId",
+                "ipId",
+                "styleImageId",
+                "url",
+                "sceneId",
+                "composition",
+                "inputHash",
+                "createdAt"
+              ],
+              "description": "Generated first frame."
+            }
+          }
+        },
+        "required": [
+          "modelImages",
+          "styleImages",
+          "firstFrames"
+        ],
+        "description": "Generated product materials grouped by type."
+      },
+      "VideoTask": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string"
+          },
+          "ipId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED"
+            ]
+          },
+          "params": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "teamId",
+          "workflowId",
+          "ipId",
+          "status",
+          "params",
+          "result",
+          "error",
+          "startedAt",
+          "completedAt",
+          "createdAt"
+        ],
+        "description": "Video generation task."
+      },
+      "VideoTaskList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "userId": {
+              "type": "string"
+            },
+            "teamId": {
+              "type": "string"
+            },
+            "workflowId": {
+              "type": "string"
+            },
+            "ipId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "RUNNING",
+                "COMPLETED",
+                "FAILED"
+              ]
+            },
+            "params": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "error": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "startedAt": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "completedAt": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "userId",
+            "teamId",
+            "workflowId",
+            "ipId",
+            "status",
+            "params",
+            "result",
+            "error",
+            "startedAt",
+            "completedAt",
+            "createdAt"
+          ],
+          "description": "Video generation task."
+        }
+      },
+      "Workflow": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "string"
+          },
+          "config": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "description",
+          "version",
+          "config",
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "Executable workflow."
+      },
+      "WorkflowList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "code": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "version": {
+              "type": "string"
+            },
+            "config": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "code",
+            "name",
+            "description",
+            "version",
+            "config",
+            "createdAt",
+            "updatedAt"
+          ],
+          "description": "Executable workflow."
+        }
+      },
+      "Movement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "description": "Movement."
+      },
+      "MovementList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "description": "Movement."
+        }
+      },
+      "MovementMaterial": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "clothing": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 date-time string."
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "content",
+          "clothing",
+          "scope",
+          "createdAt"
+        ],
+        "description": "Movement material."
+      },
+      "MovementMaterialList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "content": {
+              "type": "string"
+            },
+            "clothing": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "scope": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 date-time string."
+            }
+          },
+          "required": [
+            "id",
+            "url",
+            "content",
+            "clothing",
+            "scope",
+            "createdAt"
+          ],
+          "description": "Movement material."
+        }
+      },
+      "UploadResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "originalName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "description": "Uploaded file response."
+      },
+      "GenerationJobResponse": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "videoUrl": {
+            "type": "string"
+          },
+          "result": {}
+        },
+        "description": "External generation job response."
       }
     },
     "parameters": {}
