@@ -6,6 +6,42 @@ import type { WorkflowExecutionResult } from '@/domains/workflow/types'
 
 const MANUAL_UPLOAD_SOURCE = 'manual_upload'
 
+async function validateUploadedVideoOwnership(
+  tx: {
+    product: { findFirst: typeof db.product.findFirst }
+    virtualIp: { findFirst: typeof db.virtualIp.findFirst }
+  },
+  input: SaveUploadedVideoInput
+) {
+  const product = await tx.product.findFirst({
+    where: {
+      id: input.productId,
+      teamId: input.teamId,
+    },
+    select: { id: true },
+  })
+
+  if (!product) {
+    throw new Error('Product not found')
+  }
+
+  if (!input.ipId) {
+    return
+  }
+
+  const ip = await tx.virtualIp.findFirst({
+    where: {
+      id: input.ipId,
+      teamId: input.teamId,
+    },
+    select: { id: true },
+  })
+
+  if (!ip) {
+    throw new Error('IP not found')
+  }
+}
+
 export async function createVideoTask(input: CreateTaskInput) {
   return db.videoTask.create({
     data: {
@@ -132,6 +168,10 @@ export async function getVideoDetail(videoId: string, teamId: string) {
 
 export async function saveUploadedVideo(input: SaveUploadedVideoInput) {
   return db.$transaction(async (tx) => {
+    await validateUploadedVideoOwnership(tx, input)
+
+    // `video_tasks.workflowId` is required, so manual uploads need a stable workflow row
+    // that can be reused across uploads without adding route-level special cases.
     const workflow = await tx.workflow.upsert({
       where: { code: MANUAL_UPLOAD_SOURCE },
       update: {},
