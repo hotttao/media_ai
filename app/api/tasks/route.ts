@@ -4,6 +4,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { getTasks } from '@/domains/video/service'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/tasks - 任务列表
 export async function GET(request: NextRequest) {
   try {

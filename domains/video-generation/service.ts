@@ -5,8 +5,10 @@ import { v4 as uuid } from 'uuid'
 import { providerRegistry } from '@/foundation/providers/registry'
 import { ImageBlendTool, SceneReplaceTool, ImageToVideoTool, MotionTransferTool, ModelImageTool, StyleImageTool, MultiImageEditTool } from './tools'
 import { getMovementMaterialById } from '@/domains/movement-material/service'
-import type { VideoGenerationResult, ModelImageGenerationResult, StyleImageGenerationResult, FirstFrameGenerationResult } from './types'
+import type { VideoGenerationResult, ModelImageGenerationResult, StyleImageGenerationResult, FirstFrameGenerationResult, VideoGenerationTraceInput } from './types'
 import type { ToolResult } from '@/foundation/providers/ToolProvider'
+import { normalizeVideoPrompt } from './prompt'
+import { buildGeneratedImagePrompt } from './image-prompt'
 
 const PROVIDER_NAME = 'runninghub' as const
 
@@ -86,6 +88,7 @@ export async function generateModelImage(
       productId,
       ipId,
       url: modelResult.outputs.modelImage,
+      prompt: null,
       inputHash,
     }
   })
@@ -149,6 +152,7 @@ export async function generateStyleImage(
       ipId: modelImage.ipId,
       modelImageId,
       url: styleResult.outputs.styledImage,
+      prompt: buildGeneratedImagePrompt(pose),
       poseId: undefined, // pose 是文本描述
       makeupId: undefined,
       accessoryId: undefined,
@@ -195,7 +199,7 @@ export async function generateFirstFrame(
   // 3. 获取场景图
   const scene = await db.material.findUnique({
     where: { id: sceneId },
-    select: { url: true },
+    select: { url: true, prompt: true },
   })
   if (!scene?.url) {
     throw new Error(`Scene ${sceneId} not found`)
@@ -218,6 +222,7 @@ export async function generateFirstFrame(
       ipId,
       styleImageId,
       url: sceneResult.outputs.firstFrame,
+      prompt: buildGeneratedImagePrompt(scene.prompt, composition),
       sceneId,
       composition,
       inputHash,
@@ -237,12 +242,12 @@ export async function generateVideo(
   teamId: string,
   ipId: string,
   firstFrameUrl: string,
-  movementId: string
+  trace: VideoGenerationTraceInput
 ): Promise<VideoGenerationResult> {
   // 1. 获取动作信息 (movement)
-  const movement = await getMovementMaterialById(movementId)
+  const movement = await getMovementMaterialById(trace.movementId)
   if (!movement) {
-    throw new Error(`Movement ${movementId} not found`)
+    throw new Error(`Movement ${trace.movementId} not found`)
   }
 
   const provider = getRunningHubProvider()
@@ -289,8 +294,15 @@ export async function generateVideo(
         teamId,
         ipId,
         productId,
-        name: `video_${movementId}_${Date.now()}`,
+        name: `video_${trace.movementId}_${Date.now()}`,
         url: videoUrl,
+        prompt: normalizeVideoPrompt(trace.prompt),
+        sceneId: trace.sceneId || null,
+        poseId: trace.poseId || null,
+        movementId: trace.movementId,
+        firstFrameId: trace.firstFrameId || null,
+        styleImageId: trace.styleImageId || null,
+        modelImageId: trace.modelImageId || null,
       },
     })
 

@@ -9,17 +9,23 @@ interface MovementCardProps {
     content: string
     clothing: string | null
     scope: string | null
+    isGeneral: boolean
+    poseIds: string[]
     createdAt: string
   }
+  onClick?: () => void
   onEdit: (movement: MovementCardProps['movement']) => void
   onDelete: (id: string) => void
 }
 
-export function MovementCard({ movement, onEdit, onDelete }: MovementCardProps) {
+export function MovementCard({ movement, onClick, onEdit, onDelete }: MovementCardProps) {
   const [showConfirm, setShowConfirm] = useState(false)
 
   return (
-    <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/10 group hover:border-cyan-500/30 transition-all duration-300">
+    <div
+      onClick={onClick}
+      className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-900/80 transition-all duration-300 group hover:border-cyan-500/30 cursor-pointer"
+    >
       {/* Video indicator or text indicator */}
       <div className="aspect-video bg-gradient-to-br from-blue-900/40 to-cyan-900/40 flex items-center justify-center">
         {movement.url ? (
@@ -39,6 +45,17 @@ export function MovementCard({ movement, onEdit, onDelete }: MovementCardProps) 
 
       {/* Info section */}
       <div className="p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs ${
+              movement.isGeneral
+                ? 'bg-emerald-500/20 text-emerald-300'
+                : 'bg-amber-500/20 text-amber-300'
+            }`}
+          >
+            {movement.isGeneral ? '通用动作' : '专用动作'}
+          </span>
+        </div>
         <p className="text-sm text-white/80 line-clamp-2 mb-2">{movement.content}</p>
         {movement.clothing && (
           <p className="text-xs text-white/40">服装: {movement.clothing}</p>
@@ -51,7 +68,10 @@ export function MovementCard({ movement, onEdit, onDelete }: MovementCardProps) 
       {/* Actions */}
       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
-          onClick={() => onEdit(movement)}
+          onClick={(event) => {
+            event.stopPropagation()
+            onEdit(movement)
+          }}
           className="p-2 rounded-lg bg-black/50 text-white/60 hover:text-white hover:bg-black/70"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +79,10 @@ export function MovementCard({ movement, onEdit, onDelete }: MovementCardProps) 
           </svg>
         </button>
         <button
-          onClick={() => setShowConfirm(true)}
+          onClick={(event) => {
+            event.stopPropagation()
+            setShowConfirm(true)
+          }}
           className="p-2 rounded-lg bg-black/50 text-red-400/60 hover:text-red-400 hover:bg-black/70"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -5,6 +5,7 @@ export const createMaterialSchema = z.object({
   type: z.enum(['SCENE', 'POSE', 'MAKEUP', 'ACCESSORY', 'OTHER']).describe('Material category used for filtering and generation workflows.'),
   name: z.string().min(1, 'Name is required').max(100).describe('Human-readable material name.'),
   description: z.string().optional().describe('Optional notes describing the material usage or style.'),
+  prompt: z.string().optional().describe('Optional prompt text used to guide later generation workflows.'),
   url: z.string().min(1, 'URL is required').describe('Public or internal URL of the material asset.'),
   tags: z.array(z.string()).optional().describe('Searchable labels attached to the material.'),
 }).describe('Payload for creating a material asset.')

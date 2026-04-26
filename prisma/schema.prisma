@@ -107,11 +107,13 @@ model Material {
   type                  MaterialType
   name                  String            @db.VarChar(100)
   description           String?           @db.Text
+  prompt                String?           @db.Text
   url                   String            @db.VarChar(500)
   tags                  String?
   createdAt             DateTime          @default(now()) @map("created_at")
   updatedAt             DateTime          @updatedAt @map("updated_at")
   ipMaterials           IpMaterial[]      @relation("IpMaterialToMaterial")
+  poseMovementLinks     PoseMovement[]    @relation("PoseMovementToMaterial")
   productScenes         ProductScene[]    @relation("ProductSceneToMaterial")
   team                  Team?             @relation("TeamToMaterials", fields: [teamId], references: [id])
   user                  User?             @relation("UserToMaterials", fields: [userId], references: [id])
@@ -247,10 +249,17 @@ model Video {
   name      String?    @db.VarChar(100)
   url       String     @db.VarChar(500)
   thumbnail String?    @db.VarChar(500)
+  prompt    String?    @db.Text
   duration  Int?
   size      BigInt?
   createdAt DateTime   @default(now()) @map("created_at")
   productId String?    @map("product_id") @db.VarChar(36)
+  sceneId   String?    @map("scene_id") @db.VarChar(36)
+  poseId    String?    @map("pose_id") @db.VarChar(36)
+  movementId String?   @map("movement_id") @db.VarChar(36)
+  firstFrameId String? @map("first_frame_id") @db.VarChar(36)
+  styleImageId String? @map("style_image_id") @db.VarChar(36)
+  modelImageId String? @map("model_image_id") @db.VarChar(36)
   product   Product?   @relation("ProductToVideos", fields: [productId], references: [id], onUpdate: Restrict, map: "fk_videos_product")
   ip        VirtualIp? @relation("VirtualIpToVideos", fields: [ipId], references: [id])
   task      VideoTask  @relation("TaskToVideos", fields: [taskId], references: [id])
@@ -259,6 +268,12 @@ model Video {
 
   @@index([productId], map: "fk_videos_product")
   @@index([ipId], map: "videos_ip_id_fkey")
+  @@index([sceneId], map: "videos_scene_id_idx")
+  @@index([poseId], map: "videos_pose_id_idx")
+  @@index([movementId], map: "videos_movement_id_idx")
+  @@index([firstFrameId], map: "videos_first_frame_id_idx")
+  @@index([styleImageId], map: "videos_style_image_id_idx")
+  @@index([modelImageId], map: "videos_model_image_id_idx")
   @@index([taskId], map: "videos_task_id_fkey")
   @@index([teamId], map: "videos_team_id_fkey")
   @@index([userId], map: "videos_user_id_fkey")
@@ -271,9 +286,25 @@ model MovementMaterial {
   content   String   @db.Text
   clothing  String?  @db.Text
   scope     String?  @db.Text
+  isGeneral Boolean  @default(true) @map("is_general")
   createdAt DateTime @default(now()) @map("created_at")
+  poseLinks PoseMovement[] @relation("PoseMovementToMovement")
 
   @@map("movement_materials")
+}
+
+model PoseMovement {
+  id         String           @id @default(uuid()) @db.VarChar(36)
+  poseId     String           @map("pose_id") @db.VarChar(36)
+  movementId String           @map("movement_id") @db.VarChar(36)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  pose       Material         @relation("PoseMovementToMaterial", fields: [poseId], references: [id], onDelete: Cascade)
+  movement   MovementMaterial @relation("PoseMovementToMovement", fields: [movementId], references: [id], onDelete: Cascade)
+
+  @@unique([poseId, movementId], map: "pose_movements_pose_id_movement_id_key")
+  @@index([poseId], map: "idx_pose_movements_pose")
+  @@index([movementId], map: "idx_pose_movements_movement")
+  @@map("pose_movements")
 }
 
 enum Role {
@@ -326,6 +357,7 @@ model ModelImage {
   productId  String   @map("product_id") @db.VarChar(36)
   ipId       String   @map("ip_id") @db.VarChar(36)
   url        String   @db.VarChar(500)
+  prompt     String?  @db.Text
   inputHash  String   @map("input_hash") @db.VarChar(64)
   createdAt  DateTime @default(now()) @map("created_at")
 
@@ -343,6 +375,7 @@ model StyleImage {
   ipId          String   @map("ip_id") @db.VarChar(36)
   modelImageId  String   @map("model_image_id") @db.VarChar(36)
   url           String   @db.VarChar(500)
+  prompt        String?  @db.Text
   poseId        String?  @map("pose_id") @db.VarChar(36)
   makeupId      String?  @map("makeup_id") @db.VarChar(36)
   accessoryId   String?  @map("accessory_id") @db.VarChar(36)
@@ -364,6 +397,7 @@ model FirstFrame {
   ipId         String   @map("ip_id") @db.VarChar(36)
   styleImageId String?  @map("style_image_id") @db.VarChar(36)
   url          String   @db.VarChar(500)
+  prompt       String?  @db.Text
   sceneId      String?  @map("scene_id") @db.VarChar(36)
   composition  String?  @db.VarChar(500)
   inputHash    String   @map("input_hash") @db.VarChar(64)

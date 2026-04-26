@@ -2,14 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { createMovementMaterial, getMovementMaterials } from '@/domains/movement-material/service'
+import { createMovementMaterialSchema } from '@/domains/movement-material/validators'
 import { z } from 'zod'
-
-const createMovementMaterialSchema = z.object({
-  url: z.string().optional(),
-  content: z.string().min(1),
-  clothing: z.string().optional(),
-  scope: z.string().optional(),
-})
 
 // GET /api/movement-materials - List all movement materials
 export async function GET() {

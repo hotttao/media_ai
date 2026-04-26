@@ -987,7 +987,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"visibility\": \"PUBLIC\",\n  \"type\": \"SCENE\",\n  \"name\": \"Postman name\",\n  \"description\": \"Created from Postman collection.\",\n  \"url\": \"{{generatedImageUrl}}\",\n  \"tags\": [\n    \"postman\"\n  ]\n}",
+              "raw": "{\n  \"visibility\": \"PUBLIC\",\n  \"type\": \"SCENE\",\n  \"name\": \"Postman name\",\n  \"description\": \"Created from Postman collection.\",\n  \"prompt\": \"sample-prompt\",\n  \"url\": \"{{generatedImageUrl}}\",\n  \"tags\": [\n    \"postman\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1109,7 +1109,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{}",
+              "raw": "{\n  \"url\": \"{{generatedImageUrl}}\",\n  \"content\": \"sample-content\",\n  \"clothing\": \"sample-clothing\",\n  \"scope\": \"sample-scope\",\n  \"isGeneral\": false,\n  \"poseIds\": [\n    \"sample-poseIds\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1190,7 +1190,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{}",
+              "raw": "{\n  \"url\": \"{{generatedImageUrl}}\",\n  \"content\": \"sample-content\",\n  \"clothing\": \"sample-clothing\",\n  \"scope\": \"sample-scope\",\n  \"isGeneral\": false,\n  \"poseIds\": [\n    \"sample-poseIds\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1295,7 +1295,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{}",
+              "raw": "{\n  \"url\": \"{{generatedImageUrl}}\",\n  \"content\": \"sample-content\",\n  \"clothing\": \"sample-clothing\",\n  \"scope\": \"sample-scope\",\n  \"isGeneral\": false,\n  \"poseIds\": [\n    \"sample-poseIds\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1477,7 +1477,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstFrameId\": \"{{firstFrameId}}\",\n  \"prompt\": \"A smooth fashion product video with confident walking pose.\",\n  \"duration\": 5\n}",
+              "raw": "{\n  \"ipId\": \"{{ipId}}\",\n  \"firstFrameUrl\": \"{{generatedImageUrl}}\",\n  \"movementId\": \"{{movementId}}\",\n  \"sceneId\": \"{{materialId}}\",\n  \"poseId\": \"{{materialId}}\",\n  \"firstFrameId\": \"{{firstFrameId}}\",\n  \"styleImageId\": \"{{styleImageId}}\",\n  \"modelImageId\": \"{{modelImageId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1728,7 +1728,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ipId\": \"{{ipId}}\",\n  \"imageUrl\": \"{{generatedImageUrl}}\",\n  \"inputHash\": \"postman-model-image-hash\"\n}",
+              "raw": "{\n  \"ipId\": \"{{ipId}}\",\n  \"imageUrl\": \"{{generatedImageUrl}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1745,7 +1745,7 @@
                 "exec": [
                   "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
                   "let json = {}; try { json = pm.response.json(); } catch (e) {}",
-                  "if (json.id) pm.collectionVariables.set('modelImageId', json.id);"
+                  "if (json.modelImageId) pm.collectionVariables.set('modelImageId', json.modelImageId);"
                 ]
               }
             }
@@ -2046,7 +2046,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"modelImageId\": \"{{modelImageId}}\",\n  \"pose\": \"standing front view\",\n  \"makeupUrl\": \"{{materialUrl}}\",\n  \"accessoryUrl\": \"{{materialUrl}}\",\n  \"imageUrl\": \"{{generatedImageUrl}}\",\n  \"taskId\": \"{{taskId}}\"\n}",
+              "raw": "{\n  \"modelImageId\": \"{{modelImageId}}\",\n  \"poseId\": \"{{materialId}}\",\n  \"makeupId\": \"{{materialId}}\",\n  \"accessoryId\": \"{{materialId}}\",\n  \"imageUrl\": \"{{generatedImageUrl}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2063,7 +2063,7 @@
                 "exec": [
                   "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
                   "let json = {}; try { json = pm.response.json(); } catch (e) {}",
-                  "if (json.id) pm.collectionVariables.set('styleImageId', json.id);"
+                  "if (json.styleImageId) pm.collectionVariables.set('styleImageId', json.styleImageId);"
                 ]
               }
             }

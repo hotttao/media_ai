@@ -1449,8 +1449,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": true
+                "$ref": "#/components/schemas/CreateMovementMaterial"
               }
             }
           }
@@ -1480,7 +1479,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Movement"
+                  "$ref": "#/components/schemas/MovementMaterial"
                 }
               }
             }
@@ -1539,7 +1538,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Movement"
+                  "$ref": "#/components/schemas/MovementMaterial"
                 }
               }
             }
@@ -1590,8 +1589,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": true
+                "$ref": "#/components/schemas/UpdateMovementMaterial"
               }
             }
           }
@@ -1670,7 +1668,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MovementList"
+                  "$ref": "#/components/schemas/MovementMaterialList"
                 }
               }
             }
@@ -1709,7 +1707,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Movement"
+                  "$ref": "#/components/schemas/MovementMaterial"
                 }
               }
             }
@@ -1719,7 +1717,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Movement"
+                  "$ref": "#/components/schemas/MovementMaterial"
                 }
               }
             }
@@ -1760,8 +1758,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": true
+                "$ref": "#/components/schemas/CreateMovementMaterial"
               }
             }
           }
@@ -1799,7 +1796,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FirstFrameSaveResponse"
+                  "$ref": "#/components/schemas/FirstFrameList"
                 }
               }
             }
@@ -2007,7 +2004,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenerationJobResponse"
+                  "$ref": "#/components/schemas/VideoGenerationResponse"
                 }
               }
             }
@@ -2017,7 +2014,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenerationJobResponse"
+                  "$ref": "#/components/schemas/VideoGenerationResponse"
                 }
               }
             }
@@ -2058,8 +2055,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": true
+                "$ref": "#/components/schemas/GenerateVideoRequest"
               }
             }
           }
@@ -2384,7 +2380,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenerationJobResponse"
+                  "$ref": "#/components/schemas/ModelImageSaveResponse"
                 }
               }
             }
@@ -2394,7 +2390,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenerationJobResponse"
+                  "$ref": "#/components/schemas/ModelImageSaveResponse"
                 }
               }
             }
@@ -2947,7 +2943,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenerationJobResponse"
+                  "$ref": "#/components/schemas/StyleImageSaveResponse"
                 }
               }
             }
@@ -2957,7 +2953,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenerationJobResponse"
+                  "$ref": "#/components/schemas/StyleImageSaveResponse"
                 }
               }
             }
@@ -4263,6 +4259,10 @@
             "type": "string",
             "description": "Optional notes describing the material usage or style."
           },
+          "prompt": {
+            "type": "string",
+            "description": "Optional prompt text used to guide later generation workflows."
+          },
           "url": {
             "type": "string",
             "minLength": 1,
@@ -4736,6 +4736,103 @@
           }
         },
         "description": "Payload for partially updating a virtual IP character."
+      },
+      "CreateMovementMaterial": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "clothing": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "isGeneral": {
+            "type": "boolean"
+          },
+          "poseIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "UpdateMovementMaterial": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "clothing": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "isGeneral": {
+            "type": "boolean"
+          },
+          "poseIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GenerateVideoRequest": {
+        "type": "object",
+        "properties": {
+          "ipId": {
+            "type": "string"
+          },
+          "firstFrameUrl": {
+            "type": "string"
+          },
+          "movementId": {
+            "type": "string"
+          },
+          "productMaterialId": {
+            "type": "string"
+          },
+          "step": {
+            "type": "string"
+          },
+          "styleImageId": {
+            "type": "string"
+          },
+          "sceneId": {
+            "type": "string"
+          },
+          "composition": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "poseId": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "firstFrameId": {
+            "type": "string"
+          },
+          "modelImageId": {
+            "type": "string"
+          }
+        },
+        "description": "Payload for first-frame generation and final video generation."
       },
       "CsrfResponse": {
         "type": "object",
@@ -5428,6 +5525,12 @@
               "null"
             ]
           },
+          "prompt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "url": {
             "type": "string"
           },
@@ -5456,6 +5559,7 @@
           "type",
           "name",
           "description",
+          "prompt",
           "url",
           "tags",
           "createdAt",
@@ -5510,6 +5614,12 @@
                 "null"
               ]
             },
+            "prompt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "url": {
               "type": "string"
             },
@@ -5538,6 +5648,7 @@
             "type",
             "name",
             "description",
+            "prompt",
             "url",
             "tags",
             "createdAt",
@@ -5977,6 +6088,12 @@
           "url": {
             "type": "string"
           },
+          "prompt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "inputHash": {
             "type": "string"
           },
@@ -5991,6 +6108,7 @@
           "productId",
           "ipId",
           "url",
+          "prompt",
           "inputHash",
           "createdAt"
         ],
@@ -6013,6 +6131,12 @@
             "url": {
               "type": "string"
             },
+            "prompt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "inputHash": {
               "type": "string"
             },
@@ -6027,6 +6151,7 @@
             "productId",
             "ipId",
             "url",
+            "prompt",
             "inputHash",
             "createdAt"
           ],
@@ -6085,6 +6210,12 @@
             "url": {
               "type": "string"
             },
+            "prompt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "poseId": {
               "type": [
                 "string",
@@ -6118,6 +6249,7 @@
             "ipId",
             "modelImageId",
             "url",
+            "prompt",
             "poseId",
             "makeupId",
             "accessoryId",
@@ -6166,6 +6298,12 @@
             "url": {
               "type": "string"
             },
+            "prompt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "sceneId": {
               "type": [
                 "string",
@@ -6193,6 +6331,7 @@
             "ipId",
             "styleImageId",
             "url",
+            "prompt",
             "sceneId",
             "composition",
             "inputHash",
@@ -6221,6 +6360,12 @@
                 "url": {
                   "type": "string"
                 },
+                "prompt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "inputHash": {
                   "type": "string"
                 },
@@ -6235,6 +6380,7 @@
                 "productId",
                 "ipId",
                 "url",
+                "prompt",
                 "inputHash",
                 "createdAt"
               ],
@@ -6260,6 +6406,12 @@
                 },
                 "url": {
                   "type": "string"
+                },
+                "prompt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "poseId": {
                   "type": [
@@ -6294,6 +6446,7 @@
                 "ipId",
                 "modelImageId",
                 "url",
+                "prompt",
                 "poseId",
                 "makeupId",
                 "accessoryId",
@@ -6326,6 +6479,12 @@
                 "url": {
                   "type": "string"
                 },
+                "prompt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "sceneId": {
                   "type": [
                     "string",
@@ -6353,6 +6512,7 @@
                 "ipId",
                 "styleImageId",
                 "url",
+                "prompt",
                 "sceneId",
                 "composition",
                 "inputHash",
@@ -6745,6 +6905,15 @@
               "null"
             ]
           },
+          "isGeneral": {
+            "type": "boolean"
+          },
+          "poseIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -6757,6 +6926,8 @@
           "content",
           "clothing",
           "scope",
+          "isGeneral",
+          "poseIds",
           "createdAt"
         ],
         "description": "Movement material."
@@ -6790,6 +6961,15 @@
                 "null"
               ]
             },
+            "isGeneral": {
+              "type": "boolean"
+            },
+            "poseIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
             "createdAt": {
               "type": "string",
               "format": "date-time",
@@ -6802,6 +6982,8 @@
             "content",
             "clothing",
             "scope",
+            "isGeneral",
+            "poseIds",
             "createdAt"
           ],
           "description": "Movement material."
@@ -6843,6 +7025,22 @@
           "result": {}
         },
         "description": "External generation job response."
+      },
+      "VideoGenerationResponse": {
+        "type": "object",
+        "properties": {
+          "videoId": {
+            "type": "string"
+          },
+          "videoUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "videoId",
+          "videoUrl"
+        ],
+        "description": "Generated video response."
       }
     },
     "parameters": {}

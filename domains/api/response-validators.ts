@@ -91,6 +91,7 @@ export const materialResponseSchema = z.object({
   type: z.enum(['SCENE', 'POSE', 'MAKEUP', 'ACCESSORY', 'OTHER']),
   name: z.string(),
   description: nullableStringSchema,
+  prompt: nullableStringSchema,
   url: z.string(),
   tags: nullableStringSchema,
   createdAt: dateTimeSchema,
@@ -141,6 +142,7 @@ export const modelImageResponseSchema = z.object({
   productId: z.string(),
   ipId: z.string(),
   url: z.string(),
+  prompt: nullableStringSchema,
   inputHash: z.string(),
   createdAt: dateTimeSchema,
 }).describe('Generated model image.')
@@ -156,6 +158,7 @@ export const styleImageResponseSchema = z.object({
   ipId: z.string(),
   modelImageId: z.string(),
   url: z.string(),
+  prompt: nullableStringSchema,
   poseId: nullableStringSchema,
   makeupId: nullableStringSchema,
   accessoryId: nullableStringSchema,
@@ -174,6 +177,7 @@ export const firstFrameResponseSchema = z.object({
   ipId: z.string(),
   styleImageId: nullableStringSchema,
   url: z.string(),
+  prompt: nullableStringSchema,
   sceneId: nullableStringSchema,
   composition: nullableStringSchema,
   inputHash: z.string(),
@@ -184,6 +188,11 @@ export const firstFrameSaveResponseSchema = z.object({
   firstFrameUrl: z.string(),
   firstFrameId: z.string(),
 }).describe('Saved first frame response.')
+
+export const videoGenerationResponseSchema = z.object({
+  videoId: z.string(),
+  videoUrl: z.string(),
+}).describe('Generated video response.')
 
 export const generatedMaterialsResponseSchema = z.object({
   modelImages: z.array(modelImageResponseSchema),
@@ -232,6 +241,8 @@ export const movementMaterialResponseSchema = z.object({
   content: z.string(),
   clothing: nullableStringSchema,
   scope: nullableStringSchema,
+  isGeneral: z.boolean(),
+  poseIds: z.array(z.string()),
   createdAt: dateTimeSchema,
 }).describe('Movement material.')
 

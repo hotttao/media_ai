@@ -18,6 +18,7 @@ export function MaterialUploader({ onClose, onSuccess }: MaterialUploaderProps) 
     type: 'SCENE',
     visibility: 'PERSONAL',
     description: '',
+    prompt: '',
     tags: '',
   })
 
@@ -69,6 +70,7 @@ export function MaterialUploader({ onClose, onSuccess }: MaterialUploaderProps) 
         type: formData.type,
         visibility: formData.visibility,
         description: formData.description || undefined,
+        prompt: formData.prompt || undefined,
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
         url,
       }
@@ -138,6 +140,7 @@ export function MaterialUploader({ onClose, onSuccess }: MaterialUploaderProps) 
         name: data.name || prev.name,
         type: data.type || prev.type,
         description: data.description || prev.description,
+        prompt: prev.prompt,
         tags: data.tags?.join(', ') || prev.tags,
       }))
     } catch (error) {
@@ -300,6 +303,17 @@ export function MaterialUploader({ onClose, onSuccess }: MaterialUploaderProps) 
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="素材描述..."
+          rows={3}
+          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-all duration-300 resize-none"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-white/70">Prompt 提示词（可选）</label>
+        <textarea
+          value={formData.prompt}
+          onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
+          placeholder="用于后续辅助生成视频的提示词"
           rows={3}
           className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-all duration-300 resize-none"
         />

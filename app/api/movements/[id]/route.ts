@@ -2,14 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { getMovementMaterialById, updateMovementMaterial, deleteMovementMaterial } from '@/domains/movement-material/service'
+import { updateMovementMaterialSchema } from '@/domains/movement-material/validators'
 import { z } from 'zod'
-
-const updateMovementMaterialSchema = z.object({
-  url: z.string().optional(),
-  content: z.string().min(1).optional(),
-  clothing: z.string().optional(),
-  scope: z.string().optional(),
-})
 
 type RouteParams = { params: { id: string } }
 

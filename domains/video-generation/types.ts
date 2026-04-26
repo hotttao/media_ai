@@ -14,6 +14,16 @@ export interface VideoGenerationResult {
   videoUrl: string
 }
 
+export interface VideoGenerationTraceInput {
+  sceneId?: string | null
+  poseId?: string | null
+  movementId: string
+  prompt?: string | null
+  firstFrameId?: string | null
+  styleImageId?: string | null
+  modelImageId?: string | null
+}
+
 export interface ModelImageGenerationResult {
   modelImageUrl: string
   modelImageId: string

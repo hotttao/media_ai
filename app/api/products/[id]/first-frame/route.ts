@@ -4,6 +4,7 @@ import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
 import { isSceneAllowedForProductAndIp } from '@/domains/product/service'
 import { v4 as uuid } from 'uuid'
+import { buildGeneratedImagePrompt } from '@/domains/video-generation/image-prompt'
 
 // POST /api/products/{id}/first-frame
 export async function POST(
@@ -17,7 +18,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { styleImageId, sceneId, composition, imageUrl } = body
+    const { styleImageId, sceneId, composition, imageUrl, prompt } = body
 
     if (!styleImageId || !imageUrl) {
       return NextResponse.json({ error: 'Missing required fields: styleImageId, imageUrl' }, { status: 400 })
@@ -37,6 +38,13 @@ export async function POST(
         return NextResponse.json({ error: 'Scene is not allowed for this product/IP combination' }, { status: 400 })
       }
     }
+
+    const scenePrompt = sceneId
+      ? (await db.material.findUnique({
+          where: { id: sceneId },
+          select: { prompt: true },
+        }))?.prompt ?? null
+      : null
 
     // 计算 input hash 用于去重
     const hashStrings = (...inputs: (string | undefined | null)[]): string => {
@@ -77,6 +85,10 @@ export async function POST(
         ipId: styleImage.ipId,
         styleImageId,
         url: imageUrl,
+        prompt: buildGeneratedImagePrompt(
+          typeof prompt === 'string' ? prompt : scenePrompt,
+          composition
+        ),
         sceneId: sceneId || undefined,
         composition: composition || undefined,
         inputHash,

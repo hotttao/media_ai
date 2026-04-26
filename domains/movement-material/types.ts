@@ -5,12 +5,16 @@ export interface MovementMaterial {
   content: string
   clothing: string | null
   scope: string | null
+  isGeneral: boolean
+  poseIds: string[]
   createdAt: Date
 }
 
 export interface CreateMovementMaterialInput {
   url?: string
-  content: string
+  content?: string
   clothing?: string
   scope?: string
+  isGeneral?: boolean
+  poseIds?: string[]
 }

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
 import { v4 as uuid } from 'uuid'
+import { buildGeneratedImagePrompt } from '@/domains/video-generation/image-prompt'
 
 // Simple hash function for deduplication
 function hashStrings(...inputs: (string | undefined | null)[]): string {
@@ -28,7 +29,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { modelImageId, poseId, makeupId, accessoryId, imageUrl } = body
+    const { modelImageId, poseId, makeupId, accessoryId, imageUrl, prompt } = body
 
     if (!modelImageId || !imageUrl) {
       return NextResponse.json({ error: 'Missing required fields: modelImageId, imageUrl' }, { status: 400 })
@@ -66,6 +67,7 @@ export async function POST(
         ipId: modelImage.ipId,
         modelImageId,
         url: imageUrl,
+        prompt: buildGeneratedImagePrompt(typeof prompt === 'string' ? prompt : null),
         poseId: poseId || undefined,
         makeupId: makeupId || undefined,
         accessoryId: accessoryId || undefined,

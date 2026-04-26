@@ -13,6 +13,10 @@ import {
 } from '../domains/product/validators'
 import { createIpSchema, updateIpSchema } from '../domains/virtual-ip/validators'
 import {
+  createMovementMaterialSchema,
+  updateMovementMaterialSchema,
+} from '../domains/movement-material/validators'
+import {
   credentialsLoginResponseSchema,
   csrfResponseSchema,
   errorResponseSchema,
@@ -34,6 +38,7 @@ import {
   successResponseSchema,
   uploadResponseSchema,
   videoTaskResponseSchema,
+  videoGenerationResponseSchema,
   virtualIpResponseSchema,
   workflowResponseSchema,
   firstFrameResponseSchema,
@@ -50,6 +55,22 @@ type HttpMethod = typeof httpMethods[number]
 type MethodSchemaMap = Partial<Record<HttpMethod, ZodTypeAny>>
 
 const registry = new OpenAPIRegistry()
+const generateVideoRequestSchema = z.object({
+  ipId: z.string().optional(),
+  firstFrameUrl: z.string().optional(),
+  movementId: z.string().optional(),
+  productMaterialId: z.string().optional(),
+  step: z.string().optional(),
+  styleImageId: z.string().optional(),
+  sceneId: z.string().optional(),
+  composition: z.string().optional(),
+  imageUrl: z.string().optional(),
+  poseId: z.string().optional(),
+  prompt: z.string().optional(),
+  firstFrameId: z.string().optional(),
+  modelImageId: z.string().optional(),
+}).describe('Payload for first-frame generation and final video generation.')
+
 const schemas = {
   CreateMaterial: registry.register('CreateMaterial', createMaterialSchema),
   MaterialFilter: registry.register('MaterialFilter', materialFilterSchema),
@@ -59,6 +80,9 @@ const schemas = {
   ExtractProductInfo: registry.register('ExtractProductInfo', extractProductInfoSchema),
   CreateVirtualIp: registry.register('CreateVirtualIp', createIpSchema),
   UpdateVirtualIp: registry.register('UpdateVirtualIp', updateIpSchema),
+  CreateMovementMaterial: registry.register('CreateMovementMaterial', createMovementMaterialSchema),
+  UpdateMovementMaterial: registry.register('UpdateMovementMaterial', updateMovementMaterialSchema),
+  GenerateVideoRequest: registry.register('GenerateVideoRequest', generateVideoRequestSchema),
   CsrfResponse: registry.register('CsrfResponse', csrfResponseSchema),
   CredentialsLoginResponse: registry.register('CredentialsLoginResponse', credentialsLoginResponseSchema),
   ErrorResponse: registry.register('ErrorResponse', errorResponseSchema),
@@ -93,6 +117,7 @@ const schemas = {
   MovementMaterialList: registry.register('MovementMaterialList', z.array(movementMaterialResponseSchema)),
   UploadResponse: registry.register('UploadResponse', uploadResponseSchema),
   GenerationJobResponse: registry.register('GenerationJobResponse', generationJobResponseSchema),
+  VideoGenerationResponse: registry.register('VideoGenerationResponse', videoGenerationResponseSchema),
 }
 
 const schemaRefBySchema = new Map<ZodTypeAny, string>([
@@ -104,6 +129,9 @@ const schemaRefBySchema = new Map<ZodTypeAny, string>([
   [schemas.ExtractProductInfo, 'ExtractProductInfo'],
   [schemas.CreateVirtualIp, 'CreateVirtualIp'],
   [schemas.UpdateVirtualIp, 'UpdateVirtualIp'],
+  [schemas.CreateMovementMaterial, 'CreateMovementMaterial'],
+  [schemas.UpdateMovementMaterial, 'UpdateMovementMaterial'],
+  [schemas.GenerateVideoRequest, 'GenerateVideoRequest'],
   [schemas.CsrfResponse, 'CsrfResponse'],
   [schemas.CredentialsLoginResponse, 'CredentialsLoginResponse'],
   [schemas.ErrorResponse, 'ErrorResponse'],
@@ -138,14 +166,19 @@ const schemaRefBySchema = new Map<ZodTypeAny, string>([
   [schemas.MovementMaterialList, 'MovementMaterialList'],
   [schemas.UploadResponse, 'UploadResponse'],
   [schemas.GenerationJobResponse, 'GenerationJobResponse'],
+  [schemas.VideoGenerationResponse, 'VideoGenerationResponse'],
 ])
 
 const requestBodySchemas: Record<string, MethodSchemaMap> = {
   '/api/ips': { POST: schemas.CreateVirtualIp },
   '/api/ips/{id}': { PUT: schemas.UpdateVirtualIp },
   '/api/materials': { POST: schemas.CreateMaterial },
+  '/api/movement-materials': { POST: schemas.CreateMovementMaterial },
+  '/api/movements': { POST: schemas.CreateMovementMaterial },
+  '/api/movements/{id}': { PATCH: schemas.UpdateMovementMaterial },
   '/api/products': { POST: schemas.CreateProduct },
   '/api/products/{id}': { PATCH: schemas.UpdateProduct },
+  '/api/products/{id}/generate-video': { POST: schemas.GenerateVideoRequest },
   '/api/products/extract': { POST: schemas.ExtractProductInfo },
 }
 
@@ -164,20 +197,20 @@ const responseSchemas: Record<string, MethodSchemaMap> = {
   '/api/materials/extract': { POST: schemas.GenerationJobResponse },
   '/api/materials/ip/{ipId}': { GET: schemas.IpMaterialList, POST: schemas.IpMaterial },
   '/api/movement-materials': { GET: schemas.MovementMaterialList, POST: schemas.MovementMaterial },
-  '/api/movements': { GET: schemas.MovementList, POST: schemas.Movement },
-  '/api/movements/{id}': { GET: schemas.Movement, PATCH: schemas.Movement, DELETE: schemas.SuccessResponse },
+  '/api/movements': { GET: schemas.MovementMaterialList, POST: schemas.MovementMaterial },
+  '/api/movements/{id}': { GET: schemas.MovementMaterial, PATCH: schemas.MovementMaterial, DELETE: schemas.SuccessResponse },
   '/api/products': { GET: schemas.ProductList, POST: schemas.Product },
   '/api/products/{id}': { GET: schemas.Product, PATCH: schemas.Product, DELETE: schemas.SuccessResponse },
-  '/api/products/{id}/first-frame': { GET: schemas.FirstFrameSaveResponse, POST: schemas.FirstFrameSaveResponse },
+  '/api/products/{id}/first-frame': { GET: schemas.FirstFrameList, POST: schemas.FirstFrameSaveResponse },
   '/api/products/{id}/first-frames': { GET: schemas.FirstFrameList },
-  '/api/products/{id}/generate-video': { POST: schemas.GenerationJobResponse },
+  '/api/products/{id}/generate-video': { POST: schemas.VideoGenerationResponse },
   '/api/products/{id}/generated-materials': { GET: schemas.GeneratedMaterialsResponse },
   '/api/products/{id}/images': { POST: schemas.ProductImage },
   '/api/products/{id}/images/{imageId}': { DELETE: schemas.SuccessResponse },
-  '/api/products/{id}/model-image': { POST: schemas.GenerationJobResponse },
+  '/api/products/{id}/model-image': { POST: schemas.ModelImageSaveResponse },
   '/api/products/{id}/model-image/save': { POST: schemas.ModelImageSaveResponse },
   '/api/products/{id}/model-images': { GET: schemas.ModelImageList },
-  '/api/products/{id}/style-image': { POST: schemas.GenerationJobResponse },
+  '/api/products/{id}/style-image': { POST: schemas.StyleImageSaveResponse },
   '/api/products/{id}/style-image/save': { POST: schemas.StyleImageSaveResponse },
   '/api/products/{id}/style-images': { GET: schemas.StyleImageList },
   '/api/products/extract': { POST: schemas.GenerationJobResponse },

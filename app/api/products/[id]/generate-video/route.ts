@@ -15,7 +15,21 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let body: { ipId?: string; firstFrameUrl?: string; movementId?: string; productMaterialId?: string; step?: string; styleImageId?: string; sceneId?: string; composition?: string; imageUrl?: string }
+    let body: {
+      ipId?: string
+      firstFrameUrl?: string
+      movementId?: string
+      productMaterialId?: string
+      step?: string
+      styleImageId?: string
+      sceneId?: string
+      composition?: string
+      imageUrl?: string
+      poseId?: string
+      prompt?: string
+      firstFrameId?: string
+      modelImageId?: string
+    }
     try {
       body = await request.json()
     } catch (error) {
@@ -60,7 +74,7 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid product ID format' }, { status: 400 })
     }
 
-    const { ipId, firstFrameUrl, movementId } = body
+    const { ipId, firstFrameUrl, movementId, sceneId, poseId, prompt, firstFrameId, styleImageId, modelImageId } = body
 
     if (!ipId || !firstFrameUrl || !movementId) {
       return NextResponse.json({ error: 'Missing required fields: ipId, firstFrameUrl, movementId' }, { status: 400 })
@@ -72,7 +86,15 @@ export async function POST(
       session.user.teamId,
       ipId,
       firstFrameUrl,
-      movementId
+      {
+        sceneId,
+        poseId,
+        movementId,
+        prompt,
+        firstFrameId,
+        styleImageId,
+        modelImageId,
+      }
     )
 
     return NextResponse.json(result)

@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { getAllowedMovementsForPose } from '@/domains/movement-material/availability'
+import { buildGeneratedImagePrompt } from '@/domains/video-generation/image-prompt'
 
 // Types
 interface VirtualIP {
@@ -30,6 +32,8 @@ interface Material {
   name: string
   url: string
   type: string
+  description?: string | null
+  prompt?: string | null
 }
 
 interface SceneAssociation {
@@ -41,6 +45,8 @@ interface Movement {
   content: string
   url: string | null
   clothing?: string | null
+  isGeneral: boolean
+  poseIds: string[]
 }
 
 interface GeneratedImage {
@@ -129,6 +135,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   // Step 5: Video
   const [movements, setMovements] = useState<Movement[]>([])
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null)
+  const [videoPrompt, setVideoPrompt] = useState('')
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [videoLoading, setVideoLoading] = useState(false)
   const [videoProgress, setVideoProgress] = useState(0)
@@ -192,11 +199,22 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
     return nextScenes
   }, [ipScenes, productScenes, scenes])
 
+  const filteredMovements = useMemo(
+    () => getAllowedMovementsForPose(movements, selectedPose?.id ?? null),
+    [movements, selectedPose]
+  )
+
   useEffect(() => {
     if (selectedScene && !filteredScenes.some(scene => scene.id === selectedScene.id)) {
       setSelectedScene(null)
     }
   }, [filteredScenes, selectedScene])
+
+  useEffect(() => {
+    if (selectedMovement && !filteredMovements.some((movement) => movement.id === selectedMovement.id)) {
+      setSelectedMovement(null)
+    }
+  }, [filteredMovements, selectedMovement])
 
   // Fetch IP fullBodyUrl when selected
   useEffect(() => {
@@ -275,6 +293,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
             body: JSON.stringify({
               ipId: selectedIp?.id,
               imageUrl: modelImageUrl,
+              prompt: null,
             }),
           })
           if (res.ok) {
@@ -300,6 +319,11 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
               makeupId: selectedMakeup?.id,
               accessoryId: selectedAccessory?.id,
               imageUrl: styledImageUrl,
+              prompt: buildGeneratedImagePrompt(
+                selectedPose?.prompt,
+                selectedMakeup?.prompt,
+                selectedAccessory?.prompt
+              ),
             }),
           })
           if (res.ok) {
@@ -324,6 +348,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
               sceneId: selectedScene?.id,
               composition: composition,
               imageUrl: firstFrameUrl,
+              prompt: buildGeneratedImagePrompt(selectedScene?.prompt, composition),
             }),
           })
           if (res.ok) {
@@ -494,7 +519,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         modelImageId,
-                        pose: selectedPose.url,
+                        pose: selectedPose.prompt || selectedPose.description || selectedPose.name,
                         makeupUrl: selectedMakeup?.url,
                         accessoryUrl: selectedAccessory?.url,
                       }),
@@ -575,15 +600,56 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
 
             {currentStep === 4 && (
               <VideoStep
-                movements={movements}
+                movements={filteredMovements}
                 selectedMovement={selectedMovement}
                 onMovementSelect={setSelectedMovement}
+                videoPrompt={videoPrompt}
+                onVideoPromptChange={setVideoPrompt}
                 videoUrl={videoUrl}
                 loading={videoLoading}
                 progress={videoProgress}
                 onGenerate={async () => {
-                  // TODO: call video API
-                  setVideoLoading(false)
+                  if (!selectedIp?.id || !firstFrameUrl || !selectedMovement?.id) {
+                    return
+                  }
+
+                  setVideoLoading(true)
+                  setVideoProgress(20)
+                  setError(null)
+
+                  try {
+                    const res = await fetch(`/api/products/${product.id}/generate-video`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        ipId: selectedIp.id,
+                        firstFrameUrl,
+                        movementId: selectedMovement.id,
+                        sceneId: selectedScene?.id,
+                        poseId: selectedPose?.id,
+                        prompt: videoPrompt,
+                        firstFrameId,
+                        styleImageId: styledImageId,
+                        modelImageId,
+                      }),
+                    })
+
+                    setVideoProgress(80)
+
+                    if (!res.ok) {
+                      const data = await res.json().catch(() => null)
+                      setError(data?.error || '生成视频失败')
+                      return
+                    }
+
+                    const data = await res.json()
+                    setVideoUrl(data.videoUrl)
+                    setVideoProgress(100)
+                  } catch {
+                    setError('生成视频失败')
+                  } finally {
+                    setVideoLoading(false)
+                  }
                 }}
                 canGenerate={!!selectedMovement}
               />
@@ -868,6 +934,7 @@ function ModelImageStep({
                     body: JSON.stringify({
                       ipId: selectedIp?.id,
                       imageUrl: data.url,
+                      prompt: null,
                     }),
                   })
                   if (saveRes.ok) {
@@ -1101,6 +1168,11 @@ function StyleImageStep({
                         makeupId: selectedMakeup?.id,
                         accessoryId: selectedAccessory?.id,
                         imageUrl: data.url,
+                        prompt: buildGeneratedImagePrompt(
+                          selectedPose?.prompt,
+                          selectedMakeup?.prompt,
+                          selectedAccessory?.prompt
+                        ),
                       }),
                     })
                     if (saveRes.ok) {
@@ -1324,6 +1396,7 @@ function FirstFrameStep({
                         sceneId: selectedScene?.id,
                         composition: composition,
                         imageUrl: data.url,
+                        prompt: buildGeneratedImagePrompt(selectedScene?.prompt, composition),
                       }),
                     })
                     if (saveRes.ok) {
@@ -1389,6 +1462,8 @@ function VideoStep({
   movements,
   selectedMovement,
   onMovementSelect,
+  videoPrompt,
+  onVideoPromptChange,
   videoUrl,
   loading,
   progress,
@@ -1398,6 +1473,8 @@ function VideoStep({
   movements: Movement[]
   selectedMovement: Movement | null
   onMovementSelect: (m: Movement) => void
+  videoPrompt: string
+  onVideoPromptChange: (prompt: string) => void
   videoUrl: string | null
   loading: boolean
   progress: number
@@ -1428,12 +1505,31 @@ function VideoStep({
               `}
             >
               <span className="font-medium text-warm-charcoal">{movement.content}</span>
+              <span
+                className={`mt-2 inline-block rounded-full px-2 py-0.5 text-xs ${
+                  movement.isGeneral
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-amber-100 text-amber-700'
+                }`}
+              >
+                {movement.isGeneral ? '通用动作' : '专用动作'}
+              </span>
               {movement.clothing && (
                 <span className="block text-sm text-warm-silver mt-1">适用: {movement.clothing}</span>
               )}
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="font-medium text-warm-charcoal">视频 Prompt</h3>
+        <textarea
+          value={videoPrompt}
+          onChange={(event) => onVideoPromptChange(event.target.value)}
+          placeholder="可选，用于记录这次视频生成使用的补充提示词"
+          className="h-24 w-full resize-none rounded-xl border border-oat bg-white px-4 py-3 outline-none focus:border-matcha-600 focus:ring-2 focus:ring-matcha-600/20"
+        />
       </div>
 
       {/* Generate Button */}

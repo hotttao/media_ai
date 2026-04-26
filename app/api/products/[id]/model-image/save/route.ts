@@ -16,7 +16,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { ipId, imageUrl } = body
+    const { ipId, imageUrl, prompt } = body
 
     if (!ipId || !imageUrl) {
       return NextResponse.json({ error: 'Missing required fields: ipId, imageUrl' }, { status: 400 })
@@ -44,6 +44,7 @@ export async function POST(
         productId: params.id,
         ipId: ipId,
         url: imageUrl,
+        prompt: typeof prompt === 'string' ? prompt.trim() || null : null,
         inputHash,
       }
     })

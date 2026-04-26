@@ -9,6 +9,7 @@ export interface Material {
   type: MaterialType
   name: string
   description: string | null
+  prompt: string | null
   url: string
   tags: string[] | null
   createdAt: Date
@@ -36,6 +37,7 @@ export interface CreateMaterialInput {
   type: MaterialType
   name: string
   description?: string
+  prompt?: string
   url: string
   tags?: string[]
 }
@@ -58,6 +60,7 @@ export interface UpdateMaterialInput {
   type?: MaterialType
   name?: string
   description?: string
+  prompt?: string
   url?: string
   tags?: string[]
 }

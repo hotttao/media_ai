@@ -4,6 +4,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { getWorkflows } from '@/domains/workflow/service'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/workflows - 列出可用工作流
 export async function GET() {
   try {

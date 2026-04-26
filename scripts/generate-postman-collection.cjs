@@ -118,7 +118,6 @@ function operationSample(pathName, method, op) {
     'POST /api/products/{id}/model-image/save': {
       ipId: '{{ipId}}',
       imageUrl: '{{generatedImageUrl}}',
-      inputHash: 'postman-model-image-hash',
     },
     'POST /api/products/{id}/style-image': {
       modelImageId: '{{modelImageId}}',
@@ -128,11 +127,10 @@ function operationSample(pathName, method, op) {
     },
     'POST /api/products/{id}/style-image/save': {
       modelImageId: '{{modelImageId}}',
-      pose: 'standing front view',
-      makeupUrl: '{{materialUrl}}',
-      accessoryUrl: '{{materialUrl}}',
+      poseId: '{{materialId}}',
+      makeupId: '{{materialId}}',
+      accessoryId: '{{materialId}}',
       imageUrl: '{{generatedImageUrl}}',
-      taskId: '{{taskId}}',
     },
     'POST /api/products/{id}/first-frame': {
       styleImageId: '{{styleImageId}}',
@@ -141,9 +139,14 @@ function operationSample(pathName, method, op) {
       imageUrl: '{{generatedImageUrl}}',
     },
     'POST /api/products/{id}/generate-video': {
+      ipId: '{{ipId}}',
+      firstFrameUrl: '{{generatedImageUrl}}',
+      movementId: '{{movementId}}',
+      sceneId: '{{materialId}}',
+      poseId: '{{materialId}}',
       firstFrameId: '{{firstFrameId}}',
-      prompt: 'A smooth fashion product video with confident walking pose.',
-      duration: 5,
+      styleImageId: '{{styleImageId}}',
+      modelImageId: '{{modelImageId}}',
     },
     'POST /api/teams/invite-codes': { teamId: '{{teamId}}' },
     'POST /api/tools/image-blend': {
@@ -240,8 +243,8 @@ function captureTests(pathName, method) {
     'POST /api/movements': [['movementId', 'json.id']],
     'POST /api/products': [['productId', 'json.id']],
     'POST /api/products/{id}/images': [['imageId', 'json.id']],
-    'POST /api/products/{id}/model-image/save': [['modelImageId', 'json.id']],
-    'POST /api/products/{id}/style-image/save': [['styleImageId', 'json.id']],
+    'POST /api/products/{id}/model-image/save': [['modelImageId', 'json.modelImageId']],
+    'POST /api/products/{id}/style-image/save': [['styleImageId', 'json.styleImageId']],
     'POST /api/products/{id}/first-frame': [['firstFrameId', 'json.firstFrameId']],
     'POST /api/teams/invite-codes': [['inviteCode', 'json.code']],
   }
