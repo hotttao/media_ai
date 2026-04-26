@@ -26,3 +26,18 @@ export interface CreateTaskInput {
   ipId: string | null
   params: Record<string, any>
 }
+
+export interface SaveUploadedVideoInput {
+  productId: string
+  userId: string
+  teamId: string
+  ipId: string | null
+  movementId: string
+  url: string
+  prompt?: string
+  sceneId?: string
+  poseId?: string
+  firstFrameId?: string
+  styleImageId?: string
+  modelImageId?: string
+}

@@ -1,8 +1,10 @@
 // domains/video/service.ts
 import { db } from '@/foundation/lib/db'
 import { v4 as uuid } from 'uuid'
-import type { CreateTaskInput, TaskStatus } from './types'
+import type { CreateTaskInput, SaveUploadedVideoInput, TaskStatus } from './types'
 import type { WorkflowExecutionResult } from '@/domains/workflow/types'
+
+const MANUAL_UPLOAD_SOURCE = 'manual_upload'
 
 export async function createVideoTask(input: CreateTaskInput) {
   return db.videoTask.create({
@@ -89,5 +91,119 @@ export async function createVideo(taskId: string, userId: string, teamId: string
       size: data.size,
       ipId: data.ipId,
     },
+  })
+}
+
+export async function getVideosByProduct(productId: string, teamId: string) {
+  return db.video.findMany({
+    where: {
+      productId,
+      teamId,
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+export async function getVideosByTeam(teamId: string) {
+  return db.video.findMany({
+    where: { teamId },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+export async function getVideoDetail(videoId: string, teamId: string) {
+  return db.video.findFirst({
+    where: {
+      id: videoId,
+      teamId,
+    },
+    include: {
+      product: true,
+      ip: true,
+      task: {
+        include: {
+          workflow: true,
+          ip: true,
+        },
+      },
+    },
+  })
+}
+
+export async function saveUploadedVideo(input: SaveUploadedVideoInput) {
+  return db.$transaction(async (tx) => {
+    const workflow = await tx.workflow.upsert({
+      where: { code: MANUAL_UPLOAD_SOURCE },
+      update: {},
+      create: {
+        code: MANUAL_UPLOAD_SOURCE,
+        name: 'Manual Upload',
+        version: '1.0',
+      },
+    })
+
+    const taskId = uuid()
+    const videoId = uuid()
+    const params = {
+      source: MANUAL_UPLOAD_SOURCE,
+      productId: input.productId,
+      movementId: input.movementId,
+      prompt: input.prompt,
+      sceneId: input.sceneId,
+      poseId: input.poseId,
+      firstFrameId: input.firstFrameId,
+      styleImageId: input.styleImageId,
+      modelImageId: input.modelImageId,
+      url: input.url,
+    }
+    const result = {
+      success: true,
+      source: MANUAL_UPLOAD_SOURCE,
+      videoUrl: input.url,
+      movementId: input.movementId,
+      sceneId: input.sceneId,
+      poseId: input.poseId,
+      firstFrameId: input.firstFrameId,
+      styleImageId: input.styleImageId,
+      modelImageId: input.modelImageId,
+    }
+
+    await tx.videoTask.create({
+      data: {
+        id: taskId,
+        userId: input.userId,
+        teamId: input.teamId,
+        workflowId: workflow.id,
+        ipId: input.ipId,
+        status: 'COMPLETED',
+        params: JSON.stringify(params),
+        result: JSON.stringify(result),
+        completedAt: new Date(),
+      },
+    })
+
+    await tx.video.create({
+      data: {
+        id: videoId,
+        taskId,
+        userId: input.userId,
+        teamId: input.teamId,
+        ipId: input.ipId,
+        productId: input.productId,
+        sceneId: input.sceneId,
+        poseId: input.poseId,
+        movementId: input.movementId,
+        firstFrameId: input.firstFrameId,
+        styleImageId: input.styleImageId,
+        modelImageId: input.modelImageId,
+        prompt: input.prompt,
+        url: input.url,
+      },
+    })
+
+    return {
+      videoId,
+      videoUrl: input.url,
+    }
   })
 }
