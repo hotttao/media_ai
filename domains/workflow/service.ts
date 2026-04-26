@@ -4,6 +4,8 @@ import { v4 as uuid } from 'uuid'
 import type { WorkflowDefinition } from './types'
 import { LipstickPromoWorkflow } from './built-in/workflows/lipstick-promo'
 
+const INTERNAL_WORKFLOW_CODES = new Set(['manual_upload'])
+
 // 内置工作流
 const BUILT_IN_WORKFLOWS: WorkflowDefinition[] = [
   LipstickPromoWorkflow,
@@ -14,13 +16,14 @@ export async function getWorkflows() {
   const dbWorkflows = await db.workflow.findMany({
     orderBy: { createdAt: 'desc' },
   })
+  const visibleDbWorkflows = dbWorkflows.filter((workflow) => !INTERNAL_WORKFLOW_CODES.has(workflow.code))
 
   // 合并内置工作流（内置优先）
   const workflowsMap = new Map<string, any>()
   for (const w of BUILT_IN_WORKFLOWS) {
     workflowsMap.set(w.code, w)
   }
-  for (const w of dbWorkflows) {
+  for (const w of visibleDbWorkflows) {
     if (!workflowsMap.has(w.code)) {
       workflowsMap.set(w.code, {
         ...w,
@@ -34,6 +37,10 @@ export async function getWorkflows() {
 }
 
 export async function getWorkflowByCode(code: string) {
+  if (INTERNAL_WORKFLOW_CODES.has(code)) {
+    return null
+  }
+
   // 先查内置
   const builtIn = BUILT_IN_WORKFLOWS.find(w => w.code === code)
   if (builtIn) return builtIn
