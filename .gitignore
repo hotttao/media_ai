@@ -41,4 +41,7 @@ next-env.d.ts
 # uploads
 /public/uploads
 
+# local worktrees
+/.worktrees/
+
 docs/virtual_ip
