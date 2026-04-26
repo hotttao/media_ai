@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { isSceneAllowedForProductAndIp } from '@/domains/product/service'
 import { generateFirstFrame, generateVideo } from '@/domains/video-generation/service'
+import { saveUploadedVideo } from '@/domains/video/service'
 
 // POST /api/products/[id]/generate-video
 export async function POST(
@@ -29,6 +30,7 @@ export async function POST(
       prompt?: string
       firstFrameId?: string
       modelImageId?: string
+      videoUrl?: string
     }
     try {
       body = await request.json()
@@ -74,7 +76,52 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid product ID format' }, { status: 400 })
     }
 
-    const { ipId, firstFrameUrl, movementId, sceneId, poseId, prompt, firstFrameId, styleImageId, modelImageId } = body
+    const {
+      ipId,
+      firstFrameUrl,
+      movementId,
+      sceneId,
+      poseId,
+      prompt,
+      firstFrameId,
+      styleImageId,
+      modelImageId,
+      videoUrl,
+    } = body
+
+    if (step === 'upload-video') {
+      if (!ipId || !movementId || !videoUrl) {
+        return NextResponse.json({ error: 'Missing required fields: ipId, movementId, videoUrl' }, { status: 400 })
+      }
+
+      try {
+        const result = await saveUploadedVideo({
+          productId: params.id,
+          userId: session.user.id,
+          teamId: session.user.teamId,
+          ipId,
+          movementId,
+          url: videoUrl,
+          prompt,
+          sceneId,
+          poseId,
+          firstFrameId,
+          styleImageId,
+          modelImageId,
+        })
+
+        return NextResponse.json(result)
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          (error.message === 'Product not found' || error.message === 'IP not found')
+        ) {
+          return NextResponse.json({ error: error.message }, { status: 404 })
+        }
+
+        throw error
+      }
+    }
 
     if (!ipId || !firstFrameUrl || !movementId) {
       return NextResponse.json({ error: 'Missing required fields: ipId, firstFrameUrl, movementId' }, { status: 400 })
