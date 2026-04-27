@@ -97,6 +97,10 @@
       "sceneId": "scene_1",
       "createdAt": "2026-04-27T10:00:00.000Z"
     },
+    "styleImage": {
+      "id": "style_1",
+      "url": "https://..."
+    },
     "movement": {
       "id": "move_1",
       "content": "转身展示裙摆",
@@ -130,6 +134,7 @@
 
 - `combinationKey` 仅供前端稳定渲染与未来任务触发使用。
 - `firstFrame.styleImageId` 与 `firstFrame.poseId` 必须显式返回，供后台任务直接衔接“姿势 -> 动作提示词”链路。
+- `styleImage.url` 必须显式返回，避免后台任务为拿素材地址再追加一次查询。
 - 第一版不返回“可直接执行”的任务 payload，只返回上下文数据。
 
 ### 2. 获取当前团队姿势与动作映射
@@ -201,7 +206,7 @@
    - `styleImageId`
    - `poseId`
    - `sceneId`
-2. 批量查询关联 `style_images.poseId`
+2. 批量查询关联 `style_images.poseId + style_images.url`
 3. 批量查询相关商品、IP、姿势、场景
 4. 查询全部动作素材
 5. 对每张首帧图用 `getAllowedMovementsForPose()` 得出候选动作
@@ -303,6 +308,7 @@
 
 - `/api/videos/pending-combinations` 可返回当前团队未生成的首帧图+动作组合
 - `/api/videos/pending-combinations` 返回中显式包含 `styleImageId` 与 `poseId`
+- `/api/videos/pending-combinations` 返回中显式包含 `styleImage.url`
 - `/api/videos/pose-movement-map` 可返回当前团队姿势与动作映射
 - `/videos` 页面新增 `未生成组合` tab
 - 该 tab 可查看未生成组合，但不会真实发起任务
