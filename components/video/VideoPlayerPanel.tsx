@@ -24,7 +24,7 @@ export function VideoPlayerPanel({ video }: { video: VideoDetail }) {
             </span>
           </div>
           <h1 className="text-3xl font-semibold tracking-tight text-white">
-            {video.product?.name || '未关联商品视频'}
+            {video.name || video.product?.name || '未命名视频'}
           </h1>
           <p className="text-sm leading-6 text-white/60">
             {video.prompt || video.trace?.movement?.content || '暂无视频说明'}

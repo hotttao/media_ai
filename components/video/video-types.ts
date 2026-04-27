@@ -33,6 +33,7 @@ export interface VideoTaskInfo {
 
 export interface VideoListItem {
   id: string
+  name?: string | null
   url: string
   thumbnail?: string | null
   prompt?: string | null

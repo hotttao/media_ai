@@ -5,12 +5,11 @@ import { ChatWindow } from '@/components/home/ChatWindow'
 import { VideoToolCard } from '@/components/home/VideoToolCard'
 import { PromptElementsBar } from '@/components/home/PromptElementsBar'
 
-// PRD 4.3 定义的工具
 const videoTools = [
   {
     id: '1',
     title: '双图编辑',
-    description: '输入两张图片和多张副图，生成编辑后的图片',
+    description: '输入两张图片和多张辅图，生成编辑后的图片',
     href: '/tools',
     gradient: 'from-rose-400 to-pink-500',
     icon: '🖼️',
@@ -26,7 +25,7 @@ const videoTools = [
   {
     id: '3',
     title: '模特图生成',
-    description: '结合虚拟IP全身图和产品图生成模特图',
+    description: '结合虚拟 IP 全身图和商品图生成模特图',
     href: '/tools',
     gradient: 'from-violet-400 to-purple-500',
     icon: '👗',
@@ -34,7 +33,7 @@ const videoTools = [
   {
     id: '4',
     title: '定妆图生成',
-    description: '结合模特图和姿势、妆容、饰品生成定妆图',
+    description: '结合模特图与姿势、妆容、饰品生成定妆图',
     href: '/tools',
     gradient: 'from-emerald-400 to-teal-500',
     icon: '💄',
@@ -50,7 +49,7 @@ const videoTools = [
   {
     id: '6',
     title: '图生视频',
-    description: '输入首帧图和动作文字描述，生成视频',
+    description: '输入首帧图和动作描述，生成视频',
     href: '/videos',
     gradient: 'from-pink-400 to-rose-500',
     icon: '🎬',
@@ -68,8 +67,8 @@ const videoTools = [
 const quickAccess = [
   {
     id: 'products',
-    title: '产品库',
-    description: '管理产品素材库',
+    title: '商品库',
+    description: '管理商品素材',
     href: '/products',
     gradient: 'from-violet-500 to-purple-500',
     icon: '📦',
@@ -77,32 +76,38 @@ const quickAccess = [
   {
     id: 'materials',
     title: '素材库',
-    description: '管理视频素材',
+    description: '管理图片与视频素材',
     href: '/materials',
     gradient: 'from-teal-500 to-cyan-500',
-    icon: '🖼️',
+    icon: '🧰',
   },
   {
     id: 'ips',
-    title: '虚拟IP',
+    title: '虚拟 IP',
     description: '管理虚拟人物',
     href: '/ips',
     gradient: 'from-pink-500 to-rose-500',
     icon: '👤',
   },
+  {
+    id: 'videos',
+    title: '视频库',
+    description: '查看所有已生成视频',
+    href: '/videos',
+    gradient: 'from-matcha-500 to-emerald-500',
+    icon: '🎬',
+  },
 ]
 
 export default function HomePage() {
   return (
-    <div className="p-6 space-y-6">
-      {/* Chat Window */}
+    <div className="space-y-6 p-6">
       <div className="h-[35vh] min-h-[280px] max-h-[350px]">
         <ChatWindow />
       </div>
 
-      {/* Quick Access Section */}
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {quickAccess.map((item) => (
             <Link
               key={item.id}
@@ -110,20 +115,19 @@ export default function HomePage() {
               className={`
                 relative overflow-hidden rounded-2xl p-5
                 bg-gradient-to-br ${item.gradient}
-                text-white shadow-lg hover:scale-[1.02] transition-transform
+                text-white shadow-lg transition-transform hover:scale-[1.02]
               `}
             >
-              <div className="text-3xl mb-2">{item.icon}</div>
-              <h3 className="font-semibold text-lg">{item.title}</h3>
-              <p className="text-sm text-white/80 mt-1">{item.description}</p>
+              <div className="mb-2 text-3xl">{item.icon}</div>
+              <h3 className="text-lg font-semibold">{item.title}</h3>
+              <p className="mt-1 text-sm text-white/80">{item.description}</p>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* Video Tools Section */}
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {videoTools.map((tool) => (
             <VideoToolCard
               key={tool.id}
@@ -138,7 +142,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Prompt Elements Bar */}
       <PromptElementsBar />
     </div>
   )

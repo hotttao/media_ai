@@ -37,6 +37,8 @@ export default async function VideosPage() {
         videos={videos}
         emptyTitle="还没有任何视频"
         emptyDescription="先从商品详情页生成或上传视频，这里会自动汇总展示。"
+        emptyActionHref="/products"
+        emptyActionLabel="去商品页生成视频"
       />
     </div>
   )

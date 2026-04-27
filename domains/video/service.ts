@@ -14,7 +14,7 @@ function parseJsonField(value: string | null) {
   try {
     return JSON.parse(value)
   } catch {
-    return null
+    return value
   }
 }
 

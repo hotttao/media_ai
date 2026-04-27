@@ -265,7 +265,11 @@ export function ProductDetail({ product }: { product: any }) {
             }}
           />
         ) : activeTab === 'videos' ? (
-          <VideosTab videos={productVideos} loading={videosLoading} />
+          <VideosTab
+            videos={productVideos}
+            loading={videosLoading}
+            onCreateVideo={() => setShowWizard(true)}
+          />
         ) : (
           <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:gap-10">
             {/* Left: Product Image */}
@@ -836,9 +840,11 @@ function MaterialsTab({
 function VideosTab({
   videos,
   loading,
+  onCreateVideo,
 }: {
   videos: VideoListItem[]
   loading: boolean
+  onCreateVideo: () => void
 }) {
   if (loading) {
     return (
@@ -862,6 +868,8 @@ function VideosTab({
           videos={videos}
           emptyTitle="这个商品还没有视频"
           emptyDescription="先在生成向导里生成或上传视频，完成后会自动出现在这里。"
+          emptyActionLabel="生成视频"
+          onEmptyActionClick={onCreateVideo}
         />
       </div>
     </div>

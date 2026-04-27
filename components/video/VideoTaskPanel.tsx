@@ -49,14 +49,30 @@ function JsonPanel({
   value,
 }: {
   title: string
-  value: Record<string, unknown> | null | undefined
+  value: unknown
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-white/8 bg-black/20">
       <div className="border-b border-white/8 px-4 py-3 text-sm font-medium text-white">{title}</div>
       <pre className="overflow-x-auto px-4 py-4 text-xs leading-6 text-white/65">
-        {value ? JSON.stringify(value, null, 2) : '未记录'}
+        {renderPanelValue(value)}
       </pre>
     </div>
   )
+}
+
+function renderPanelValue(value: unknown) {
+  if (value === null || value === undefined || value === '') {
+    return '未记录'
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  try {
+    return JSON.stringify(value, null, 2)
+  } catch {
+    return String(value)
+  }
 }
