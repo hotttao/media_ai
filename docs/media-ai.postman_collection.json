@@ -76,6 +76,11 @@
       "type": "string"
     },
     {
+      "key": "videoId",
+      "value": "REPLACE_WITH_VIDEO_ID",
+      "type": "string"
+    },
+    {
       "key": "imageId",
       "value": "REPLACE_WITH_IMAGE_ID",
       "type": "string"
@@ -1492,7 +1497,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.videoId) pm.collectionVariables.set('videoId', json.videoId);"
                 ]
               }
             }
@@ -2113,6 +2120,38 @@
           ]
         },
         {
+          "name": "GET products id videos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/videos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "videos"
+              ],
+              "query": []
+            },
+            "description": "operationId: getProductsIdVideos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "POST products extract",
           "request": {
             "method": "POST",
@@ -2551,6 +2590,72 @@
               ]
             },
             "description": "operationId: postUpload"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "videos",
+      "item": [
+        {
+          "name": "GET videos videoId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/videos/{{videoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "videos",
+                "{{videoId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: getVideosVideoId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET videos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/videos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "videos"
+              ],
+              "query": []
+            },
+            "description": "operationId: getVideos"
           },
           "event": [
             {

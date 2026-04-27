@@ -384,7 +384,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-matcha-50 via-background to-oat-light">
+    <div className="min-h-screen overflow-y-auto bg-gradient-to-br from-matcha-50 via-background to-oat-light">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-oat">
         <div className="max-w-6xl mx-auto px-6 py-4">
@@ -417,7 +417,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-8 pb-28">
         <AnimatePresence mode="wait">
           <motion.div key={currentStep} variants={pageVariants} initial="initial" animate="animate" exit="exit">
             {error && (
@@ -728,7 +728,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
       </main>
 
       {/* Footer Navigation */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-lg border-t border-oat">
+      <footer className="sticky bottom-0 z-30 border-t border-oat bg-background/90 backdrop-blur-lg">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between">
           <button
             onClick={goBack}
@@ -1635,13 +1635,14 @@ function VideoStep({
             className="hidden"
             disabled={!selectedMovement || !selectedIpId || loading}
             onChange={async (event) => {
-              const file = event.target.files?.[0]
+              const input = event.currentTarget
+              const file = input.files?.[0]
               if (!file) {
                 return
               }
 
               await onUpload(file)
-              event.currentTarget.value = ''
+              input.value = ''
             }}
           />
         </label>

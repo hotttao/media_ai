@@ -194,6 +194,83 @@ export const videoGenerationResponseSchema = z.object({
   videoUrl: z.string(),
 }).describe('Generated video response.')
 
+export const videoTraceResourceResponseSchema = z.object({
+  id: z.string(),
+  url: nullableStringSchema.optional(),
+  prompt: nullableStringSchema.optional(),
+  createdAt: dateTimeSchema.optional(),
+  name: nullableStringSchema.optional(),
+  content: nullableStringSchema.optional(),
+  clothing: nullableStringSchema.optional(),
+  composition: nullableStringSchema.optional(),
+}).passthrough().describe('Resource referenced in a video generation trace.')
+
+export const videoTaskWorkflowResponseSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  name: z.string(),
+}).describe('Workflow summary attached to a video task.')
+
+export const videoTaskSummaryResponseSchema = z.object({
+  id: z.string(),
+  status: z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']),
+  createdAt: dateTimeSchema.optional(),
+  startedAt: dateTimeSchema.nullable().optional(),
+  completedAt: dateTimeSchema.nullable().optional(),
+  error: nullableStringSchema.optional(),
+  params: z.unknown().optional(),
+  result: z.unknown().optional(),
+  workflow: videoTaskWorkflowResponseSchema.nullable().optional(),
+  ip: z.object({
+    id: z.string(),
+    nickname: z.string(),
+  }).nullable().optional(),
+}).describe('Task summary returned with a video record.')
+
+export const videoTraceResponseSchema = z.object({
+  modelImage: videoTraceResourceResponseSchema.nullable().optional(),
+  styleImage: videoTraceResourceResponseSchema.nullable().optional(),
+  firstFrame: videoTraceResourceResponseSchema.nullable().optional(),
+  scene: videoTraceResourceResponseSchema.nullable().optional(),
+  pose: videoTraceResourceResponseSchema.nullable().optional(),
+  movement: videoTraceResourceResponseSchema.nullable().optional(),
+}).describe('Resolved generation trace resources for a video.')
+
+export const videoSummaryResponseSchema = z.object({
+  id: z.string(),
+  name: nullableStringSchema.optional(),
+  url: z.string(),
+  thumbnail: nullableStringSchema.optional(),
+  prompt: nullableStringSchema.optional(),
+  createdAt: dateTimeSchema,
+  product: z.object({
+    id: z.string(),
+    name: z.string(),
+  }).nullable().optional(),
+  ip: z.object({
+    id: z.string(),
+    nickname: z.string(),
+    avatarUrl: nullableStringSchema.optional(),
+  }).nullable().optional(),
+  task: videoTaskSummaryResponseSchema.nullable().optional(),
+  trace: videoTraceResponseSchema.nullable().optional(),
+}).describe('Video summary item returned by list APIs.')
+
+export const videoDetailResponseSchema = videoSummaryResponseSchema.extend({
+  product: z.object({
+    id: z.string(),
+    name: z.string(),
+    images: z.array(productImageResponseSchema).optional(),
+  }).nullable().optional(),
+  ip: z.object({
+    id: z.string(),
+    nickname: z.string(),
+    avatarUrl: nullableStringSchema.optional(),
+    fullBodyUrl: nullableStringSchema.optional(),
+  }).nullable().optional(),
+  relatedVideos: z.array(videoSummaryResponseSchema),
+}).describe('Complete video detail payload.')
+
 export const generatedMaterialsResponseSchema = z.object({
   modelImages: z.array(modelImageResponseSchema),
   styleImages: z.array(styleImageResponseSchema),

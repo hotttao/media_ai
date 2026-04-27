@@ -173,8 +173,8 @@ model VideoTask {
   workflowId  String     @map("workflow_id")
   ipId        String?    @map("ip_id")
   status      TaskStatus @default(PENDING)
-  params      String?
-  result      String?
+  params      String?    @db.Text
+  result      String?    @db.Text
   error       String?    @db.Text
   startedAt   DateTime?  @map("started_at") @db.DateTime(0)
   completedAt DateTime?  @map("completed_at") @db.DateTime(0)

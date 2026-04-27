@@ -39,6 +39,8 @@ import {
   uploadResponseSchema,
   videoTaskResponseSchema,
   videoGenerationResponseSchema,
+  videoSummaryResponseSchema,
+  videoDetailResponseSchema,
   virtualIpResponseSchema,
   workflowResponseSchema,
   firstFrameResponseSchema,
@@ -118,6 +120,9 @@ const schemas = {
   UploadResponse: registry.register('UploadResponse', uploadResponseSchema),
   GenerationJobResponse: registry.register('GenerationJobResponse', generationJobResponseSchema),
   VideoGenerationResponse: registry.register('VideoGenerationResponse', videoGenerationResponseSchema),
+  VideoSummary: registry.register('VideoSummary', videoSummaryResponseSchema),
+  VideoSummaryList: registry.register('VideoSummaryList', z.array(videoSummaryResponseSchema)),
+  VideoDetail: registry.register('VideoDetail', videoDetailResponseSchema),
 }
 
 const schemaRefBySchema = new Map<ZodTypeAny, string>([
@@ -167,6 +172,9 @@ const schemaRefBySchema = new Map<ZodTypeAny, string>([
   [schemas.UploadResponse, 'UploadResponse'],
   [schemas.GenerationJobResponse, 'GenerationJobResponse'],
   [schemas.VideoGenerationResponse, 'VideoGenerationResponse'],
+  [schemas.VideoSummary, 'VideoSummary'],
+  [schemas.VideoSummaryList, 'VideoSummaryList'],
+  [schemas.VideoDetail, 'VideoDetail'],
 ])
 
 const requestBodySchemas: Record<string, MethodSchemaMap> = {
@@ -210,6 +218,7 @@ const responseSchemas: Record<string, MethodSchemaMap> = {
   '/api/products/{id}/model-image': { POST: schemas.ModelImageSaveResponse },
   '/api/products/{id}/model-image/save': { POST: schemas.ModelImageSaveResponse },
   '/api/products/{id}/model-images': { GET: schemas.ModelImageList },
+  '/api/products/{id}/videos': { GET: schemas.VideoSummaryList },
   '/api/products/{id}/style-image': { POST: schemas.StyleImageSaveResponse },
   '/api/products/{id}/style-image/save': { POST: schemas.StyleImageSaveResponse },
   '/api/products/{id}/style-images': { GET: schemas.StyleImageList },
@@ -220,6 +229,8 @@ const responseSchemas: Record<string, MethodSchemaMap> = {
   '/api/tools': { GET: schemas.GenerationJobResponse },
   '/api/tools/image-blend': { POST: schemas.GenerationJobResponse },
   '/api/upload': { POST: schemas.UploadResponse },
+  '/api/videos': { GET: schemas.VideoSummaryList },
+  '/api/videos/{videoId}': { GET: schemas.VideoDetail },
   '/api/webhooks/runninghub': { POST: schemas.SuccessResponse },
   '/api/workflows': { GET: schemas.WorkflowList },
   '/api/workflows/{code}': { GET: schemas.Workflow },

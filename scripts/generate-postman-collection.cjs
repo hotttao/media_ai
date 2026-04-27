@@ -23,6 +23,7 @@ const collectionVariables = [
   ['generatedMaterialType', 'modelImage'],
   ['movementId', 'REPLACE_WITH_MOVEMENT_ID'],
   ['taskId', 'REPLACE_WITH_TASK_ID'],
+  ['videoId', 'REPLACE_WITH_VIDEO_ID'],
   ['imageId', 'REPLACE_WITH_IMAGE_ID'],
   ['modelImageId', 'REPLACE_WITH_MODEL_IMAGE_ID'],
   ['styleImageId', 'REPLACE_WITH_STYLE_IMAGE_ID'],
@@ -175,6 +176,7 @@ function variableNameForPathParam(pathName, paramName) {
   if (pathName.includes('/api/ips/')) return 'ipId'
   if (pathName.includes('/api/materials/')) return 'materialId'
   if (pathName.includes('/api/movements/')) return 'movementId'
+  if (pathName.includes('/api/videos/')) return 'videoId'
   if (pathName.includes('/api/tasks/')) return 'taskId'
   return 'id'
 }
@@ -246,6 +248,7 @@ function captureTests(pathName, method) {
     'POST /api/products/{id}/model-image/save': [['modelImageId', 'json.modelImageId']],
     'POST /api/products/{id}/style-image/save': [['styleImageId', 'json.styleImageId']],
     'POST /api/products/{id}/first-frame': [['firstFrameId', 'json.firstFrameId']],
+    'POST /api/products/{id}/generate-video': [['videoId', 'json.videoId']],
     'POST /api/teams/invite-codes': [['inviteCode', 'json.code']],
   }
   for (const [name, expression] of map[key] || []) {
