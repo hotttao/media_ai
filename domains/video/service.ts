@@ -6,6 +6,114 @@ import type { WorkflowExecutionResult } from '@/domains/workflow/types'
 
 const MANUAL_UPLOAD_SOURCE = 'manual_upload'
 
+function parseJsonField(value: string | null) {
+  if (!value) {
+    return null
+  }
+
+  try {
+    return JSON.parse(value)
+  } catch {
+    return null
+  }
+}
+
+async function loadVideoTraceResources(videos: Array<{
+  modelImageId?: string | null
+  styleImageId?: string | null
+  firstFrameId?: string | null
+  sceneId?: string | null
+  poseId?: string | null
+  movementId?: string | null
+}>) {
+  const modelImageIds = [...new Set(videos.map(video => video.modelImageId).filter(Boolean))] as string[]
+  const styleImageIds = [...new Set(videos.map(video => video.styleImageId).filter(Boolean))] as string[]
+  const firstFrameIds = [...new Set(videos.map(video => video.firstFrameId).filter(Boolean))] as string[]
+  const sceneIds = [...new Set(videos.map(video => video.sceneId).filter(Boolean))] as string[]
+  const poseIds = [...new Set(videos.map(video => video.poseId).filter(Boolean))] as string[]
+  const movementIds = [...new Set(videos.map(video => video.movementId).filter(Boolean))] as string[]
+
+  const [modelImages, styleImages, firstFrames, scenes, poses, movements] = await Promise.all([
+    modelImageIds.length > 0
+      ? db.modelImage.findMany({
+          where: { id: { in: modelImageIds } },
+          select: { id: true, url: true, prompt: true, createdAt: true },
+        })
+      : [],
+    styleImageIds.length > 0
+      ? db.styleImage.findMany({
+          where: { id: { in: styleImageIds } },
+          select: { id: true, url: true, prompt: true, createdAt: true, modelImageId: true, poseId: true },
+        })
+      : [],
+    firstFrameIds.length > 0
+      ? db.firstFrame.findMany({
+          where: { id: { in: firstFrameIds } },
+          select: {
+            id: true,
+            url: true,
+            prompt: true,
+            createdAt: true,
+            sceneId: true,
+            composition: true,
+            styleImageId: true,
+          },
+        })
+      : [],
+    sceneIds.length > 0
+      ? db.material.findMany({
+          where: { id: { in: sceneIds } },
+          select: { id: true, name: true, url: true, prompt: true },
+        })
+      : [],
+    poseIds.length > 0
+      ? db.material.findMany({
+          where: { id: { in: poseIds } },
+          select: { id: true, name: true, url: true, prompt: true },
+        })
+      : [],
+    movementIds.length > 0
+      ? db.movementMaterial.findMany({
+          where: { id: { in: movementIds } },
+          select: { id: true, content: true, url: true, clothing: true, isGeneral: true },
+        })
+      : [],
+  ])
+
+  return {
+    modelImages: new Map(modelImages.map(item => [item.id, item])),
+    styleImages: new Map(styleImages.map(item => [item.id, item])),
+    firstFrames: new Map(firstFrames.map(item => [item.id, item])),
+    scenes: new Map(scenes.map(item => [item.id, item])),
+    poses: new Map(poses.map(item => [item.id, item])),
+    movements: new Map(movements.map(item => [item.id, item])),
+  }
+}
+
+function buildVideoViewModel(
+  video: any,
+  traceResources: Awaited<ReturnType<typeof loadVideoTraceResources>>
+) {
+  return {
+    ...video,
+    task: video.task
+      ? {
+          ...video.task,
+          params: parseJsonField(video.task.params),
+          result: parseJsonField(video.task.result),
+        }
+      : null,
+    trace: {
+      modelImage: video.modelImageId ? traceResources.modelImages.get(video.modelImageId) ?? null : null,
+      styleImage: video.styleImageId ? traceResources.styleImages.get(video.styleImageId) ?? null : null,
+      firstFrame: video.firstFrameId ? traceResources.firstFrames.get(video.firstFrameId) ?? null : null,
+      scene: video.sceneId ? traceResources.scenes.get(video.sceneId) ?? null : null,
+      pose: video.poseId ? traceResources.poses.get(video.poseId) ?? null : null,
+      movement: video.movementId ? traceResources.movements.get(video.movementId) ?? null : null,
+    },
+  }
+}
+
 async function validateUploadedVideoOwnership(
   tx: {
     product: { findFirst: typeof db.product.findFirst }
@@ -131,31 +239,112 @@ export async function createVideo(taskId: string, userId: string, teamId: string
 }
 
 export async function getVideosByProduct(productId: string, teamId: string) {
-  return db.video.findMany({
+  const videos = await db.video.findMany({
     where: {
       productId,
       teamId,
     },
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      ip: {
+        select: {
+          id: true,
+          nickname: true,
+          avatarUrl: true,
+        },
+      },
+      task: {
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          workflow: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   })
+
+  const traceResources = await loadVideoTraceResources(videos)
+
+  return videos.map(video => buildVideoViewModel(video, traceResources))
 }
 
 export async function getVideosByTeam(teamId: string) {
-  return db.video.findMany({
+  const videos = await db.video.findMany({
     where: { teamId },
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      ip: {
+        select: {
+          id: true,
+          nickname: true,
+          avatarUrl: true,
+        },
+      },
+      task: {
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          workflow: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   })
+
+  const traceResources = await loadVideoTraceResources(videos)
+
+  return videos.map(video => buildVideoViewModel(video, traceResources))
 }
 
 export async function getVideoDetail(videoId: string, teamId: string) {
-  return db.video.findFirst({
+  const video = await db.video.findFirst({
     where: {
       id: videoId,
       teamId,
     },
     include: {
-      product: true,
-      ip: true,
+      product: {
+        include: {
+          images: {
+            orderBy: {
+              order: 'asc',
+            },
+          },
+        },
+      },
+      ip: {
+        select: {
+          id: true,
+          nickname: true,
+          avatarUrl: true,
+          fullBodyUrl: true,
+        },
+      },
       task: {
         include: {
           workflow: true,
@@ -164,6 +353,61 @@ export async function getVideoDetail(videoId: string, teamId: string) {
       },
     },
   })
+
+  if (!video) {
+    return null
+  }
+
+  const relatedVideos = video.productId
+    ? await db.video.findMany({
+        where: {
+          teamId,
+          productId: video.productId,
+          NOT: {
+            id: video.id,
+          },
+        },
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          ip: {
+            select: {
+              id: true,
+              nickname: true,
+              avatarUrl: true,
+            },
+          },
+          task: {
+            select: {
+              id: true,
+              status: true,
+              createdAt: true,
+              workflow: {
+                select: {
+                  id: true,
+                  code: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+      })
+    : []
+
+  const traceResources = await loadVideoTraceResources([video, ...relatedVideos])
+  const detail = buildVideoViewModel(video, traceResources)
+
+  return {
+    ...detail,
+    relatedVideos: relatedVideos.map(item => buildVideoViewModel(item, traceResources)),
+  }
 }
 
 export async function saveUploadedVideo(input: SaveUploadedVideoInput) {

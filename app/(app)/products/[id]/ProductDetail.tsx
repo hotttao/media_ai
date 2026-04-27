@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { GenerateVideoWizard } from './GenerateVideoWizard'
+import { VideoGrid } from '@/components/video/VideoGrid'
+import type { VideoListItem } from '@/components/video/video-types'
 
 // Types for generated materials
 interface ModelImage {
@@ -61,9 +63,11 @@ export function ProductDetail({ product }: { product: any }) {
   const router = useRouter()
   const [isZoomed, setIsZoomed] = useState(false)
   const [showWizard, setShowWizard] = useState(false)
-  const [activeTab, setActiveTab] = useState<'detail' | 'materials'>('detail')
+  const [activeTab, setActiveTab] = useState<'detail' | 'materials' | 'videos'>('detail')
   const [generatedMaterials, setGeneratedMaterials] = useState<GeneratedMaterials | null>(null)
   const [materialsLoading, setMaterialsLoading] = useState(false)
+  const [productVideos, setProductVideos] = useState<VideoListItem[]>([])
+  const [videosLoading, setVideosLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [productDeleting, setProductDeleting] = useState(false)
   const [productScenes, setProductScenes] = useState<SceneMaterial[]>(product.productScenes || [])
@@ -79,11 +83,46 @@ export function ProductDetail({ product }: { product: any }) {
       .finally(() => setMaterialsLoading(false))
   }
 
+  const fetchProductVideos = () => {
+    setVideosLoading(true)
+    fetch(`/api/products/${product.id}/videos`)
+      .then(res => res.json())
+      .then((data) => setProductVideos(Array.isArray(data) ? data : []))
+      .finally(() => setVideosLoading(false))
+  }
+
   useEffect(() => {
     if (activeTab === 'materials' && !generatedMaterials) {
       fetchGeneratedMaterials()
     }
   }, [activeTab, product.id])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const syncTabFromHash = () => {
+      if (window.location.hash === '#videos') {
+        setActiveTab('videos')
+      }
+    }
+
+    syncTabFromHash()
+    window.addEventListener('hashchange', syncTabFromHash)
+    return () => window.removeEventListener('hashchange', syncTabFromHash)
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'videos' && productVideos.length === 0) {
+      fetchProductVideos()
+    }
+
+    if (typeof window !== 'undefined') {
+      const nextHash = activeTab === 'videos' ? '#videos' : ''
+      window.history.replaceState(null, '', `${window.location.pathname}${nextHash}`)
+    }
+  }, [activeTab, product.id, productVideos.length])
 
   useEffect(() => {
     if (!showSceneSelector || availableScenes.length > 0) {
@@ -194,6 +233,21 @@ export function ProductDetail({ product }: { product: any }) {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('videos')}
+            className={`pb-3 px-1 text-sm font-medium transition-all flex items-center gap-2 ${
+              activeTab === 'videos'
+                ? 'text-violet-600 border-b-2 border-violet-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            视频
+            {productVideos.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 text-xs">
+                {productVideos.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {activeTab === 'materials' ? (
@@ -210,6 +264,8 @@ export function ProductDetail({ product }: { product: any }) {
               fetchGeneratedMaterials()
             }}
           />
+        ) : activeTab === 'videos' ? (
+          <VideosTab videos={productVideos} loading={videosLoading} />
         ) : (
           <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:gap-10">
             {/* Left: Product Image */}
@@ -773,6 +829,41 @@ function MaterialsTab({
           </button>
         </div>
       )}
+    </div>
+  )
+}
+
+function VideosTab({
+  videos,
+  loading,
+}: {
+  videos: VideoListItem[]
+  loading: boolean
+}) {
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5 rounded-3xl border border-gray-200 bg-white p-5 shadow-lg shadow-gray-100 sm:p-6">
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900">该商品的全部视频</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          点击任一视频可进入详情页观看成片，并查看模特图、定妆图、首帧图和动作等生成过程。
+        </p>
+      </div>
+
+      <div className="[&_h3]:text-gray-900 [&_p]:text-gray-500">
+        <VideoGrid
+          videos={videos}
+          emptyTitle="这个商品还没有视频"
+          emptyDescription="先在生成向导里生成或上传视频，完成后会自动出现在这里。"
+        />
+      </div>
     </div>
   )
 }

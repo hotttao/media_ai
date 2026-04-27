@@ -5,6 +5,21 @@ const mockDb = vi.hoisted(() => ({
     findMany: vi.fn(),
     findFirst: vi.fn(),
   },
+  modelImage: {
+    findMany: vi.fn(),
+  },
+  styleImage: {
+    findMany: vi.fn(),
+  },
+  firstFrame: {
+    findMany: vi.fn(),
+  },
+  material: {
+    findMany: vi.fn(),
+  },
+  movementMaterial: {
+    findMany: vi.fn(),
+  },
   product: {
     findFirst: vi.fn(),
   },
@@ -40,6 +55,11 @@ import {
 describe('video service', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockDb.modelImage.findMany.mockResolvedValue([])
+    mockDb.styleImage.findMany.mockResolvedValue([])
+    mockDb.firstFrame.findMany.mockResolvedValue([])
+    mockDb.material.findMany.mockResolvedValue([])
+    mockDb.movementMaterial.findMany.mockResolvedValue([])
   })
 
   function createTransactionMocks(overrides?: Partial<{
@@ -82,12 +102,28 @@ describe('video service', () => {
 
     const result = await getVideosByProduct('product-1', 'team-1')
 
-    expect(result).toEqual(videos)
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: 'video-2',
+        productId: 'product-1',
+        teamId: 'team-1',
+        task: null,
+        trace: expect.any(Object),
+      }),
+      expect.objectContaining({
+        id: 'video-1',
+        productId: 'product-1',
+        teamId: 'team-1',
+        task: null,
+        trace: expect.any(Object),
+      }),
+    ])
     expect(mockDb.video.findMany).toHaveBeenCalledWith({
       where: {
         productId: 'product-1',
         teamId: 'team-1',
       },
+      include: expect.any(Object),
       orderBy: { createdAt: 'desc' },
     })
   })
@@ -98,9 +134,17 @@ describe('video service', () => {
 
     const result = await getVideosByTeam('team-1')
 
-    expect(result).toEqual(videos)
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: 'video-1',
+        teamId: 'team-1',
+        task: null,
+        trace: expect.any(Object),
+      }),
+    ])
     expect(mockDb.video.findMany).toHaveBeenCalledWith({
       where: { teamId: 'team-1' },
+      include: expect.any(Object),
       orderBy: { createdAt: 'desc' },
     })
   })

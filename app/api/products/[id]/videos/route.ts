@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { getVideosByProduct } from '@/domains/video/service'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/products/[id]/videos
 export async function GET(
   request: NextRequest,

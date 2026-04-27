@@ -137,6 +137,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null)
   const [videoPrompt, setVideoPrompt] = useState('')
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [videoId, setVideoId] = useState<string | null>(null)
   const [videoLoading, setVideoLoading] = useState(false)
   const [videoProgress, setVideoProgress] = useState(0)
 
@@ -282,6 +283,12 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   }, [currentStep, selectedIp, styledImageId, product.id])
 
   const goNext = async () => {
+    if (currentStep === STEPS.length - 1) {
+      router.push(videoId ? `/videos/${videoId}` : `/products/${product.id}#videos`)
+      router.refresh()
+      return
+    }
+
     // Step 1: 如果有新的模特图（上传或生成），保存到 ModelImage 表
     if (currentStep === 1 && modelImageUrl && modelImageUrl !== savedModelImageUrl) {
       try {
@@ -606,6 +613,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 videoPrompt={videoPrompt}
                 onVideoPromptChange={setVideoPrompt}
                 videoUrl={videoUrl}
+                selectedIpId={selectedIp?.id || null}
                 loading={videoLoading}
                 progress={videoProgress}
                 onGenerate={async () => {
@@ -644,9 +652,70 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
 
                     const data = await res.json()
                     setVideoUrl(data.videoUrl)
+                    setVideoId(data.videoId || null)
                     setVideoProgress(100)
                   } catch {
                     setError('生成视频失败')
+                  } finally {
+                    setVideoLoading(false)
+                  }
+                }}
+                onUpload={async (file) => {
+                  if (!selectedIp?.id || !selectedMovement?.id) {
+                    setError('请先选择动作后再上传视频')
+                    return
+                  }
+
+                  setVideoLoading(true)
+                  setVideoProgress(20)
+                  setError(null)
+
+                  try {
+                    const formData = new FormData()
+                    formData.append('file', file)
+
+                    const uploadRes = await fetch('/api/upload', {
+                      method: 'POST',
+                      body: formData,
+                    })
+
+                    if (!uploadRes.ok) {
+                      setError('上传视频失败')
+                      return
+                    }
+
+                    const uploadData = await uploadRes.json()
+                    setVideoProgress(65)
+
+                    const saveRes = await fetch(`/api/products/${product.id}/generate-video`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        step: 'upload-video',
+                        ipId: selectedIp.id,
+                        movementId: selectedMovement.id,
+                        videoUrl: uploadData.url,
+                        prompt: videoPrompt,
+                        sceneId: selectedScene?.id,
+                        poseId: selectedPose?.id,
+                        firstFrameId,
+                        styleImageId: styledImageId,
+                        modelImageId,
+                      }),
+                    })
+
+                    if (!saveRes.ok) {
+                      const data = await saveRes.json().catch(() => null)
+                      setError(data?.error || '保存上传视频失败')
+                      return
+                    }
+
+                    const saveData = await saveRes.json()
+                    setVideoUrl(saveData.videoUrl)
+                    setVideoId(saveData.videoId || null)
+                    setVideoProgress(100)
+                  } catch {
+                    setError('上传视频失败')
                   } finally {
                     setVideoLoading(false)
                   }
@@ -1465,9 +1534,11 @@ function VideoStep({
   videoPrompt,
   onVideoPromptChange,
   videoUrl,
+  selectedIpId,
   loading,
   progress,
   onGenerate,
+  onUpload,
   canGenerate,
 }: {
   movements: Movement[]
@@ -1476,9 +1547,11 @@ function VideoStep({
   videoPrompt: string
   onVideoPromptChange: (prompt: string) => void
   videoUrl: string | null
+  selectedIpId: string | null
   loading: boolean
   progress: number
   onGenerate: () => void
+  onUpload: (file: File) => Promise<void>
   canGenerate: boolean
 }) {
   return (
@@ -1530,6 +1603,48 @@ function VideoStep({
           placeholder="可选，用于记录这次视频生成使用的补充提示词"
           className="h-24 w-full resize-none rounded-xl border border-oat bg-white px-4 py-3 outline-none focus:border-matcha-600 focus:ring-2 focus:ring-matcha-600/20"
         />
+      </div>
+
+      <div className="rounded-2xl border border-oat bg-white/70 p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-medium text-warm-charcoal">上传成品视频</h3>
+            <p className="mt-1 text-sm text-warm-silver">
+              上传模式也会写入标准视频记录，后续同样能在视频库和详情页查看生成过程。
+            </p>
+          </div>
+          <span className="rounded-full bg-oat-light px-3 py-1 text-xs text-warm-silver">
+            {selectedMovement ? '已选动作，可上传' : '先选动作才能上传'}
+          </span>
+        </div>
+
+        <label
+          className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium transition-colors ${
+            selectedMovement && selectedIpId
+              ? 'cursor-pointer border-oat bg-white text-warm-charcoal hover:bg-oat-light'
+              : 'cursor-not-allowed border-oat bg-gray-100 text-warm-silver'
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          上传视频
+          <input
+            type="file"
+            accept="video/*"
+            className="hidden"
+            disabled={!selectedMovement || !selectedIpId || loading}
+            onChange={async (event) => {
+              const file = event.target.files?.[0]
+              if (!file) {
+                return
+              }
+
+              await onUpload(file)
+              event.currentTarget.value = ''
+            }}
+          />
+        </label>
       </div>
 
       {/* Generate Button */}
