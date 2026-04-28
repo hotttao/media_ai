@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { getAllowedMovementsForPose } from '@/domains/movement-material/availability'
 import { buildGeneratedImagePrompt } from '@/domains/video-generation/image-prompt'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 // Types
 interface VirtualIP {
@@ -888,7 +889,7 @@ function ModelImageStep({
               `}
             >
               <Image
-                src={img.url}
+                src={getImageUrl(img.url)}
                 alt="产品图"
                 fill
                 className="object-contain"
@@ -926,7 +927,7 @@ function ModelImageStep({
                 `}
               >
                 <Image
-                  src={image.url}
+                  src={getImageUrl(image.url)}
                   alt={`已有模特图 ${i + 1}`}
                   fill
                   className="object-contain"
@@ -1125,7 +1126,7 @@ function StyleImageStep({
                 `}
               >
                 <Image
-                  src={image.url}
+                  src={getImageUrl(image.url)}
                   alt={`已有定妆图 ${i + 1}`}
                   fill
                   className="object-contain"
@@ -1150,7 +1151,7 @@ function StyleImageStep({
                 ${selectedPose?.id === pose.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
               `}
             >
-              <Image src={pose.url} alt={pose.name} fill className="object-contain" />
+              <Image src={getImageUrl(pose.url)} alt={pose.name} fill className="object-contain" />
             </button>
           ))}
         </div>
@@ -1169,7 +1170,7 @@ function StyleImageStep({
                 ${selectedMakeup?.id === makeup.id ? 'ring-4 ring-pink-600' : 'hover:ring-2 ring-oat'}
               `}
             >
-              <Image src={makeup.url} alt={makeup.name} fill className="object-contain" />
+              <Image src={getImageUrl(makeup.url)} alt={makeup.name} fill className="object-contain" />
             </button>
           ))}
         </div>
@@ -1188,7 +1189,7 @@ function StyleImageStep({
                 ${selectedAccessory?.id === acc.id ? 'ring-4 ring-violet-600' : 'hover:ring-2 ring-oat'}
               `}
             >
-              <Image src={acc.url} alt={acc.name} fill className="object-contain" />
+              <Image src={getImageUrl(acc.url)} alt={acc.name} fill className="object-contain" />
             </button>
           ))}
         </div>
@@ -1381,7 +1382,7 @@ function FirstFrameStep({
                 `}
               >
                 <Image
-                  src={image.url}
+                  src={getImageUrl(image.url)}
                   alt={`已有首帧图 ${i + 1}`}
                   fill
                   className="object-contain"
@@ -1406,7 +1407,7 @@ function FirstFrameStep({
                 ${selectedScene?.id === scene.id ? 'ring-4 ring-matcha-600' : 'hover:ring-2 ring-oat'}
               `}
             >
-              <Image src={scene.url} alt={scene.name} fill className="object-contain" />
+              <Image src={getImageUrl(scene.url)} alt={scene.name} fill className="object-contain" />
             </button>
           ))}
         </div>

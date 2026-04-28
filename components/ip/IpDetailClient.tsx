@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { IpForm } from '@/components/ip/IpForm'
 import { IpImageUploader } from '@/components/ip/IpImageUploader'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type IpData = any
@@ -403,7 +404,7 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
                 {scenes.map((scene) => (
                   <div key={scene.id} className="relative aspect-[4/3] overflow-hidden rounded-xl bg-black/30">
                     {scene.material?.url ? (
-                      <img src={scene.material.url} alt={scene.material.name} className="h-full w-full object-cover" />
+                      <img src={getImageUrl(scene.material.url)} alt={scene.material.name} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-white/5 text-white/20">?</div>
                     )}
@@ -441,7 +442,7 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
                       onClick={() => image.url && setLightboxImage(image.url)}
                     >
                       {image.url ? (
-                        <img src={image.url} alt="" className="h-full w-full object-contain" />
+                        <img src={getImageUrl(image.url)} alt="" className="h-full w-full object-contain" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-white/[0.03]">
                           <ImagePlaceholder icon="image" />
@@ -709,7 +710,7 @@ function SceneSelectorModal({
                   }`}
                   onClick={() => toggleScene(scene.id)}
                 >
-                  <img src={scene.url} alt={scene.name} className="h-full w-full object-cover" />
+                  <img src={getImageUrl(scene.url)} alt={scene.name} className="h-full w-full object-cover" />
                   {selected.includes(scene.id) && (
                     <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-violet-500">
                       <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

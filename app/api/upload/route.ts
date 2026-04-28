@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
-import { ensureUploadDir, generateFileName, getPublicUrl } from '@/foundation/lib/file-upload'
-import fs from 'fs'
-import path from 'path'
+import { uploadToImageService } from '@/foundation/lib/file-upload'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,21 +19,9 @@ export async function POST(request: NextRequest) {
     }
 
     const teamId = session.user.teamId
-    const uploadDir = ensureUploadDir(teamId)
-    const targetDir = subDir ? path.join(uploadDir, subDir) : uploadDir
+    const url = await uploadToImageService(file, teamId, subDir)
 
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true })
-    }
-
-    const fileName = generateFileName(file.name)
-    const filePath = path.join(targetDir, fileName)
-    const publicUrl = getPublicUrl(teamId, subDir ? `${subDir}/${fileName}` : fileName)
-
-    const buffer = Buffer.from(await file.arrayBuffer())
-    fs.writeFileSync(filePath, buffer)
-
-    return NextResponse.json({ url: publicUrl, fileName })
+    return NextResponse.json({ url })
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })

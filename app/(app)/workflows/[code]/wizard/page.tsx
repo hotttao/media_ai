@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 export default function WizardPage({ params }: { params: { code: string } }) {
   const router = useRouter()
@@ -90,7 +91,7 @@ export default function WizardPage({ params }: { params: { code: string } }) {
                   >
                     <div className="w-16 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light mx-auto">
                       <img
-                        src={ip.avatarUrl || ip.images?.[0]?.fullBodyUrl || '/placeholder.png'}
+                        src={getImageUrl(ip.avatarUrl) || getImageUrl(ip.images?.[0]?.fullBodyUrl) || '/placeholder.png'}
                         alt={ip.nickname}
                         className="w-full h-full object-contain"
                       />

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { GenerateVideoWizard } from './GenerateVideoWizard'
 import { VideoGrid } from '@/components/video/VideoGrid'
+import { getImageUrl } from '@/foundation/lib/utils'
 import type { VideoListItem } from '@/components/video/video-types'
 
 // Types for generated materials
@@ -282,7 +283,7 @@ export function ProductDetail({ product }: { product: any }) {
                 {mainImage ? (
                   <>
                     <Image
-                      src={mainImage.url}
+                      src={getImageUrl(mainImage.url)}
                       alt={product.name}
                       fill
                       className="object-contain transition-transform duration-500 group-hover:scale-105"
@@ -325,7 +326,7 @@ export function ProductDetail({ product }: { product: any }) {
                       className="relative flex-shrink-0 w-16 aspect-[9/16] rounded-xl overflow-hidden bg-gray-100 border-2 border-gray-200 hover:border-violet-400 transition-all duration-300 group"
                     >
                       <Image
-                        src={image.url}
+                        src={getImageUrl(image.url)}
                         alt={`${product.name} ${index + 1}`}
                         fill
                         className="object-contain group-hover:scale-105 transition-transform duration-300"
@@ -412,7 +413,7 @@ export function ProductDetail({ product }: { product: any }) {
                     {productScenes.map((scene) => (
                       <div key={scene.id} className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
                         {scene.material?.url ? (
-                          <img src={scene.material.url} alt={scene.material.name} className="w-full h-full object-cover" />
+                          <img src={getImageUrl(scene.material.url)} alt={scene.material.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300">?</div>
                         )}
@@ -539,7 +540,7 @@ export function ProductDetail({ product }: { product: any }) {
         >
           <div className="relative w-full h-full max-w-5xl max-h-[85vh] bg-white rounded-2xl overflow-hidden shadow-2xl">
             <Image
-              src={mainImage.url}
+              src={getImageUrl(mainImage.url)}
               alt={product.name}
               fill
               className="object-contain"
@@ -636,7 +637,7 @@ function SceneSelectorModal({
                       : 'hover:ring-2 hover:ring-gray-300'
                   }`}
                 >
-                  <img src={scene.url} alt={scene.name} className="w-full h-full object-cover" />
+                  <img src={getImageUrl(scene.url)} alt={scene.name} className="w-full h-full object-cover" />
                   {selected.includes(scene.id) && (
                     <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-violet-500 text-white flex items-center justify-center">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -759,7 +760,7 @@ function MaterialsTab({
           {materials.modelImages.map(m => (
             <div key={m.id} className="relative group aspect-[9/16] w-full max-w-36">
               <img
-                src={m.url}
+                src={getImageUrl(m.url)}
                 alt="模特图"
                 className="h-full w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-100 object-contain"
                 onClick={() => setPreviewUrl(m.url)}
@@ -958,7 +959,7 @@ function SecondaryImagesSection({
             <div key={image.id} className="relative group">
               <div className="relative aspect-[9/16] rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
                 <Image
-                  src={image.url}
+                  src={getImageUrl(image.url)}
                   alt="副图"
                   fill
                   className="object-contain"

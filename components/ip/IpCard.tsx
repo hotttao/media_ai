@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 interface IpCardProps {
   ip: {
@@ -16,7 +17,7 @@ interface IpCardProps {
 
 export function IpCard({ ip }: IpCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const imageUrl = ip.avatarUrl || ip.images?.[0]?.fullBodyUrl || 'https://via.placeholder.com/150'
+  const imageUrl = getImageUrl(ip.avatarUrl) || getImageUrl(ip.images?.[0]?.fullBodyUrl) || 'https://via.placeholder.com/150'
 
   return (
     <Link href={`/ips/${ip.id}`}>

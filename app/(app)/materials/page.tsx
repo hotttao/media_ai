@@ -6,6 +6,7 @@ import { MaterialUploader } from '@/components/material/MaterialUploader'
 import { MovementCard } from '@/components/movement/MovementCard'
 import { MovementForm } from '@/components/movement/MovementForm'
 import { getVisibleCollections, type MaterialFilter } from './view-state'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 interface Material {
   id: string
@@ -586,7 +587,7 @@ export default function MaterialsPage() {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="relative aspect-[4/5] overflow-hidden bg-black">
-              <img src={selectedMaterial.url} alt={selectedMaterial.name} className="h-full w-full object-cover" />
+              <img src={getImageUrl(selectedMaterial.url)} alt={selectedMaterial.name} className="h-full w-full object-cover" />
               <button
                 onClick={() => setSelectedMaterial(null)}
                 className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white/70 transition-colors hover:bg-black/70"
@@ -658,7 +659,7 @@ export default function MaterialsPage() {
           >
             <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-sky-900/50 to-cyan-900/30">
               {selectedMovement.url ? (
-                <video src={selectedMovement.url} controls className="h-full w-full object-cover" />
+                <video src={getImageUrl(selectedMovement.url)} controls className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center p-6 text-center text-white/80">
                   <p className="text-base leading-7">{selectedMovement.content || '未填写动作描述'}</p>

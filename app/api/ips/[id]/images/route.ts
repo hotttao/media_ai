@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
-import { ensureUploadDir, generateFileName, getPublicUrl } from '@/foundation/lib/file-upload'
+import { uploadToImageService } from '@/foundation/lib/file-upload'
 import { db } from '@/foundation/lib/db'
-import fs from 'fs'
-import path from 'path'
 
 type RouteParams = { params: { id: string } }
 
@@ -27,26 +25,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const teamId = session.user.teamId
     const ipId = params.id
-    const subDir = path.join('ips', ipId)
-    const uploadDir = ensureUploadDir(teamId)
-    const targetDir = path.join(uploadDir, subDir)
-
-    console.log('[IP Images Upload] targetDir:', targetDir)
-
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true })
-      console.log('[IP Images Upload] Created directory:', targetDir)
-    }
 
     async function processFile(file: File | null): Promise<string | null> {
       if (!file) return null
-      const fileName = generateFileName(file.name)
-      const filePath = path.join(targetDir, fileName)
-      console.log('[IP Images Upload] Writing file to:', filePath)
-      const buffer = Buffer.from(await file.arrayBuffer())
-      fs.writeFileSync(filePath, buffer)
-      console.log('[IP Images Upload] File written, size:', buffer.length)
-      return getPublicUrl(teamId, path.join(subDir, fileName))
+      return uploadToImageService(file, teamId, `ips/${ipId}`)
     }
 
     const [avatarUrl, fullBodyUrl, threeViewUrl, nineViewUrl] = await Promise.all([

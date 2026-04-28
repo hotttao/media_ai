@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 interface ProductCardProps {
   product: {
@@ -71,7 +72,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="relative aspect-[9/16] overflow-hidden bg-black/20">
           {mainImage ? (
             <Image
-              src={mainImage.url}
+              src={getImageUrl(mainImage.url)}
               alt={product.name}
               fill
               className={`

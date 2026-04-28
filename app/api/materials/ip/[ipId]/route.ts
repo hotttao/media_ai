@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { getIpMaterials, createIpMaterial } from '@/domains/materials/service'
-import { ensureUploadDir, generateFileName, getPublicUrl } from '@/foundation/lib/file-upload'
-import fs from 'fs'
-import path from 'path'
+import { uploadToImageService } from '@/foundation/lib/file-upload'
 
 type RouteParams = { params: { ipId: string } }
 
@@ -50,21 +48,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const ipId = params.ipId
     const teamId = session.user.teamId
-    const subDir = path.join('ip_materials', ipId)
-    const uploadDir = ensureUploadDir(teamId)
-    const targetDir = path.join(uploadDir, subDir)
-
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true })
-    }
 
     async function processFile(file: File | null): Promise<string | null> {
       if (!file) return null
-      const fileName = generateFileName(file.name)
-      const filePath = path.join(targetDir, fileName)
-      const buffer = Buffer.from(await file.arrayBuffer())
-      fs.writeFileSync(filePath, buffer)
-      return getPublicUrl(teamId, path.join(subDir, fileName))
+      return uploadToImageService(file, teamId, `ip_materials/${ipId}`)
     }
 
     const [fullBodyUrl, threeViewUrl, nineViewUrl] = await Promise.all([

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { IpMaterialCard } from '@/components/material/IpMaterialCard'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 interface IpMaterial {
   id: string
@@ -247,7 +248,7 @@ function LightboxSlideshow({
         {/* Image */}
         <div className="relative flex items-center justify-center h-full">
           <img
-            src={images[currentIndex].url}
+            src={getImageUrl(images[currentIndex].url)}
             alt={images[currentIndex].name}
             className="max-w-full max-h-[70vh] object-contain rounded-lg"
           />
@@ -470,7 +471,7 @@ export default function IpMaterialsPage({ params }: { params: { ipId: string } }
                 >
                   {scene.material?.url ? (
                     <img
-                      src={scene.material.url}
+                      src={getImageUrl(scene.material.url)}
                       alt={scene.material.name}
                       className="w-full h-full object-cover"
                     />
@@ -528,7 +529,7 @@ export default function IpMaterialsPage({ params }: { params: { ipId: string } }
                   {material.fullBodyUrl ? (
                     <>
                       <img
-                        src={material.fullBodyUrl}
+                        src={getImageUrl(material.fullBodyUrl)}
                         alt={material.name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
@@ -627,7 +628,7 @@ function SceneSelectorModal({
                   onClick={() => toggleScene(scene.id)}
                 >
                   <img
-                    src={scene.url}
+                    src={getImageUrl(scene.url)}
                     alt={scene.name}
                     className="w-full h-full object-cover"
                   />
