@@ -9,7 +9,7 @@ import type {
 import { getCombinationLabels } from './types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/foundation/lib/utils'
+import { cn, getImageUrl } from '@/foundation/lib/utils'
 
 /** 单个可选项目的标签 */
 function SelectableTag({
@@ -38,7 +38,7 @@ function SelectableTag({
       )}
     >
       {item.url && (
-        <img src={item.url} alt={item.name} className="h-5 w-5 rounded object-cover" />
+        <img src={getImageUrl(item.url)} alt={item.name} className="h-5 w-5 rounded object-cover" />
       )}
       <span className="font-medium">{item.name}</span>
     </button>
@@ -124,10 +124,10 @@ function CombinationCard({
         combination.status === 'failed' && 'border-pomegranate-400/30 bg-pomegranate-50'
       )}
     >
-      <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-3 min-w-0">
         {combination.itemA.url && (
           <img
-            src={combination.itemA.url}
+            src={getImageUrl(combination.itemA.url)}
             alt={combination.itemA.name}
             className="h-8 w-8 rounded object-cover shrink-0"
           />
@@ -138,7 +138,7 @@ function CombinationCard({
         <span className="text-warm-silver">×</span>
         {combination.itemB.url && (
           <img
-            src={combination.itemB.url}
+            src={getImageUrl(combination.itemB.url)}
             alt={combination.itemB.name}
             className="h-8 w-8 rounded object-cover shrink-0"
           />

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { PendingCombinationItem } from './pending-combination-types'
 import { getPendingCombinationTitle } from './pending-combination-types'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 export function PendingCombinationCard({ item }: { item: PendingCombinationItem }) {
   const [showNotice, setShowNotice] = useState(false)
@@ -10,7 +11,7 @@ export function PendingCombinationCard({ item }: { item: PendingCombinationItem 
   return (
     <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
       <div className="flex gap-2 p-2">
-        <img src={item.firstFrame.url} alt={item.movement.content} className="h-14 w-12 rounded-lg object-cover shrink-0" />
+        <img src={getImageUrl(item.firstFrame.url)} alt={item.movement.content} className="h-14 w-12 rounded-lg object-cover shrink-0" />
         <div className="min-w-0 flex-1">
           <h3 className="line-clamp-1 text-xs font-semibold text-white">{getPendingCombinationTitle(item)}</h3>
           <p className="mt-0.5 text-xs text-white/60">IP: {item.ip?.nickname || '未记录'}</p>
