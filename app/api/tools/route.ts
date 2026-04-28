@@ -45,7 +45,7 @@ const tools = [
     description: '结合模特图和姿势、妆容、饰品生成定妆图',
     icon: '💄',
     gradient: 'from-emerald-400 to-teal-500',
-    href: '/products',
+    href: '/tools/style-image',
     inputs: StyleImageTool.inputs,
     outputs: StyleImageTool.outputs,
   },
