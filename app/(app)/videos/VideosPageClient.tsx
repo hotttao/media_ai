@@ -6,6 +6,8 @@ import type { PendingCombinationItem } from '@/components/video/pending-combinat
 import { VideoGrid } from '@/components/video/VideoGrid'
 import { PendingCombinationGrid } from '@/components/video/PendingCombinationGrid'
 
+type PendingViewMode = 'flat' | 'movement' | 'product'
+
 export function VideosPageClient({
   videos,
   pendingCombinations,
@@ -14,6 +16,7 @@ export function VideosPageClient({
   pendingCombinations: PendingCombinationItem[]
 }) {
   const [activeTab, setActiveTab] = useState<'generated' | 'pending'>('generated')
+  const [pendingView, setPendingView] = useState<PendingViewMode>('flat')
 
   return (
     <div className="space-y-6">
@@ -51,7 +54,47 @@ export function VideosPageClient({
           emptyActionLabel="去商品页生成视频"
         />
       ) : (
-        <PendingCombinationGrid items={pendingCombinations} />
+        <div>
+          <div className="mb-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingView('flat')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                pendingView === 'flat'
+                  ? 'bg-matcha-600 text-white'
+                  : 'bg-white/10 text-white/60 hover:text-white'
+              }`}
+            >
+              平铺
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingView('movement')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                pendingView === 'movement'
+                  ? 'bg-matcha-600 text-white'
+                  : 'bg-white/10 text-white/60 hover:text-white'
+              }`}
+            >
+              按动作
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingView('product')}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                pendingView === 'product'
+                  ? 'bg-matcha-600 text-white'
+                  : 'bg-white/10 text-white/60 hover:text-white'
+              }`}
+            >
+              按产品
+            </button>
+          </div>
+          <PendingCombinationGrid
+            items={pendingCombinations}
+            groupBy={pendingView === 'flat' ? null : pendingView}
+          />
+        </div>
       )}
     </div>
   )

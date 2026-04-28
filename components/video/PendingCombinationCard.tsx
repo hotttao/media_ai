@@ -13,9 +13,9 @@ export function PendingCombinationCard({ item }: { item: PendingCombinationItem 
         <img src={item.firstFrame.url} alt={item.movement.content} className="h-28 w-20 rounded-xl object-cover" />
         <div className="min-w-0 flex-1 space-y-2">
           <h3 className="line-clamp-1 text-base font-semibold text-white">{getPendingCombinationTitle(item)}</h3>
+          <p className="text-sm text-white/60">动作: {item.movement.content}</p>
           <p className="text-sm text-white/60">IP: {item.ip?.nickname || '未记录'}</p>
           <p className="text-sm text-white/60">姿势: {item.pose?.name || item.firstFrame.poseId}</p>
-          <p className="text-sm text-white/60">定妆图: {item.styleImage.id}</p>
         </div>
       </div>
       <div className="mt-4 flex items-center justify-between">
