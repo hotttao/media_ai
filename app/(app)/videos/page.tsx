@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
-import { getVideosByTeam } from '@/domains/video/service'
-import { VideoGrid } from '@/components/video/VideoGrid'
+import { getVideosByTeam, getPendingVideoCombinations } from '@/domains/video/service'
+import { VideosPageClient } from './VideosPageClient'
+import { getVideoTabSummary } from './videos-page-state'
 
 export default async function VideosPage() {
   const session = await getServerSession(authOptions)
@@ -14,7 +15,12 @@ export default async function VideosPage() {
     redirect('/')
   }
 
-  const videos = await getVideosByTeam(session.user.teamId)
+  const [videos, pendingCombinations] = await Promise.all([
+    getVideosByTeam(session.user.teamId),
+    getPendingVideoCombinations(session.user.teamId),
+  ])
+
+  const tabSummary = getVideoTabSummary({ videos: videos.length, pending: pendingCombinations.length })
 
   return (
     <div className="space-y-8 p-6">
@@ -25,21 +31,15 @@ export default async function VideosPage() {
           </div>
           <h1 className="text-4xl font-semibold tracking-tight text-white">视频库</h1>
           <p className="mt-3 text-sm leading-6 text-white/65">
-            从全局快速浏览所有已生成视频。这里优先按最新时间排序，适合先找视频，再回到具体商品。
+            从全局快速浏览所有已生成视频和待生成组合。优先按最新时间排序。
           </p>
           <div className="mt-6 inline-flex rounded-2xl bg-black/20 px-4 py-3 text-sm text-white/80">
-            当前共 {videos.length} 条视频
+            已生成 {tabSummary.generatedCount} 条视频 · 待生成 {tabSummary.pendingCount} 个组合
           </div>
         </div>
       </section>
 
-      <VideoGrid
-        videos={videos}
-        emptyTitle="还没有任何视频"
-        emptyDescription="先从商品详情页生成或上传视频，这里会自动汇总展示。"
-        emptyActionHref="/products"
-        emptyActionLabel="去商品页生成视频"
-      />
+      <VideosPageClient videos={videos} pendingCombinations={pendingCombinations} />
     </div>
   )
 }
