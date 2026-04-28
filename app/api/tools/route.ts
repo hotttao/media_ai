@@ -35,7 +35,7 @@ const tools = [
     description: '结合虚拟IP全身图和产品图生成模特图',
     icon: '👗',
     gradient: 'from-violet-400 to-purple-500',
-    href: '/products',
+    href: '/tools/model-image',
     inputs: ModelImageTool.inputs,
     outputs: ModelImageTool.outputs,
   },
