@@ -54,11 +54,14 @@ export default function StyleImagePage() {
     try {
       for (const combo of combinations) {
         const [poseId, modelImageId] = combo.key.split('-')
-        await fetch('/api/tools/combination/generate', {
+        const res = await fetch('/api/tools/combination/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: 'style-image', modelImageId, poseId }),
         })
+        if (!res.ok) {
+          console.error(`Failed to generate: ${poseId}-${modelImageId}`)
+        }
       }
       alert('生成完成')
       window.location.reload()

@@ -37,8 +37,17 @@ export async function GET() {
       select: { id: true, name: true, url: true },
     })
 
-    // 构建可用组合
-    const combinations: any[] = []
+    interface FirstFrameCombination {
+  id: string
+  scene: { id: string; name: string; url: string | null }
+  styleImage: { id: string; url: string }
+  productId: string
+  ipId: string
+  existingFirstFrameId: string | null
+}
+
+// 构建可用组合
+const combinations: FirstFrameCombination[] = []
     for (const styleImage of styleImages) {
       const existingFirstFrameMap = new Map(
         styleImage.firstFrames.map(f => [f.sceneId, f.id])

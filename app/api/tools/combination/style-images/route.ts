@@ -42,8 +42,15 @@ export async function GET() {
       select: { id: true, name: true, url: true },
     })
 
-    // 构建可用组合
-    const combinations: any[] = []
+    interface StyleImageCombination {
+  id: string
+  pose: { id: string; name: string; url: string | null }
+  modelImage: { id: string; url: string; productName?: string | null }
+  existingStyleImageId: string | null
+}
+
+// 构建可用组合
+const combinations: StyleImageCombination[] = []
     for (const modelImage of modelImages) {
       const existingStyleImageMap = new Map(
         modelImage.styleImages.map(s => [s.poseId, s.id])
