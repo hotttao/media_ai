@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import type {
   SelectableItem,
   GeneratedCombination,
@@ -342,7 +342,7 @@ export function CombinationSelector({
   }, [onGenerate, pendingCombinations])
 
   // 通知父组件选择变化
-  useMemo(() => {
+  useEffect(() => {
     if (onSelectionChange) {
       onSelectionChange(Array.from(selectedA), Array.from(selectedB))
     }
