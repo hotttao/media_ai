@@ -11,7 +11,7 @@ interface PendingCombinationGridProps {
 export function PendingCombinationGrid({ items, groupBy = null }: PendingCombinationGridProps) {
   if (items.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 px-6 py-16 text-center text-sm text-white/45">
+      <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-6 py-12 text-center text-sm text-white/45">
         当前没有待生成组合
       </div>
     )
@@ -20,7 +20,7 @@ export function PendingCombinationGrid({ items, groupBy = null }: PendingCombina
   if (groupBy === 'movement') {
     const groups = groupByMovement(items)
     return (
-      <div>
+      <div className="space-y-2">
         {groups.map((group) => (
           <PendingCombinationGroup key={group.title} group={group} />
         ))}
@@ -31,7 +31,7 @@ export function PendingCombinationGrid({ items, groupBy = null }: PendingCombina
   if (groupBy === 'product') {
     const groups = groupByProduct(items)
     return (
-      <div>
+      <div className="space-y-2">
         {groups.map((group) => (
           <PendingCombinationGroup key={group.title} group={group} />
         ))}
@@ -40,7 +40,7 @@ export function PendingCombinationGrid({ items, groupBy = null }: PendingCombina
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
       {items.map((item) => (
         <PendingCombinationCard key={item.combinationKey} item={item} />
       ))}

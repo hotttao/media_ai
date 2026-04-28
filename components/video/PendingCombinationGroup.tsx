@@ -12,16 +12,16 @@ export function PendingCombinationGroup({ group }: PendingCombinationGroupProps)
   const [isExpanded, setIsExpanded] = useState(true)
 
   return (
-    <div className="mb-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-white/5"
+        className="flex w-full items-center justify-between px-3 py-2 text-left transition-colors hover:bg-white/5"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-white">{group.title}</span>
           <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/60">
-            {group.count} 个组合
+            {group.count}
           </span>
         </div>
         <svg
@@ -34,7 +34,7 @@ export function PendingCombinationGroup({ group }: PendingCombinationGroupProps)
         </svg>
       </button>
       {isExpanded && (
-        <div className="grid grid-cols-1 gap-3 p-4 pt-0 xl:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 px-3 pb-3 lg:grid-cols-3 xl:grid-cols-4">
           {group.items.map((item) => (
             <PendingCombinationCard key={item.combinationKey} item={item} />
           ))}
