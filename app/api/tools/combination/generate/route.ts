@@ -55,6 +55,22 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing modelImageId or poseId' }, { status: 400 })
         }
 
+        // 获取 modelImage 并验证属于当前用户
+        const modelImage = await db.modelImage.findUnique({
+          where: { id: modelImageId }
+        })
+        if (!modelImage) {
+          return NextResponse.json({ error: 'ModelImage not found' }, { status: 404 })
+        }
+
+        // 通过 product 验证所有权
+        const product = await db.product.findUnique({
+          where: { id: modelImage.productId }
+        })
+        if (!product || product.userId !== session.user.id) {
+          return NextResponse.json({ error: 'ModelImage not found' }, { status: 404 })
+        }
+
         // 获取 pose 的 URL（pose 是 material 表的记录）
         const poseMaterial = await db.material.findUnique({ where: { id: poseId } })
         if (!poseMaterial) {
