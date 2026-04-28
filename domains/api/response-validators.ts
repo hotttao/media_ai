@@ -336,3 +336,39 @@ export const generationJobResponseSchema = z.object({
   videoUrl: z.string().optional(),
   result: z.unknown().optional(),
 }).passthrough().describe('External generation job response.')
+
+export const pendingVideoCombinationResponseSchema = z.object({
+  combinationKey: z.string(),
+  firstFrame: z.object({
+    id: z.string(),
+    url: z.string(),
+    productId: z.string(),
+    ipId: z.string(),
+    styleImageId: z.string(),
+    poseId: z.string(),
+    sceneId: z.string().nullable().optional(),
+    createdAt: dateTimeSchema,
+  }),
+  styleImage: z.object({
+    id: z.string(),
+    url: z.string(),
+  }),
+  movement: movementMaterialResponseSchema.pick({
+    id: true,
+    content: true,
+    url: true,
+    clothing: true,
+    isGeneral: true,
+  }),
+  product: z.object({ id: z.string(), name: z.string() }).nullable(),
+  ip: z.object({ id: z.string(), nickname: z.string() }).nullable(),
+  pose: materialResponseSchema.pick({ id: true, name: true, url: true }).nullable(),
+  scene: materialResponseSchema.pick({ id: true, name: true, url: true }).nullable(),
+})
+
+export const poseMovementMapResponseSchema = z.object({
+  pose: materialResponseSchema.pick({ id: true, name: true, url: true }),
+  generalMovements: z.array(movementMaterialResponseSchema.pick({ id: true, content: true, url: true, clothing: true, isGeneral: true })),
+  specialMovements: z.array(movementMaterialResponseSchema.pick({ id: true, content: true, url: true, clothing: true, isGeneral: true })),
+  allMovements: z.array(movementMaterialResponseSchema.pick({ id: true, content: true, url: true, clothing: true, isGeneral: true })),
+})

@@ -44,6 +44,8 @@ import {
   virtualIpResponseSchema,
   workflowResponseSchema,
   firstFrameResponseSchema,
+  pendingVideoCombinationResponseSchema,
+  poseMovementMapResponseSchema,
 } from '../domains/api/response-validators'
 
 extendZodWithOpenApi(z)
@@ -123,6 +125,8 @@ const schemas = {
   VideoSummary: registry.register('VideoSummary', videoSummaryResponseSchema),
   VideoSummaryList: registry.register('VideoSummaryList', z.array(videoSummaryResponseSchema)),
   VideoDetail: registry.register('VideoDetail', videoDetailResponseSchema),
+  PendingVideoCombinationList: registry.register('PendingVideoCombinationList', z.array(pendingVideoCombinationResponseSchema)),
+  PoseMovementMapList: registry.register('PoseMovementMapList', z.array(poseMovementMapResponseSchema)),
 }
 
 const schemaRefBySchema = new Map<ZodTypeAny, string>([
@@ -175,6 +179,8 @@ const schemaRefBySchema = new Map<ZodTypeAny, string>([
   [schemas.VideoSummary, 'VideoSummary'],
   [schemas.VideoSummaryList, 'VideoSummaryList'],
   [schemas.VideoDetail, 'VideoDetail'],
+  [schemas.PendingVideoCombinationList, 'PendingVideoCombinationList'],
+  [schemas.PoseMovementMapList, 'PoseMovementMapList'],
 ])
 
 const requestBodySchemas: Record<string, MethodSchemaMap> = {
@@ -231,6 +237,8 @@ const responseSchemas: Record<string, MethodSchemaMap> = {
   '/api/upload': { POST: schemas.UploadResponse },
   '/api/videos': { GET: schemas.VideoSummaryList },
   '/api/videos/{videoId}': { GET: schemas.VideoDetail },
+  '/api/videos/pending-combinations': { GET: schemas.PendingVideoCombinationList },
+  '/api/videos/pose-movement-map': { GET: schemas.PoseMovementMapList },
   '/api/webhooks/runninghub': { POST: schemas.SuccessResponse },
   '/api/workflows': { GET: schemas.WorkflowList },
   '/api/workflows/{code}': { GET: schemas.Workflow },

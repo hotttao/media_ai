@@ -2640,6 +2640,68 @@
           ]
         },
         {
+          "name": "GET videos pending combinations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/videos/pending-combinations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "videos",
+                "pending-combinations"
+              ],
+              "query": []
+            },
+            "description": "operationId: getVideosPendingCombinations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET videos pose movement map",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/videos/pose-movement-map",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "videos",
+                "pose-movement-map"
+              ],
+              "query": []
+            },
+            "description": "operationId: getVideosPoseMovementMap"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "GET videos",
           "request": {
             "method": "GET",

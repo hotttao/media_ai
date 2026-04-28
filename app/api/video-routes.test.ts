@@ -67,6 +67,28 @@ describe('video api routes', () => {
     return import('@/app/api/products/[id]/generate-video/route')
   }
 
+  async function loadPendingCombinationsRoute(serviceMocks?: {
+    getPendingVideoCombinations?: ReturnType<typeof vi.fn>
+  }) {
+    vi.resetModules()
+    vi.doMock('@/domains/video/service', () => ({
+      getPendingVideoCombinations: serviceMocks?.getPendingVideoCombinations ?? vi.fn(),
+    }))
+
+    return import('@/app/api/videos/pending-combinations/route')
+  }
+
+  async function loadPoseMovementMapRoute(serviceMocks?: {
+    getPoseMovementMap?: ReturnType<typeof vi.fn>
+  }) {
+    vi.resetModules()
+    vi.doMock('@/domains/video/service', () => ({
+      getPoseMovementMap: serviceMocks?.getPoseMovementMap ?? vi.fn(),
+    }))
+
+    return import('@/app/api/videos/pose-movement-map/route')
+  }
+
   it('returns 401 for product video list requests without a session', async () => {
     const getVideosByProduct = vi.fn()
     const { GET } = await loadProductVideosRoute({ getVideosByProduct })
@@ -298,5 +320,81 @@ describe('video api routes', () => {
       modelImageId: 'model-1',
     })
     expect(mockGenerateVideo).not.toHaveBeenCalled()
+  })
+
+  it('GET /api/videos/pending-combinations returns 401 without session', async () => {
+    const { GET } = await loadPendingCombinationsRoute()
+    mockGetServerSession.mockResolvedValue(null)
+
+    const response = await GET(new Request('http://localhost:3000/api/videos/pending-combinations'))
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' })
+  })
+
+  it('GET /api/videos/pending-combinations returns 400 without team', async () => {
+    const getPendingVideoCombinations = vi.fn()
+    const { GET } = await loadPendingCombinationsRoute({ getPendingVideoCombinations })
+    mockGetServerSession.mockResolvedValue({ user: { id: 'user-1' } })
+
+    const response = await GET(new Request('http://localhost:3000/api/videos/pending-combinations'))
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'No team found' })
+    expect(getPendingVideoCombinations).not.toHaveBeenCalled()
+  })
+
+  it('GET /api/videos/pending-combinations returns combinations for authenticated team', async () => {
+    const getPendingVideoCombinations = vi.fn().mockResolvedValue([
+      { combinationKey: 'frame-1:move-1', firstFrame: { id: 'frame-1' }, movement: { id: 'move-1' } },
+    ])
+    const { GET } = await loadPendingCombinationsRoute({ getPendingVideoCombinations })
+    mockGetServerSession.mockResolvedValue({ user: { id: 'user-1', teamId: 'team-1' } })
+
+    const response = await GET(new Request('http://localhost:3000/api/videos/pending-combinations'))
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual([
+      { combinationKey: 'frame-1:move-1', firstFrame: { id: 'frame-1' }, movement: { id: 'move-1' } },
+    ])
+    expect(getPendingVideoCombinations).toHaveBeenCalledWith('team-1')
+  })
+
+  it('GET /api/videos/pose-movement-map returns 401 without session', async () => {
+    const { GET } = await loadPoseMovementMapRoute()
+    mockGetServerSession.mockResolvedValue(null)
+
+    const response = await GET(new Request('http://localhost:3000/api/videos/pose-movement-map'))
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' })
+  })
+
+  it('GET /api/videos/pose-movement-map returns 400 without team', async () => {
+    const getPoseMovementMap = vi.fn()
+    const { GET } = await loadPoseMovementMapRoute({ getPoseMovementMap })
+    mockGetServerSession.mockResolvedValue({ user: { id: 'user-1' } })
+
+    const response = await GET(new Request('http://localhost:3000/api/videos/pose-movement-map'))
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'No team found' })
+    expect(getPoseMovementMap).not.toHaveBeenCalled()
+  })
+
+  it('GET /api/videos/pose-movement-map returns mapped data for authenticated team', async () => {
+    const getPoseMovementMap = vi.fn().mockResolvedValue([
+      { pose: { id: 'pose-1' }, generalMovements: [], specialMovements: [], allMovements: [] },
+    ])
+    const { GET } = await loadPoseMovementMapRoute({ getPoseMovementMap })
+    mockGetServerSession.mockResolvedValue({ user: { id: 'user-1', teamId: 'team-1' } })
+
+    const response = await GET(new Request('http://localhost:3000/api/videos/pose-movement-map'))
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual([
+      { pose: { id: 'pose-1' }, generalMovements: [], specialMovements: [], allMovements: [] },
+    ])
+    expect(getPoseMovementMap).toHaveBeenCalledWith('team-1')
   })
 })

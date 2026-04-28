@@ -4015,6 +4015,88 @@
         }
       }
     },
+    "/api/videos/pending-combinations": {
+      "get": {
+        "tags": [
+          "videos"
+        ],
+        "summary": "GET videos pending combinations",
+        "operationId": "getVideosPendingCombinations",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingVideoCombinationList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/videos/pose-movement-map": {
+      "get": {
+        "tags": [
+          "videos"
+        ],
+        "summary": "GET videos pose movement map",
+        "operationId": "getVideosPoseMovementMap",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoseMovementMapList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/videos": {
       "get": {
         "tags": [
@@ -9366,6 +9448,346 @@
           "relatedVideos"
         ],
         "description": "Complete video detail payload."
+      },
+      "PendingVideoCombinationList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "combinationKey": {
+              "type": "string"
+            },
+            "firstFrame": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "ipId": {
+                  "type": "string"
+                },
+                "styleImageId": {
+                  "type": "string"
+                },
+                "poseId": {
+                  "type": "string"
+                },
+                "sceneId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 date-time string."
+                }
+              },
+              "required": [
+                "id",
+                "url",
+                "productId",
+                "ipId",
+                "styleImageId",
+                "poseId",
+                "createdAt"
+              ]
+            },
+            "styleImage": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "url"
+              ]
+            },
+            "movement": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "clothing": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "isGeneral": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "content",
+                "url",
+                "clothing",
+                "isGeneral"
+              ],
+              "description": "Movement material."
+            },
+            "product": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            },
+            "ip": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "nickname": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "nickname"
+              ]
+            },
+            "pose": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "url"
+              ],
+              "description": "Material asset."
+            },
+            "scene": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "url"
+              ],
+              "description": "Material asset."
+            }
+          },
+          "required": [
+            "combinationKey",
+            "firstFrame",
+            "styleImage",
+            "movement",
+            "product",
+            "ip",
+            "pose",
+            "scene"
+          ]
+        }
+      },
+      "PoseMovementMapList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "pose": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "url"
+              ],
+              "description": "Material asset."
+            },
+            "generalMovements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "clothing": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "isGeneral": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "content",
+                  "url",
+                  "clothing",
+                  "isGeneral"
+                ],
+                "description": "Movement material."
+              }
+            },
+            "specialMovements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "clothing": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "isGeneral": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "content",
+                  "url",
+                  "clothing",
+                  "isGeneral"
+                ],
+                "description": "Movement material."
+              }
+            },
+            "allMovements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "clothing": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "isGeneral": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "content",
+                  "url",
+                  "clothing",
+                  "isGeneral"
+                ],
+                "description": "Movement material."
+              }
+            }
+          },
+          "required": [
+            "pose",
+            "generalMovements",
+            "specialMovements",
+            "allMovements"
+          ]
+        }
       }
     },
     "parameters": {}
