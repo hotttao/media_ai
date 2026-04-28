@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
-import { generateModelImage } from '@/domains/video-generation/service'
+import { generateModelImage, generateStyleImage } from '@/domains/video-generation/service'
 import { db } from '@/foundation/lib/db'
 
 // POST /api/tools/combination/generate
@@ -47,6 +47,26 @@ export async function POST(request: NextRequest) {
           product.images[0].url,
           []
         )
+        break
+      }
+
+      case 'style-image': {
+        if (!modelImageId || !poseId) {
+          return NextResponse.json({ error: 'Missing modelImageId or poseId' }, { status: 400 })
+        }
+
+        // 获取 pose 的 URL（pose 是 material 表的记录）
+        const poseMaterial = await db.material.findUnique({ where: { id: poseId } })
+        if (!poseMaterial) {
+          return NextResponse.json({ error: 'Pose not found' }, { status: 404 })
+        }
+
+        // 验证权限：pose 必须是公开的或属于当前用户
+        if (poseMaterial.visibility !== 'PUBLIC' && poseMaterial.userId !== session.user.id) {
+          return NextResponse.json({ error: 'Pose not found' }, { status: 404 })
+        }
+
+        result = await generateStyleImage(modelImageId, poseMaterial.url || poseMaterial.name)
         break
       }
 
