@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Image from 'next/image'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 export default function ImageBlendPage() {
   const [imageA, setImageA] = useState<string | null>(null)
@@ -17,6 +18,7 @@ export default function ImageBlendPage() {
   const handleImageUpload = async (file: File, setImage: (url: string) => void) => {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('subDir', 'image-blend')
     const res = await fetch('/api/upload', { method: 'POST', body: formData })
     if (res.ok) {
       const data = await res.json()
@@ -83,7 +85,7 @@ export default function ImageBlendPage() {
                 className="relative aspect-[9/16] max-h-80 rounded-2xl border-2 border-dashed border-rose-300/50 bg-white/50 cursor-pointer hover:border-rose-400 hover:bg-white/70 transition-colors overflow-hidden"
             >
               {imageA ? (
-                  <Image src={imageA} alt="图片A" fill className="object-contain" />
+                  <Image src={getImageUrl(imageA)} alt="图片A" fill className="object-contain" />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-warm-silver">
                   <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +115,7 @@ export default function ImageBlendPage() {
                 className="relative aspect-[9/16] max-h-80 rounded-2xl border-2 border-dashed border-cyan-300/50 bg-white/50 cursor-pointer hover:border-cyan-400 hover:bg-white/70 transition-colors overflow-hidden"
             >
               {imageB ? (
-                  <Image src={imageB} alt="图片B" fill className="object-contain" />
+                  <Image src={getImageUrl(imageB)} alt="图片B" fill className="object-contain" />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-warm-silver">
                   <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,7 +179,7 @@ export default function ImageBlendPage() {
           <div className="mt-8">
             <h3 className="text-warm-charcoal font-medium mb-3 text-center">生成结果</h3>
           <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-white/80 mx-auto max-w-xs">
-              <Image src={result} alt="结果" fill className="object-contain" />
+              <Image src={getImageUrl(result)} alt="结果" fill className="object-contain" />
             </div>
           </div>
         )}

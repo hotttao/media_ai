@@ -826,7 +826,7 @@ function MaterialsTab({
       {/* Preview Modal */}
       {previewUrl && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-8" onClick={() => setPreviewUrl(null)}>
-          <img src={previewUrl} alt="Preview" className="max-w-full max-h-full object-contain" />
+          <img src={getImageUrl(previewUrl)} alt="Preview" className="max-w-full max-h-full object-contain" />
           <button className="absolute top-6 right-6 p-2 rounded-full bg-white/10 text-white hover:bg-white/20">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

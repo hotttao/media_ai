@@ -674,6 +674,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                   try {
                     const formData = new FormData()
                     formData.append('file', file)
+                    formData.append('subDir', 'videos')
 
                     const uploadRes = await fetch('/api/upload', {
                       method: 'POST',
@@ -795,7 +796,7 @@ function SelectIPStep({
             >
               <div className="aspect-[9/16] bg-oat-light">
                 {ip.avatarUrl ? (
-                  <Image src={ip.avatarUrl} alt={ip.nickname} fill className="object-contain" />
+                  <Image src={getImageUrl(ip.avatarUrl)} alt={ip.nickname} fill className="object-contain" />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-4xl">👤</div>
                 )}
@@ -856,7 +857,7 @@ function ModelImageStep({
             {selectedIp?.fullBodyUrl ? (
               <>
                 <Image
-                  src={selectedIp.fullBodyUrl}
+                  src={getImageUrl(selectedIp.fullBodyUrl)}
                   alt={selectedIp.nickname}
                   fill
                   className="object-contain"
@@ -947,7 +948,7 @@ function ModelImageStep({
             className="relative w-20 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(modelImageUrl)}
           >
-            <Image src={modelImageUrl} alt="模特图" fill className="object-contain" />
+            <Image src={getImageUrl(modelImageUrl)} alt="模特图" fill className="object-contain" />
           </div>
         </div>
       )}
@@ -960,7 +961,7 @@ function ModelImageStep({
         >
           <div className="relative max-w-full max-h-full">
             <Image
-              src={previewUrl}
+              src={getImageUrl(previewUrl)}
               alt="预览"
               width={800}
               height={1000}
@@ -994,6 +995,7 @@ function ModelImageStep({
               if (file) {
                 const formData = new FormData()
                 formData.append('file', file)
+                formData.append('subDir', 'model-images')
                 const res = await fetch('/api/upload', { method: 'POST', body: formData })
                 if (res.ok) {
                   const data = await res.json()
@@ -1099,7 +1101,7 @@ function StyleImageStep({
             className="relative w-20 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(modelImageUrl)}
           >
-            <Image src={modelImageUrl} alt="模特图" fill className="object-contain" />
+            <Image src={getImageUrl(modelImageUrl)} alt="模特图" fill className="object-contain" />
           </div>
         </div>
       )}
@@ -1203,7 +1205,7 @@ function StyleImageStep({
             className="relative w-20 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(styledImageUrl)}
           >
-            <Image src={styledImageUrl} alt="定妆图" fill className="object-contain" />
+            <Image src={getImageUrl(styledImageUrl)} alt="定妆图" fill className="object-contain" />
           </div>
         </div>
       )}
@@ -1224,6 +1226,7 @@ function StyleImageStep({
               if (file) {
                 const formData = new FormData()
                 formData.append('file', file)
+                formData.append('subDir', 'style-images')
                 const res = await fetch('/api/upload', { method: 'POST', body: formData })
                 if (res.ok) {
                   const data = await res.json()
@@ -1283,7 +1286,7 @@ function StyleImageStep({
         >
           <div className="relative max-w-full max-h-full">
             <Image
-              src={previewUrl}
+              src={getImageUrl(previewUrl)}
               alt="预览"
               width={800}
               height={1000}
@@ -1355,7 +1358,7 @@ function FirstFrameStep({
             className="relative w-16 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(styledImageUrl)}
           >
-            <Image src={styledImageUrl} alt="定妆图" fill className="object-contain" />
+            <Image src={getImageUrl(styledImageUrl)} alt="定妆图" fill className="object-contain" />
           </div>
         </div>
       )}
@@ -1432,7 +1435,7 @@ function FirstFrameStep({
             className="relative w-16 aspect-[9/16] rounded-xl overflow-hidden bg-oat-light cursor-pointer"
             onDoubleClick={() => setPreviewUrl(firstFrameUrl)}
           >
-            <Image src={firstFrameUrl} alt="首帧图" fill className="object-contain" />
+            <Image src={getImageUrl(firstFrameUrl)} alt="首帧图" fill className="object-contain" />
           </div>
         </div>
       )}
@@ -1453,6 +1456,7 @@ function FirstFrameStep({
               if (file) {
                 const formData = new FormData()
                 formData.append('file', file)
+                formData.append('subDir', 'first-frames')
                 const res = await fetch('/api/upload', { method: 'POST', body: formData })
                 if (res.ok) {
                   const data = await res.json()
@@ -1506,7 +1510,7 @@ function FirstFrameStep({
         >
           <div className="relative max-w-full max-h-full">
             <Image
-              src={previewUrl}
+              src={getImageUrl(previewUrl)}
               alt="预览"
               width={800}
               height={1000}
@@ -1664,7 +1668,7 @@ function VideoStep({
       {videoUrl && (
         <div className="max-w-2xl mx-auto">
           <h3 className="font-medium text-warm-charcoal text-center mb-3">生成的视频</h3>
-          <video src={videoUrl} controls className="w-full rounded-xl" />
+          <video src={getImageUrl(videoUrl)} controls className="w-full rounded-xl" />
         </div>
       )}
     </div>

@@ -44,8 +44,44 @@ export function getFilePath(teamId: string, fileName: string): string {
   return path.join(UPLOAD_DIR, 'teams', teamId, fileName)
 }
 
+// 保存文件到本地（用于本地开发或切换存储方式）
+export async function saveToLocal(
+  file: File | Buffer,
+  teamId: string,
+  subDir: string = ''
+): Promise<string> {
+  // 从 File 对象获取原始文件名
+  const originalName = file instanceof File ? file.name : 'upload.jpg'
+  const fileName = generateFileName(originalName)
+
+  // 构建本地保存路径
+  const teamDir = ensureUploadDir(teamId)
+  const fullDir = subDir ? path.join(teamDir, subDir) : teamDir
+
+  // 确保子目录存在
+  if (!fs.existsSync(fullDir)) {
+    fs.mkdirSync(fullDir, { recursive: true })
+  }
+
+  const filePath = path.join(fullDir, fileName)
+
+  // 写入文件
+  if (Buffer.isBuffer(file)) {
+    fs.writeFileSync(filePath, file)
+  } else {
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    fs.writeFileSync(filePath, buffer)
+  }
+
+  // 返回相对路径
+  const relativePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${fileName}`
+  console.log(`[saveToLocal] saved to "${relativePath}"`)
+  return relativePath
+}
+
 // 上传文件到外部图片服务
-export async function uploadToImageService(
+export async function uploadToRemote(
   file: File | Buffer,
   teamId: string,
   userId: string,
@@ -66,10 +102,10 @@ export async function uploadToImageService(
     formData.append('file', file, fileName)
   }
 
-  const filePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${encodeURIComponent(fileName)}`
+  // 构造上传 URL：/uploads/teams/{teamId}/{subDir}/{filename}
+  const filePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${fileName}`
   const uploadUrl = `${IMAGE_SERVICE_BASE_URL}${filePath}`
-  console.log(`[uploadToImageService] POST ${uploadUrl}`)
-  console.log(`[uploadToImageService] POST ${uploadUrl}`)
+  console.log(`[uploadToRemote] POST ${uploadUrl}`)
 
   const response = await fetch(uploadUrl, {
     method: 'POST',
@@ -81,9 +117,19 @@ export async function uploadToImageService(
   }
 
   const data = await response.json()
-  console.log(`[uploadToImageService] image service returned url="${data.url}"`)
+  console.log(`[uploadToRemote] image service returned url="${data.url}"`)
   // 返回相对路径，与数据库存储格式一致
   return data.url
+}
+
+// 兼容旧接口，内部调用 uploadToRemote
+export async function uploadToImageService(
+  file: File | Buffer,
+  teamId: string,
+  userId: string,
+  subDir: string = ''
+): Promise<string> {
+  return uploadToRemote(file, teamId, userId, subDir)
 }
 
 // 获取完整的图片 URL（添加图片服务前缀）
