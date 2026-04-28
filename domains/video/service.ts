@@ -3,6 +3,7 @@ import { db } from '@/foundation/lib/db'
 import { v4 as uuid } from 'uuid'
 import type { CreateTaskInput, SaveUploadedVideoInput, TaskStatus } from './types'
 import type { WorkflowExecutionResult } from '@/domains/workflow/types'
+import { getAllowedMovementsForPose } from '@/domains/movement-material/availability'
 
 const MANUAL_UPLOAD_SOURCE = 'manual_upload'
 
@@ -485,9 +486,157 @@ export async function saveUploadedVideo(input: SaveUploadedVideoInput) {
       },
     })
 
-    return {
+return {
       videoId,
       videoUrl: input.url,
+    }
+  })
+}
+
+export async function getPendingVideoCombinations(teamId: string) {
+  const firstFrames = await db.firstFrame.findMany({
+    where: { ipId: { not: null } },
+    select: {
+      id: true,
+      url: true,
+      productId: true,
+      ipId: true,
+      styleImageId: true,
+      sceneId: true,
+      createdAt: true,
+    },
+  })
+
+  const styleImageIds = [...new Set(firstFrames.map((item) => item.styleImageId).filter(Boolean))] as string[]
+  const styleImages = styleImageIds.length > 0
+    ? await db.styleImage.findMany({
+        where: { id: { in: styleImageIds } },
+        select: { id: true, url: true, poseId: true },
+      })
+    : []
+
+  const styleImageMap = new Map(styleImages.map((item) => [item.id, item]))
+  const poseIds = [...new Set(styleImages.map((item) => item.poseId).filter(Boolean))] as string[]
+  const sceneIds = [...new Set(firstFrames.map((item) => item.sceneId).filter(Boolean))] as string[]
+  const productIds = [...new Set(firstFrames.map((item) => item.productId).filter(Boolean))] as string[]
+  const ipIds = [...new Set(firstFrames.map((item) => item.ipId).filter(Boolean))] as string[]
+
+  const [movements, products, ips, materials, existingVideos] = await Promise.all([
+    db.movementMaterial.findMany({
+      include: {
+        poseLinks: {
+          select: { poseId: true },
+        },
+      },
+    }),
+    productIds.length > 0 ? db.product.findMany({ where: { id: { in: productIds }, teamId }, select: { id: true, name: true } }) : [],
+    ipIds.length > 0 ? db.virtualIp.findMany({ where: { id: { in: ipIds }, teamId }, select: { id: true, nickname: true } }) : [],
+    [...poseIds, ...sceneIds].length > 0
+      ? db.material.findMany({
+          where: { id: { in: [...new Set([...poseIds, ...sceneIds])] } },
+          select: { id: true, name: true, url: true, prompt: true },
+        })
+      : [],
+    db.video.findMany({
+      where: {
+        teamId,
+        firstFrameId: { not: null },
+        movementId: { not: null },
+      },
+      select: { firstFrameId: true, movementId: true },
+    }),
+  ])
+
+  const movementView = movements.map((movement) => ({
+    id: movement.id,
+    content: movement.content,
+    url: movement.url,
+    clothing: movement.clothing,
+    isGeneral: movement.isGeneral,
+    poseIds: movement.poseLinks.map((link) => link.poseId),
+  }))
+
+  const existingSet = new Set(existingVideos.map((item) => `${item.firstFrameId}:${item.movementId}`))
+  const productMap = new Map(products.map((item) => [item.id, item]))
+  const ipMap = new Map(ips.map((item) => [item.id, item]))
+  const materialMap = new Map(materials.map((item) => [item.id, item]))
+
+  return firstFrames.flatMap((firstFrame) => {
+    const styleImage = firstFrame.styleImageId ? styleImageMap.get(firstFrame.styleImageId) : null
+    const poseId = styleImage?.poseId ?? null
+    if (!styleImage || !poseId) {
+      return []
+    }
+
+    const allowed = getAllowedMovementsForPose(movementView, poseId)
+
+    return allowed
+      .filter((movement) => !existingSet.has(`${firstFrame.id}:${movement.id}`))
+      .map((movement) => ({
+        combinationKey: `${firstFrame.id}:${movement.id}`,
+        firstFrame: {
+          ...firstFrame,
+          poseId,
+        },
+        styleImage: {
+          id: styleImage.id,
+          url: styleImage.url,
+        },
+        movement: {
+          id: movement.id,
+          content: movement.content,
+          url: movement.url,
+          clothing: movement.clothing,
+          isGeneral: movement.isGeneral,
+        },
+        product: firstFrame.productId ? productMap.get(firstFrame.productId) ?? null : null,
+        ip: firstFrame.ipId ? ipMap.get(firstFrame.ipId) ?? null : null,
+        pose: materialMap.get(poseId) ?? null,
+        scene: firstFrame.sceneId ? materialMap.get(firstFrame.sceneId) ?? null : null,
+      }))
+  })
+}
+
+export async function getPoseMovementMap(teamId: string) {
+  const [poses, movements] = await Promise.all([
+    db.material.findMany({
+      where: {
+        type: 'POSE',
+        OR: [{ teamId }, { visibility: 'PUBLIC' }],
+      },
+      select: { id: true, name: true, url: true },
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.movementMaterial.findMany({
+      include: {
+        poseLinks: {
+          select: { poseId: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+  ])
+
+  const movementView = movements.map((movement) => ({
+    id: movement.id,
+    content: movement.content,
+    url: movement.url,
+    clothing: movement.clothing,
+    isGeneral: movement.isGeneral,
+    poseIds: movement.poseLinks.map((link) => link.poseId),
+  }))
+
+  return poses.map((pose) => {
+    const allMovements = getAllowedMovementsForPose(movementView, pose.id)
+    const stripPoseIds = <T extends { poseIds?: string[] }>(m: T) => {
+      const { poseIds: _poseIds, ...rest } = m
+      return rest as T
+    }
+    return {
+      pose,
+      generalMovements: allMovements.filter((movement) => movement.isGeneral).map(stripPoseIds),
+      specialMovements: allMovements.filter((movement) => !movement.isGeneral).map(stripPoseIds),
+      allMovements: allMovements.map(stripPoseIds),
     }
   })
 }

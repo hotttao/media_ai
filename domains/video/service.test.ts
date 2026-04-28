@@ -22,9 +22,11 @@ const mockDb = vi.hoisted(() => ({
   },
   product: {
     findFirst: vi.fn(),
+    findMany: vi.fn(),
   },
   virtualIp: {
     findFirst: vi.fn(),
+    findMany: vi.fn(),
   },
   workflow: {
     upsert: vi.fn(),
@@ -50,6 +52,8 @@ import {
   getVideosByProduct,
   getVideosByTeam,
   saveUploadedVideo,
+  getPendingVideoCombinations,
+  getPoseMovementMap,
 } from './service'
 
 describe('video service', () => {
@@ -355,5 +359,99 @@ describe('video service', () => {
     expect(tx.workflow.upsert).not.toHaveBeenCalled()
     expect(tx.videoTask.create).not.toHaveBeenCalled()
     expect(tx.video.create).not.toHaveBeenCalled()
+  })
+
+  describe('getPendingVideoCombinations', () => {
+    it('returns pending first-frame and movement combinations not yet present in videos', async () => {
+      mockDb.firstFrame.findMany.mockResolvedValue([
+        {
+          id: 'frame-1',
+          url: 'https://cdn/frame-1.jpg',
+          productId: 'product-1',
+          ipId: 'ip-1',
+          styleImageId: 'style-1',
+          sceneId: 'scene-1',
+          createdAt: new Date('2026-04-27T10:00:00.000Z'),
+        },
+      ])
+      mockDb.styleImage.findMany.mockResolvedValue([
+        { id: 'style-1', url: 'https://cdn/style-1.jpg', poseId: 'pose-1' },
+      ])
+      mockDb.movementMaterial.findMany.mockResolvedValue([
+        { id: 'move-general', content: 'turn around', url: null, clothing: null, isGeneral: true, poseLinks: [] },
+        { id: 'move-pose', content: 'lift skirt', url: null, clothing: null, isGeneral: false, poseLinks: [{ poseId: 'pose-1' }] },
+      ])
+      mockDb.video.findMany.mockResolvedValue([
+        { firstFrameId: 'frame-1', movementId: 'move-general' },
+      ])
+      mockDb.product.findMany.mockResolvedValue([{ id: 'product-1', name: 'White Skirt' }])
+      mockDb.virtualIp.findMany.mockResolvedValue([{ id: 'ip-1', nickname: 'Cui Nianxia' }])
+      mockDb.material.findMany.mockResolvedValue([
+        { id: 'pose-1', name: 'Front Pose', url: 'https://cdn/pose-1.jpg', prompt: 'front pose' },
+        { id: 'scene-1', name: 'Street', url: 'https://cdn/scene-1.jpg', prompt: 'street' },
+      ])
+
+      const result = await getPendingVideoCombinations('team-1')
+
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({
+        combinationKey: 'frame-1:move-pose',
+        firstFrame: {
+          id: 'frame-1',
+          styleImageId: 'style-1',
+          poseId: 'pose-1',
+        },
+        styleImage: {
+          id: 'style-1',
+          url: 'https://cdn/style-1.jpg',
+        },
+        movement: {
+          id: 'move-pose',
+          content: 'lift skirt',
+        },
+      })
+    })
+
+    it('skips first frames when no pose can be resolved', async () => {
+      mockDb.firstFrame.findMany.mockResolvedValue([
+        { id: 'frame-1', url: 'https://cdn/frame-1.jpg', productId: 'product-1', ipId: 'ip-1', styleImageId: null, sceneId: null, createdAt: new Date() },
+      ])
+      mockDb.styleImage.findMany.mockResolvedValue([])
+      mockDb.movementMaterial.findMany.mockResolvedValue([])
+      mockDb.video.findMany.mockResolvedValue([])
+      mockDb.product.findMany.mockResolvedValue([])
+      mockDb.virtualIp.findMany.mockResolvedValue([])
+      mockDb.material.findMany.mockResolvedValue([])
+
+      const result = await getPendingVideoCombinations('team-1')
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('getPoseMovementMap', () => {
+    it('returns pose movement maps split into general and special movements', async () => {
+      mockDb.material.findMany.mockResolvedValue([
+        { id: 'pose-1', type: 'POSE', name: 'Front Pose', url: 'https://cdn/pose-1.jpg', teamId: 'team-1' },
+      ])
+      mockDb.movementMaterial.findMany.mockResolvedValue([
+        { id: 'move-general', content: 'turn around', url: null, clothing: null, isGeneral: true, poseLinks: [] },
+        { id: 'move-special', content: 'lift skirt', url: null, clothing: null, isGeneral: false, poseLinks: [{ poseId: 'pose-1' }] },
+      ])
+
+      const result = await getPoseMovementMap('team-1')
+
+      expect(result).toEqual([
+        {
+          pose: { id: 'pose-1', type: 'POSE', name: 'Front Pose', url: 'https://cdn/pose-1.jpg', teamId: 'team-1' },
+          generalMovements: [{ id: 'move-general', content: 'turn around', url: null, clothing: null, isGeneral: true }],
+          specialMovements: [{ id: 'move-special', content: 'lift skirt', url: null, clothing: null, isGeneral: false }],
+          allMovements: [
+            { id: 'move-general', content: 'turn around', url: null, clothing: null, isGeneral: true },
+            { id: 'move-special', content: 'lift skirt', url: null, clothing: null, isGeneral: false },
+          ],
+        },
+      ])
+    })
   })
 })
