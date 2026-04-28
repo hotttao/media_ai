@@ -65,7 +65,9 @@ export async function uploadToImageService(
     formData.append('file', file, fileName)
   }
 
-  const uploadUrl = `${IMAGE_SERVICE_BASE_URL}/upload/teams/${teamId}${subDir ? `/${subDir}` : ''}/${fileName}`
+  const filePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${fileName}`
+  const uploadUrl = `${IMAGE_SERVICE_BASE_URL}${filePath}`
+  console.log(`[uploadToImageService] POST ${uploadUrl}`)
   console.log(`[uploadToImageService] POST ${uploadUrl}`)
 
   const response = await fetch(uploadUrl, {
