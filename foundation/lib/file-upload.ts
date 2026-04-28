@@ -71,12 +71,12 @@ export async function uploadToImageService(
   })
 
   if (!response.ok) {
-    throw new Error(`Upload to image service failed: ${response.statusText}`)
+    throw new Error(`Upload to image service failed: ${response.statusText} (${response.status})`)
   }
 
   const data = await response.json()
-  // 返回完整的图片服务 URL
-  return `${IMAGE_SERVICE_BASE_URL}${data.url}`
+  // 返回相对路径，与数据库存储格式一致
+  return data.url
 }
 
 // 获取完整的图片 URL（添加图片服务前缀）
