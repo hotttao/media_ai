@@ -47,6 +47,7 @@ export function getFilePath(teamId: string, fileName: string): string {
 export async function uploadToImageService(
   file: File | Buffer,
   teamId: string,
+  userId: string,
   subDir: string = ''
 ): Promise<string> {
   const formData = new FormData()
@@ -61,6 +62,7 @@ export async function uploadToImageService(
   }
 
   formData.append('teamId', teamId)
+  formData.append('userId', userId)
   if (subDir) {
     formData.append('subDir', subDir)
   }

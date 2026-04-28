@@ -24,11 +24,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.log('[IP Images Upload] avatar:', avatar?.name, 'fullBody:', fullBody?.name, 'threeView:', threeView?.name, 'nineView:', nineView?.name)
 
     const teamId = session.user.teamId
+    const userId = session.user.id!
     const ipId = params.id
 
     async function processFile(file: File | null): Promise<string | null> {
       if (!file) return null
-      return uploadToImageService(file, teamId, `ips/${ipId}`)
+      return uploadToImageService(file, teamId, userId, `ips/${ipId}`)
     }
 
     const [avatarUrl, fullBodyUrl, threeViewUrl, nineViewUrl] = await Promise.all([

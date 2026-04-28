@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
     }
 
     const teamId = session.user.teamId
-    const url = await uploadToImageService(file, teamId, subDir)
+    const userId = session.user.id
+    const url = await uploadToImageService(file, teamId, userId, subDir)
 
     return NextResponse.json({ url })
   } catch (error) {

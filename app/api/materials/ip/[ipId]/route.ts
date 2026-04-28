@@ -48,10 +48,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const ipId = params.ipId
     const teamId = session.user.teamId
+    const userId = session.user.id!
 
     async function processFile(file: File | null): Promise<string | null> {
       if (!file) return null
-      return uploadToImageService(file, teamId, `ip_materials/${ipId}`)
+      return uploadToImageService(file, teamId, userId, `ip_materials/${ipId}`)
     }
 
     const [fullBodyUrl, threeViewUrl, nineViewUrl] = await Promise.all([
