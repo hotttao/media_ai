@@ -57,10 +57,10 @@ export default function FirstFramePage() {
       for (const combo of combinations) {
         const [sceneId, styleImageId] = combo.key.split('-')
         const comboData = availableCombinations.find(
-          (c: any) => c.scene.id === sceneId && c.styleImage.id === styleImageId
+          (c: AvailableCombination) => c.scene.id === sceneId && c.styleImage.id === styleImageId
         )
         if (!comboData) continue
-        await fetch('/api/tools/combination/generate', {
+        const res = await fetch('/api/tools/combination/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -71,6 +71,9 @@ export default function FirstFramePage() {
             ipId: comboData.ipId,
           }),
         })
+        if (!res.ok) {
+          console.error(`Failed to generate: ${sceneId}-${styleImageId}`)
+        }
       }
       alert('生成完成')
       window.location.reload()
