@@ -90,8 +90,11 @@ export function getFullImageUrl(relativePath: string | null | undefined): string
     return relativePath
   }
 
+  // 对路径进行编码，处理中文和特殊字符
+  const encodedPath = relativePath.split('/').map(encodeURIComponent).join('/')
+
   // 添加图片服务前缀
-  return `${IMAGE_SERVICE_BASE_URL}${relativePath}`
+  return `${IMAGE_SERVICE_BASE_URL}${encodedPath}`
 }
 
 // 获取图片服务基础 URL
