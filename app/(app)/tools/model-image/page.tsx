@@ -19,7 +19,10 @@ export default function ModelImagePage() {
 
   useEffect(() => {
     fetch('/api/tools/combination/model-images')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch')
+        return res.json()
+      })
       .then(data => {
         setAvailableCombinations(data)
         setLoading(false)

@@ -22,11 +22,23 @@ export async function POST(request: NextRequest) {
         if (!ipId || !productId) {
           return NextResponse.json({ error: 'Missing ipId or productId' }, { status: 400 })
         }
+
+        // 验证 product 属于当前用户
         const product = await db.product.findUnique({
           where: { id: productId },
           include: { images: { where: { isMain: true }, take: 1 } },
         })
-        if (!product?.images[0]) {
+        if (!product || product.userId !== session.user.id) {
+          return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+        }
+
+        // 验证 ip 属于当前用户
+        const ip = await db.virtualIp.findUnique({ where: { id: ipId } })
+        if (!ip || ip.userId !== session.user.id) {
+          return NextResponse.json({ error: 'IP not found' }, { status: 404 })
+        }
+
+        if (!product.images[0]) {
           return NextResponse.json({ error: 'Product has no main image' }, { status: 400 })
         }
         result = await generateModelImage(
