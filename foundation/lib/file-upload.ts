@@ -52,16 +52,20 @@ export async function uploadToImageService(
 ): Promise<string> {
   const formData = new FormData()
 
+  // 从 File 对象获取原始文件名
+  const originalName = file instanceof File ? file.name : 'upload.jpg'
+  const fileName = generateFileName(originalName)
+
   if (Buffer.isBuffer(file)) {
     // 如果是 Buffer，转换为 Uint8Array 再转为 Blob
     const uint8Array = new Uint8Array(file)
     const blob = new Blob([uint8Array], { type: 'image/jpeg' })
-    formData.append('file', blob, 'upload.jpg')
+    formData.append('file', blob, fileName)
   } else {
-    formData.append('file', file)
+    formData.append('file', file, fileName)
   }
 
-  const uploadUrl = `${IMAGE_SERVICE_BASE_URL}/upload/teams/${teamId}${subDir ? `/${subDir}` : ''}`
+  const uploadUrl = `${IMAGE_SERVICE_BASE_URL}/upload/teams/${teamId}${subDir ? `/${subDir}` : ''}/${fileName}`
   console.log(`[uploadToImageService] POST ${uploadUrl}`)
 
   const response = await fetch(uploadUrl, {
