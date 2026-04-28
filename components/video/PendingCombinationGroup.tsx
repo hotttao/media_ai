@@ -34,7 +34,7 @@ export function PendingCombinationGroup({ group }: PendingCombinationGroupProps)
         </svg>
       </button>
       {isExpanded && (
-        <div className="grid grid-cols-2 gap-3 px-3 pb-3 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-3 px-3 pb-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
           {group.items.map((item) => (
             <PendingCombinationCard key={item.combinationKey} item={item} />
           ))}
