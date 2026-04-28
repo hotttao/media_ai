@@ -19,7 +19,8 @@ export function ensureUploadDir(teamId: string): string {
 // Generate unique filename preserving extension
 export function generateFileName(originalName: string): string {
   const ext = path.extname(originalName)
-  const baseName = path.basename(originalName, ext)
+  // 移除中文字符和空格，只保留安全的字符
+  const baseName = path.basename(originalName, ext).replace(/[^\x00-\x7F]/g, '').replace(/\s+/g, '_')
   return `${baseName}_${uuid()}${ext}`
 }
 
@@ -65,7 +66,7 @@ export async function uploadToImageService(
     formData.append('file', file, fileName)
   }
 
-  const filePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${fileName}`
+  const filePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${encodeURIComponent(fileName)}`
   const uploadUrl = `${IMAGE_SERVICE_BASE_URL}${filePath}`
   console.log(`[uploadToImageService] POST ${uploadUrl}`)
   console.log(`[uploadToImageService] POST ${uploadUrl}`)
