@@ -77,6 +77,7 @@ export async function uploadToImageService(
   }
 
   const data = await response.json()
+  console.log(`[uploadToImageService] image service returned url="${data.url}"`)
   // 返回相对路径，与数据库存储格式一致
   return data.url
 }
@@ -94,7 +95,10 @@ export function getFullImageUrl(relativePath: string | null | undefined): string
   const encodedPath = relativePath.split('/').map(encodeURIComponent).join('/')
 
   // 添加图片服务前缀
-  return `${IMAGE_SERVICE_BASE_URL}${encodedPath}`
+  const fullUrl = `${IMAGE_SERVICE_BASE_URL}${encodedPath}`
+  console.log(`[getFullImageUrl] relativePath="${relativePath}" -> fullUrl="${fullUrl}"`)
+
+  return fullUrl
 }
 
 // 获取图片服务基础 URL
