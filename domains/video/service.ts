@@ -495,7 +495,7 @@ return {
 
 export async function getPendingVideoCombinations(teamId: string) {
   const firstFrames = await db.firstFrame.findMany({
-    where: { ipId: { not: null } },
+    where: { ipId: { not: '' } },
     select: {
       id: true,
       url: true,

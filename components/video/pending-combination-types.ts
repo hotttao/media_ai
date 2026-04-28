@@ -5,10 +5,11 @@ export interface PendingCombinationItem {
     url: string
     productId: string
     ipId: string
-    styleImageId: string
+    styleImageId: string | null
     poseId: string
     sceneId?: string | null
-    createdAt: string
+    createdAt: string | Date
+    [key: string]: unknown
   }
   styleImage: {
     id: string
