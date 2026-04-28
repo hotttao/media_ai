@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
-import { generateModelImage, generateStyleImage } from '@/domains/video-generation/service'
+import { generateModelImage, generateStyleImage, generateFirstFrame } from '@/domains/video-generation/service'
 import { db } from '@/foundation/lib/db'
 
 // POST /api/tools/combination/generate
@@ -83,6 +83,45 @@ export async function POST(request: NextRequest) {
         }
 
         result = await generateStyleImage(modelImageId, poseMaterial.url || poseMaterial.name)
+        break
+      }
+
+      case 'first-frame': {
+        if (!styleImageId || !sceneId || !productId || !ipId) {
+          return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+        }
+
+        // 验证 styleImage 属于当前用户
+        const styleImage = await db.styleImage.findUnique({
+          where: { id: styleImageId },
+          include: { modelImage: true }
+        })
+        if (!styleImage) {
+          return NextResponse.json({ error: 'StyleImage not found' }, { status: 404 })
+        }
+
+        // 通过 modelImage -> product 验证所有权
+        const product = await db.product.findUnique({
+          where: { id: styleImage.modelImage.productId }
+        })
+        if (!product || product.userId !== session.user.id) {
+          return NextResponse.json({ error: 'StyleImage not found' }, { status: 404 })
+        }
+
+        // 验证 scene 属于当前用户或公开
+        const scene = await db.material.findUnique({ where: { id: sceneId } })
+        if (!scene || (scene.visibility !== 'PUBLIC' && scene.userId !== session.user.id)) {
+          return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
+        }
+
+        result = await generateFirstFrame(
+          productId,
+          ipId,
+          styleImageId,
+          sceneId,
+          '',
+          styleImage.url
+        )
         break
       }
 

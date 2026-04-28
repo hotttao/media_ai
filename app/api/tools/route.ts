@@ -55,7 +55,7 @@ const tools = [
     description: '将人物与场景融合，生成首帧图',
     icon: '🌄',
     gradient: 'from-orange-400 to-amber-500',
-    href: '/products',
+    href: '/tools/first-frame',
     inputs: SceneReplaceTool.inputs,
     outputs: SceneReplaceTool.outputs,
   },
