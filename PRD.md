@@ -324,9 +324,9 @@ CREATE TABLE materials (
 对每一个组合调用接口:
 
 ```
- curl -X POST http://localhost:8765/v1/single/model-image \
+  curl -X POST http://127.0.0.1:8765/v1/single/model-image \
     -H "Content-Type: application/json" \
-    -d '{"modelImageId": "abc123"}'
+    -d '{"productId": "3813528280213094793", "ipId": "981cd79c-5973-429a-8edf-dff3eda45014"}'
 ```
 
 ### 9.2 定妆图生成

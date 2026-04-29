@@ -17,11 +17,15 @@ function SelectableTag({
   selected,
   onToggle,
   disabled,
+  hideLabel = false,
+  onPreview,
 }: {
   item: SelectableItem
   selected: boolean
   onToggle: () => void
   disabled?: boolean
+  hideLabel?: boolean
+  onPreview?: (src: string, alt: string) => void
 }) {
   return (
     <button
@@ -38,9 +42,27 @@ function SelectableTag({
       )}
     >
       {item.url && (
-        <img src={getImageUrl(item.url)} alt={item.name} className="h-5 w-5 rounded object-cover" />
+        <div
+          className={cn(
+            'relative overflow-hidden rounded',
+            hideLabel ? 'w-16' : 'h-8 w-8'
+          )}
+          style={hideLabel ? { aspectRatio: '9/16', height: 'auto' } : {}}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (onPreview && item.url) {
+              onPreview(getImageUrl(item.url), item.name)
+            }
+          }}
+        >
+          <img
+            src={getImageUrl(item.url)}
+            alt={item.name}
+            className={cn('object-cover cursor-zoom-in hover:scale-110 transition-transform', hideLabel ? 'w-full h-full' : 'w-full h-full')}
+          />
+        </div>
       )}
-      <span className="font-medium">{item.name}</span>
+      {!hideLabel && <span className="font-medium">{item.name}</span>}
     </button>
   )
 }
@@ -53,6 +75,8 @@ function MultiSelectPanel({
   onToggle,
   onSelectAll,
   onClearAll,
+  hideLabel = false,
+  onPreview,
 }: {
   title: string
   items: SelectableItem[]
@@ -60,6 +84,8 @@ function MultiSelectPanel({
   onToggle: (id: string) => void
   onSelectAll: () => void
   onClearAll: () => void
+  hideLabel?: boolean
+  onPreview?: (src: string, alt: string) => void
 }) {
   return (
     <div className="flex flex-col rounded-xl border border-oat bg-white shadow-clay">
@@ -93,6 +119,8 @@ function MultiSelectPanel({
               item={item}
               selected={selected.has(item.id)}
               onToggle={() => onToggle(item.id)}
+              hideLabel={hideLabel}
+              onPreview={onPreview}
             />
           ))
         )}
@@ -124,12 +152,12 @@ function CombinationCard({
         combination.status === 'failed' && 'border-pomegranate-400/30 bg-pomegranate-50'
       )}
     >
-            <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
         {combination.itemA.url && (
           <img
             src={getImageUrl(combination.itemA.url)}
             alt={combination.itemA.name}
-            className="h-8 w-8 rounded object-cover shrink-0"
+            className="h-10 w-10 rounded object-cover shrink-0"
           />
         )}
         <span className="text-sm font-medium text-foreground">
@@ -140,12 +168,12 @@ function CombinationCard({
           <img
             src={getImageUrl(combination.itemB.url)}
             alt={combination.itemB.name}
-            className="h-8 w-8 rounded object-cover shrink-0"
+            className="h-10 w-10 rounded object-cover shrink-0"
           />
         )}
-        <span className="text-sm font-medium text-foreground">
-          {combination.itemB.name}
-        </span>
+        {!combination.itemB.url && (
+          <span className="text-sm text-warm-silver">产品</span>
+        )}
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {combination.status === 'pending' && (
@@ -247,6 +275,9 @@ export function CombinationSelector({
   generating = false,
   onSelectionChange,
   onGenerate,
+  hideLabelA = false,
+  hideLabelB = false,
+  onPreview,
 }: {
   type: CombinationType
   itemsA: SelectableItem[]
@@ -256,6 +287,9 @@ export function CombinationSelector({
   generating?: boolean
   onSelectionChange?: (selectedA: string[], selectedB: string[]) => void
   onGenerate?: (combinations: GeneratedCombination[]) => void
+  hideLabelA?: boolean
+  hideLabelB?: boolean
+  onPreview?: (src: string, alt: string) => void
 }) {
   const [selectedA, setSelectedA] = useState<Set<string>>(new Set())
   const [selectedB, setSelectedB] = useState<Set<string>>(new Set())
@@ -270,8 +304,8 @@ export function CombinationSelector({
       if (!selectedA.has(a.id)) continue
       for (const b of itemsB) {
         if (!selectedB.has(b.id)) continue
-        const key = `${a.id}-${b.id}`
-        const id = key // 实际使用时可能需要 hash
+        const key = `${a.id}::${b.id}`
+        const id = key
         result.push({
           id,
           key,
@@ -368,6 +402,8 @@ export function CombinationSelector({
           onToggle={handleToggleA}
           onSelectAll={handleSelectAllA}
           onClearAll={handleClearAllA}
+          hideLabel={hideLabelA}
+          onPreview={onPreview}
         />
         <MultiSelectPanel
           title={labels.b}
@@ -376,6 +412,8 @@ export function CombinationSelector({
           onToggle={handleToggleB}
           onSelectAll={handleSelectAllB}
           onClearAll={handleClearAllB}
+          hideLabel={hideLabelB}
+          onPreview={onPreview}
         />
       </div>
 

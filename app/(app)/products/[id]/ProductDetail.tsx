@@ -698,7 +698,7 @@ function MaterialsTab({
   const renderGeneratedMaterial = (type: string, id: string, url: string, label: string) => (
     <div key={id} className="relative group aspect-[9/16] w-full max-w-36">
       <img
-        src={url}
+        src={getImageUrl(url)}
         alt={label}
         className="h-full w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-100 object-contain"
         onClick={() => setPreviewUrl(url)}

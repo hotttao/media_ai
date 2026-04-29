@@ -23,31 +23,41 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing ipId or productId' }, { status: 400 })
         }
 
-        // 验证 product 属于当前用户
-        const product = await db.product.findUnique({
-          where: { id: productId },
-          include: { images: { where: { isMain: true }, take: 1 } },
-        })
-        if (!product || product.userId !== session.user.id) {
-          return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+        // 调用外部 API 异步提交生成任务
+        const submitUrl = 'http://127.0.0.1:8765/v1/single/model-image'
+        const submitBody = { productId, ipId }
+        console.log('\n========== MODEL-IMAGE REQUEST ==========')
+        console.log('URL:', submitUrl)
+        console.log('BODY:', JSON.stringify(submitBody, null, 2))
+        console.log('==========================================\n')
+
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 60000) // 60s timeout
+
+        let response
+        try {
+          response = await fetch(submitUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submitBody),
+            signal: controller.signal,
+          })
+        } catch (err) {
+          clearTimeout(timeoutId)
+          console.error('>>> Model-image API call failed:', err)
+          return NextResponse.json({ error: 'Failed to submit task: network error' }, { status: 500 })
         }
 
-        // 验证 ip 属于当前用户
-        const ip = await db.virtualIp.findUnique({ where: { id: ipId } })
-        if (!ip || ip.userId !== session.user.id) {
-          return NextResponse.json({ error: 'IP not found' }, { status: 404 })
+        clearTimeout(timeoutId)
+        console.log('>>> Model-image API response status:', response.status)
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Unknown error')
+          console.error('Model-image API returned error:', response.status, errorText)
+          return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
         }
 
-        if (!product.images[0]) {
-          return NextResponse.json({ error: 'Product has no main image' }, { status: 400 })
-        }
-        result = await generateModelImage(
-          productId,
-          ipId,
-          product.images[0].url,
-          []
-        )
-        break
+        return NextResponse.json({ status: 'submitted' })
       }
 
       case 'style-image': {
@@ -55,74 +65,77 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing modelImageId or poseId' }, { status: 400 })
         }
 
-        // 获取 modelImage 并验证属于当前用户
-        const modelImage = await db.modelImage.findUnique({
-          where: { id: modelImageId }
-        })
-        if (!modelImage) {
-          return NextResponse.json({ error: 'ModelImage not found' }, { status: 404 })
+        console.log('\n========== STYLE-IMAGE REQUEST ==========')
+        console.log('URL: http://127.0.0.1:8765/v1/single/style-image')
+        console.log('BODY:', JSON.stringify({ modelImageId, poseId }, null, 2))
+        console.log('==========================================\n')
+
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 60000)
+
+        let response
+        try {
+          response = await fetch('http://127.0.0.1:8765/v1/single/style-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ modelImageId, poseId }),
+            signal: controller.signal,
+          })
+        } catch (err) {
+          clearTimeout(timeoutId)
+          console.error('>>> Style-image API call failed:', err)
+          return NextResponse.json({ error: 'Failed to submit task: network error' }, { status: 500 })
         }
 
-        // 通过 product 验证所有权
-        const product = await db.product.findUnique({
-          where: { id: modelImage.productId }
-        })
-        if (!product || product.userId !== session.user.id) {
-          return NextResponse.json({ error: 'ModelImage not found' }, { status: 404 })
+        clearTimeout(timeoutId)
+        console.log('>>> Style-image API response status:', response.status)
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Unknown error')
+          console.error('Style-image API returned error:', response.status, errorText)
+          return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
         }
 
-        // 获取 pose 的 URL（pose 是 material 表的记录）
-        const poseMaterial = await db.material.findUnique({ where: { id: poseId } })
-        if (!poseMaterial) {
-          return NextResponse.json({ error: 'Pose not found' }, { status: 404 })
-        }
-
-        // 验证权限：pose 必须是公开的或属于当前用户
-        if (poseMaterial.visibility !== 'PUBLIC' && poseMaterial.userId !== session.user.id) {
-          return NextResponse.json({ error: 'Pose not found' }, { status: 404 })
-        }
-
-        result = await generateStyleImage(modelImageId, poseMaterial.url || poseMaterial.name)
-        break
+        return NextResponse.json({ status: 'submitted' })
       }
 
       case 'first-frame': {
-        if (!styleImageId || !sceneId || !productId || !ipId) {
-          return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+        if (!styleImageId || !sceneId) {
+          return NextResponse.json({ error: 'Missing styleImageId or sceneId' }, { status: 400 })
         }
 
-        // 验证 styleImage 属于当前用户
-        const styleImage = await db.styleImage.findUnique({
-          where: { id: styleImageId },
-          include: { modelImage: true }
-        })
-        if (!styleImage) {
-          return NextResponse.json({ error: 'StyleImage not found' }, { status: 404 })
+        console.log('\n========== FIRST-FRAME REQUEST ==========')
+        console.log('URL: http://127.0.0.1:8765/v1/single/first-frame-image')
+        console.log('BODY:', JSON.stringify({ styleImageId, sceneId }, null, 2))
+        console.log('==========================================\n')
+
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 60000)
+
+        let response
+        try {
+          response = await fetch('http://127.0.0.1:8765/v1/single/first-frame-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ styleImageId, sceneId }),
+            signal: controller.signal,
+          })
+        } catch (err) {
+          clearTimeout(timeoutId)
+          console.error('>>> First-frame API call failed:', err)
+          return NextResponse.json({ error: 'Failed to submit task: network error' }, { status: 500 })
         }
 
-        // 通过 modelImage -> product 验证所有权
-        const product = await db.product.findUnique({
-          where: { id: styleImage.modelImage.productId }
-        })
-        if (!product || product.userId !== session.user.id) {
-          return NextResponse.json({ error: 'StyleImage not found' }, { status: 404 })
+        clearTimeout(timeoutId)
+        console.log('>>> First-frame API response status:', response.status)
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Unknown error')
+          console.error('First-frame API returned error:', response.status, errorText)
+          return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
         }
 
-        // 验证 scene 属于当前用户或公开
-        const scene = await db.material.findUnique({ where: { id: sceneId } })
-        if (!scene || (scene.visibility !== 'PUBLIC' && scene.userId !== session.user.id)) {
-          return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
-        }
-
-        result = await generateFirstFrame(
-          productId,
-          ipId,
-          styleImageId,
-          sceneId,
-          '',
-          styleImage.url
-        )
-        break
+        return NextResponse.json({ status: 'submitted' })
       }
 
       default:
