@@ -356,6 +356,7 @@ model ModelImage {
   id         String   @id @default(uuid()) @db.VarChar(36)
   productId  String   @map("product_id") @db.VarChar(36)
   ipId       String   @map("ip_id") @db.VarChar(36)
+  outfit     String   @default("") @db.VarChar(500)
   url        String   @db.VarChar(500)
   prompt     String?  @db.Text
   inputHash  String   @map("input_hash") @db.VarChar(64)
@@ -363,7 +364,7 @@ model ModelImage {
 
   styleImages StyleImage[]
 
-  @@unique([productId, ipId, inputHash], name: "uniq_model_images_dedup")
+  @@unique([productId, ipId, outfit], name: "uniq_model_images_dedup")
   @@index([productId], map: "idx_model_images_product")
   @@index([ipId], map: "idx_model_images_ip")
   @@map("model_images")
@@ -376,16 +377,16 @@ model StyleImage {
   modelImageId  String   @map("model_image_id") @db.VarChar(36)
   url           String   @db.VarChar(500)
   prompt        String?  @db.Text
-  poseId        String?  @map("pose_id") @db.VarChar(36)
-  makeupId      String?  @map("makeup_id") @db.VarChar(36)
-  accessoryId   String?  @map("accessory_id") @db.VarChar(36)
+  poseId        String   @default("") @map("pose_id") @db.VarChar(36)
+  makeupId      String   @default("") @map("makeup_id") @db.VarChar(36)
+  accessoryId   String   @default("") @map("accessory_id") @db.VarChar(36)
   inputHash     String   @map("input_hash") @db.VarChar(64)
   createdAt     DateTime @default(now()) @map("created_at")
 
   modelImage   ModelImage   @relation(fields: [modelImageId], references: [id])
   firstFrames FirstFrame[]
 
-  @@unique([modelImageId, inputHash], name: "uniq_style_images_dedup")
+  @@unique([modelImageId, poseId, makeupId, accessoryId], name: "uniq_style_images_dedup")
   @@index([productId], map: "idx_style_images_product")
   @@index([modelImageId], map: "idx_style_images_model_image")
   @@map("style_images")
@@ -395,17 +396,17 @@ model FirstFrame {
   id           String   @id @default(uuid()) @db.VarChar(36)
   productId    String   @map("product_id") @db.VarChar(36)
   ipId         String   @map("ip_id") @db.VarChar(36)
-  styleImageId String?  @map("style_image_id") @db.VarChar(36)
+  styleImageId String   @default("") @map("style_image_id") @db.VarChar(36)
   url          String   @db.VarChar(500)
   prompt       String?  @db.Text
-  sceneId      String?  @map("scene_id") @db.VarChar(36)
-  composition  String?  @db.VarChar(500)
+  sceneId      String   @default("") @map("scene_id") @db.VarChar(36)
+  composition  String   @default("") @db.VarChar(500)
   inputHash    String   @map("input_hash") @db.VarChar(64)
   createdAt    DateTime @default(now()) @map("created_at")
 
   styleImage   StyleImage? @relation(fields: [styleImageId], references: [id])
 
-  @@unique([productId, ipId, sceneId, inputHash], name: "uniq_first_frames_dedup")
+  @@unique([styleImageId, sceneId, composition], name: "uniq_first_frames_dedup")
   @@index([productId], map: "idx_first_frames_product")
   @@index([styleImageId], map: "idx_first_frames_style_image")
   @@map("first_frames")

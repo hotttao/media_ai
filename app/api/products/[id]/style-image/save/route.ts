@@ -29,7 +29,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { modelImageId, poseId, makeupId, accessoryId, imageUrl, prompt } = body
+    const { modelImageId, poseId = '', makeupId = '', accessoryId = '', imageUrl, prompt } = body
 
     if (!modelImageId || !imageUrl) {
       return NextResponse.json({ error: 'Missing required fields: modelImageId, imageUrl' }, { status: 400 })
@@ -43,15 +43,14 @@ export async function POST(
       return NextResponse.json({ error: 'ModelImage not found' }, { status: 404 })
     }
 
-    // 计算 input hash 用于去重
-    const inputHash = hashStrings(poseId, makeupId, accessoryId)
-
-    // 检查是否已存在
+    // 检查是否已存在相同 productId + ipId + poseId + makeupId + accessoryId 的记录
     const existing = await db.styleImage.findUnique({
       where: {
         uniq_style_images_dedup: {
           modelImageId,
-          inputHash
+          poseId,
+          makeupId,
+          accessoryId,
         }
       }
     })
@@ -68,10 +67,10 @@ export async function POST(
         modelImageId,
         url: imageUrl,
         prompt: buildGeneratedImagePrompt(typeof prompt === 'string' ? prompt : null),
-        poseId: poseId || undefined,
-        makeupId: makeupId || undefined,
-        accessoryId: accessoryId || undefined,
-        inputHash,
+        poseId,
+        makeupId,
+        accessoryId,
+        inputHash: hashStrings(poseId, makeupId, accessoryId),
       }
     })
 

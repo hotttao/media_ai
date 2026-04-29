@@ -1,34 +1,12 @@
 // app/api/tools/route.ts
 import { NextResponse } from 'next/server'
-import { ImageBlendTool } from '@/domains/video-generation/tools/image-blend'
 import { SceneReplaceTool } from '@/domains/video-generation/tools/scene-replace'
 import { ImageToVideoTool } from '@/domains/video-generation/tools/image-to-video'
 import { MotionTransferTool } from '@/domains/video-generation/tools/motion-transfer'
-import { MultiImageEditTool } from '@/domains/video-generation/tools/multi-image-edit'
 import { ModelImageTool } from '@/domains/video-generation/tools/model-image'
 import { StyleImageTool } from '@/domains/video-generation/tools/style-image'
 
 const tools = [
-  {
-    id: ImageBlendTool.id,
-    name: '双图编辑',
-    description: '输入两张图片和多张副图，生成编辑后的图片',
-    icon: '🖼️',
-    gradient: 'from-rose-400 to-pink-500',
-    href: '/tools/image-blend',
-    inputs: ImageBlendTool.inputs,
-    outputs: ImageBlendTool.outputs,
-  },
-  {
-    id: MultiImageEditTool.id,
-    name: '多图编辑',
-    description: '输入多张图片，生成编辑后的图片',
-    icon: '📸',
-    gradient: 'from-cyan-400 to-blue-500',
-    href: '/products',
-    inputs: MultiImageEditTool.inputs,
-    outputs: MultiImageEditTool.outputs,
-  },
   {
     id: ModelImageTool.id,
     name: '模特图生成',

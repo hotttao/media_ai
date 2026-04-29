@@ -35,13 +35,14 @@ function hashStrings(...inputs: (string | undefined | null)[]): string {
 /**
  * 生成模特图 (PRD 4.2 步骤3)
  * 流程: IP 全身图 + 产品主图 + 产品细节图 → 模特图
- * 使用 ModelImage 表 + inputHash 去重
+ * 使用 ModelImage 表 + outfit 去重
  */
 export async function generateModelImage(
   productId: string,
   ipId: string,
   productMainImageUrl: string,
-  productDetailImageUrls: string[] = []
+  productDetailImageUrls: string[] = [],
+  outfit: string = ''
 ): Promise<ModelImageGenerationResult> {
   // 1. 获取 IP 的全身图
   const ip = await db.virtualIp.findUnique({
@@ -52,18 +53,18 @@ export async function generateModelImage(
     throw new Error(`IP ${ipId} not found or has no fullBodyUrl`)
   }
 
-  // 2. 计算 input hash 用于去重
-  const inputHash = hashStrings(productMainImageUrl, ...productDetailImageUrls)
-
-  // 3. 检查是否已存在相同输入的生成结果
+  // 2. 检查是否已存在相同输入的生成结果（根据 productId + ipId + outfit 去重）
   const existing = await db.modelImage.findUnique({
     where: {
-      uniq_model_images_dedup: { productId, ipId, inputHash }
+      uniq_model_images_dedup: { productId, ipId, outfit }
     }
   })
   if (existing) {
     return { modelImageUrl: existing.url, modelImageId: existing.id }
   }
+
+  // 3. 计算 input hash（用于记录，不参与去重）
+  const inputHash = hashStrings(productMainImageUrl, ...productDetailImageUrls)
 
   const provider = getRunningHubProvider()
 
@@ -87,6 +88,7 @@ export async function generateModelImage(
       id: uuid(),
       productId,
       ipId,
+      outfit,
       url: modelResult.outputs.modelImage,
       prompt: null,
       inputHash,
@@ -99,52 +101,64 @@ export async function generateModelImage(
 /**
  * 生成定妆图 (PRD 4.2 步骤4)
  * 流程: 模特图 + 姿势 + (可选)妆容 + (可选)饰品 → 定妆图
- * 使用 StyleImage 表 + inputHash 去重
+ * 使用 StyleImage 表 + (poseId + makeupId + accessoryId) 去重
  */
 export async function generateStyleImage(
   modelImageId: string,
-  pose: string,
-  makeupUrl?: string,
-  accessoryUrl?: string
+  poseId: string = '',
+  makeupId: string = '',
+  accessoryId: string = ''
 ): Promise<StyleImageGenerationResult> {
   // 1. 获取模特图
   const modelImage = await db.modelImage.findUnique({
     where: { id: modelImageId },
-    include: { styleImages: true }
   })
   if (!modelImage) {
     throw new Error(`ModelImage ${modelImageId} not found`)
   }
 
-  // 2. 计算 input hash 用于去重
-  const inputHash = hashStrings(pose, makeupUrl, accessoryUrl)
-
-  // 3. 检查是否已存在相同输入的生成结果
+  // 2. 检查是否已存在相同输入的生成结果（根据 modelImageId + poseId + makeupId + accessoryId 去重）
   const existing = await db.styleImage.findUnique({
     where: {
-      uniq_style_images_dedup: { modelImageId, inputHash }
+      uniq_style_images_dedup: { modelImageId, poseId, makeupId, accessoryId }
     }
   })
   if (existing) {
     return { styledImageUrl: existing.url, styleImageId: existing.id }
   }
 
+  // 3. 计算 input hash（用于记录，不参与去重）
+  const inputHash = hashStrings(poseId, makeupId, accessoryId)
+
   const provider = getRunningHubProvider()
 
-  // 4. 调用定妆图生成工具
+  // 4. 获取素材 URL
+  const materialUrls: Record<string, string> = {}
+  if (poseId) {
+    const pose = await getMovementMaterialById(poseId)
+    if (pose?.url) materialUrls.pose = pose.url
+  }
+  if (makeupId) {
+    const makeup = await db.ipMaterial.findUnique({ where: { id: makeupId } })
+    if (makeup?.threeViewUrl) materialUrls.makeup = makeup.threeViewUrl
+  }
+  if (accessoryId) {
+    const accessory = await db.ipMaterial.findUnique({ where: { id: accessoryId } })
+    if (accessory?.threeViewUrl) materialUrls.accessory = accessory.threeViewUrl
+  }
+
+  // 5. 调用定妆图生成工具
   const styleInputs: Record<string, string | string[] | null> = {
     modelImage: modelImage.url,
-    pose,
+    ...materialUrls,
   }
-  if (makeupUrl) styleInputs.makeup = makeupUrl
-  if (accessoryUrl) styleInputs.accessory = accessoryUrl
 
   const styleResult: ToolResult = await provider.execute(StyleImageTool.workflowId, styleInputs)
   if (styleResult.error || !styleResult.outputs.styledImage) {
     throw new Error(`Style image generation failed: ${styleResult.error}`)
   }
 
-  // 5. 保存到 StyleImage 表
+  // 6. 保存到 StyleImage 表
   const styleImage = await db.styleImage.create({
     data: {
       id: uuid(),
@@ -152,10 +166,10 @@ export async function generateStyleImage(
       ipId: modelImage.ipId,
       modelImageId,
       url: styleResult.outputs.styledImage,
-      prompt: buildGeneratedImagePrompt(pose),
-      poseId: undefined, // pose 是文本描述
-      makeupId: undefined,
-      accessoryId: undefined,
+      prompt: null,
+      poseId,
+      makeupId,
+      accessoryId,
       inputHash,
     }
   })
@@ -166,37 +180,38 @@ export async function generateStyleImage(
 /**
  * 生成首帧图 (新版)
  * 流程: 定妆图 + 场景图 + 构图 → 首帧图
- * 使用 first_frames 表 + inputHash 去重
+ * 使用 first_frames 表 + (styleImageId + sceneId + composition) 去重
  */
 export async function generateFirstFrame(
   productId: string,
   ipId: string,
-  styleImageId: string | null,
-  sceneId: string,
-  composition: string,
+  styleImageId: string = '',
+  sceneId: string = '',
+  composition: string = '',
   imageUrl: string
 ): Promise<FirstFrameGenerationResult> {
-  // 1. 计算 input hash 用于去重
+  // 1. 检查场景是否允许
   const allowed = await isSceneAllowedForProductAndIp(productId, ipId, sceneId)
   if (!allowed) {
     throw new Error(`Scene ${sceneId} is not allowed for product ${productId} and ip ${ipId}`)
   }
 
-  const inputHash = hashStrings(sceneId, composition)
-
-  // 2. 检查是否已存在相同输入的生成结果
+  // 2. 检查是否已存在相同输入的生成结果（根据 styleImageId + sceneId + composition 去重）
   const existing = await db.firstFrame.findUnique({
     where: {
-      uniq_first_frames_dedup: { productId, ipId, sceneId, inputHash }
+      uniq_first_frames_dedup: { styleImageId, sceneId, composition }
     }
   })
   if (existing) {
     return { firstFrameUrl: existing.url, firstFrameId: existing.id }
   }
 
+  // 3. 计算 input hash（用于记录，不参与去重）
+  const inputHash = hashStrings(styleImageId, sceneId, composition)
+
   const provider = getRunningHubProvider()
 
-  // 3. 获取场景图
+  // 4. 获取场景图
   const scene = await db.material.findUnique({
     where: { id: sceneId },
     select: { url: true, prompt: true },
@@ -205,7 +220,7 @@ export async function generateFirstFrame(
     throw new Error(`Scene ${sceneId} not found`)
   }
 
-  // 4. 调用场景替换工具
+  // 5. 调用场景替换工具
   const sceneResult: ToolResult = await provider.execute(SceneReplaceTool.workflowId, {
     character: imageUrl,
     scene: scene.url,
@@ -214,7 +229,7 @@ export async function generateFirstFrame(
     throw new Error(`Scene replace failed: ${sceneResult.error}`)
   }
 
-  // 5. 保存到 first_frames 表
+  // 6. 保存到 first_frames 表
   const firstFrame = await db.firstFrame.create({
     data: {
       id: uuid(),

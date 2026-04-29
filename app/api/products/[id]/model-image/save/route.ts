@@ -16,21 +16,20 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { ipId, imageUrl, prompt } = body
+    const { ipId, imageUrl, prompt, outfit = '' } = body
 
     if (!ipId || !imageUrl) {
       return NextResponse.json({ error: 'Missing required fields: ipId, imageUrl' }, { status: 400 })
     }
 
-    // 计算 input hash（上传的图片没有参数，所以用固定值）
-    const inputHash = 'uploaded'
-
-    // 检查是否已存在
-    const existing = await db.modelImage.findFirst({
+    // 检查是否已存在相同 productId + ipId + outfit 的记录
+    const existing = await db.modelImage.findUnique({
       where: {
-        productId: params.id,
-        ipId: ipId,
-        url: imageUrl,
+        uniq_model_images_dedup: {
+          productId: params.id,
+          ipId: ipId,
+          outfit,
+        }
       }
     })
     if (existing) {
@@ -43,9 +42,10 @@ export async function POST(
         id: uuid(),
         productId: params.id,
         ipId: ipId,
+        outfit,
         url: imageUrl,
         prompt: typeof prompt === 'string' ? prompt.trim() || null : null,
-        inputHash,
+        inputHash: 'uploaded',
       }
     })
 

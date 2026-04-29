@@ -14,17 +14,9 @@ interface Tool {
   outputs: { name: string; type: string }[]
 }
 
-const typeLabels: Record<string, string> = {
-  'image': '图片',
-  'image[]': '图片组',
-  'text': '文本',
-  'video': '视频',
-}
-
 export default function ToolsPage() {
   const [tools, setTools] = useState<Tool[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedTool, setSelectedTool] = useState<Tool | null>(null)
 
   useEffect(() => {
     fetch('/api/tools')
@@ -68,9 +60,9 @@ export default function ToolsPage() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {tools.map((tool) => (
-              <button
+              <Link
                 key={tool.id}
-                onClick={() => setSelectedTool(tool)}
+                href={tool.href}
                 className={`
                   relative overflow-hidden rounded-2xl p-5 text-left
                   transition-all duration-300 hover:scale-[1.02] hover:shadow-xl
@@ -80,78 +72,8 @@ export default function ToolsPage() {
                 <div className="text-3xl mb-3">{tool.icon}</div>
                 <h3 className="text-white font-bold text-lg mb-1">{tool.name}</h3>
                 <p className="text-white/80 text-sm line-clamp-2">{tool.description}</p>
-              </button>
+              </Link>
             ))}
-          </div>
-        )}
-
-        {/* Tool Detail Modal */}
-        {selectedTool && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
-            onClick={() => setSelectedTool(null)}
-          >
-            <div
-              className="w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl"
-              style={{
-                background: 'linear-gradient(180deg, rgba(30,20,40,0.98) 0%, rgba(20,15,30,0.99) 100%)',
-                border: '1px solid rgba(255,255,255,0.1)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-4 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{selectedTool.icon}</span>
-                  <h3 className="text-lg font-semibold text-white">{selectedTool.name}</h3>
-                </div>
-                <button
-                  onClick={() => setSelectedTool(null)}
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="p-4 space-y-4">
-                <p className="text-white/90">{selectedTool.description}</p>
-
-                <div>
-                  <h4 className="text-sm font-medium text-white/70 mb-2">输入</h4>
-                  <div className="space-y-2">
-                    {selectedTool.inputs.map((input, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm">
-                        <span className="px-2 py-0.5 rounded bg-cyan-500/30 text-cyan-300 text-xs">
-                          {typeLabels[input.type] || input.type}
-                        </span>
-                        <span className="text-white/90">{input.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-white/70 mb-2">输出</h4>
-                  <div className="space-y-2">
-                    {selectedTool.outputs.map((output, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm">
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/30 text-emerald-300 text-xs">
-                          {typeLabels[output.type] || output.type}
-                        </span>
-                        <span className="text-white/90">{output.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <Link
-                    href={selectedTool.href}
-                    className="flex-1 py-2 px-4 rounded-xl bg-matcha-600 text-white text-center font-medium hover:bg-matcha-800 transition-all"
-                  >
-                    立即使用
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>

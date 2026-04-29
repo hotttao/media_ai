@@ -60,16 +60,15 @@ export async function POST(
     // sceneId 和 composition 用于去重，如果不存在则用空字符串代替
     const sceneForHash = sceneId || ''
     const compositionForHash = composition || ''
-    const inputHash = hashStrings(sceneForHash, compositionForHash)
+    const inputHash = hashStrings(styleImageId, sceneForHash, compositionForHash)
 
     // 检查是否已存在
     const existing = await db.firstFrame.findUnique({
       where: {
         uniq_first_frames_dedup: {
-          productId: params.id,
-          ipId: styleImage.ipId,
+          styleImageId,
           sceneId: sceneForHash,
-          inputHash
+          composition: compositionForHash,
         }
       }
     })
@@ -89,8 +88,8 @@ export async function POST(
           typeof prompt === 'string' ? prompt : scenePrompt,
           composition
         ),
-        sceneId: sceneId || undefined,
-        composition: composition || undefined,
+        sceneId: sceneForHash,
+        composition: compositionForHash,
         inputHash,
       }
     })

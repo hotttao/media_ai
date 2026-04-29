@@ -366,3 +366,48 @@ curl -X POST http://127.0.0.1:8765/v1/single/first-frame-image \
 ```
 
 这三个工具，都是两两组合，组合内还有过滤逻辑。有什么好的 UI组件方便选择。
+
+
+### 9.4 即梦生图工具
+即梦生图任务，用户需要选择三个参数:
+1. 人物
+2. 服装
+3. 场景
+
+每一个参数都是可以多选的。用户点击生成时。需要对他们的做一个组合。
+
+对每一个组合调用接口:
+
+```
+POST http://localhost:8765/v1/single/jimeng-image                                                                                                                                                              
+
+
+  {
+    "styleImageId": "style_abc123",
+    "sceneId": "scene_xyz",
+    "force": false
+  }
+```
+
+### 9.4 即梦生视频工具
+即梦生图任务，用户需要选择三个参数:
+1. 首帧图
+2. 动作
+
+每一个参数都是可以多选的。用户点击生成时。需要对他们的做一个组合。
+
+对每一个组合调用接口:
+
+```
+  POST http://localhost:8765/v1/single/jimeng-video                                                                                                                                                              
+                            
+
+  {
+    "productId": "prod_001",
+    "ipId": "ip_001",
+    "firstFrameId": "ff_abc",
+    "movementId": "mov_xyz",
+    "prompt": "自定义 prompt",
+    "force": false
+  }
+```

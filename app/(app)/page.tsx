@@ -7,22 +7,6 @@ import { PromptElementsBar } from '@/components/home/PromptElementsBar'
 
 const videoTools = [
   {
-    id: '1',
-    title: '双图编辑',
-    description: '输入两张图片和多张辅图，生成编辑后的图片',
-    href: '/tools',
-    gradient: 'from-rose-400 to-pink-500',
-    icon: '🖼️',
-  },
-  {
-    id: '2',
-    title: '多图编辑',
-    description: '输入多张图片，生成编辑后的图片',
-    href: '/tools',
-    gradient: 'from-cyan-400 to-blue-500',
-    icon: '📸',
-  },
-  {
     id: '3',
     title: '模特图生成',
     description: '结合虚拟 IP 全身图和商品图生成模特图',
