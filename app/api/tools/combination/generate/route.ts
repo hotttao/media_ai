@@ -4,6 +4,18 @@ import { authOptions } from '@/foundation/lib/auth'
 import { generateModelImage, generateStyleImage, generateFirstFrame } from '@/domains/video-generation/service'
 import { db } from '@/foundation/lib/db'
 
+// Simple hash function for generating deterministic IDs
+function hashStrings(...inputs: (string | undefined | null)[]): string {
+  const str = inputs.filter(Boolean).join('|')
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash
+  }
+  return Math.abs(hash).toString(16).padStart(8, '0')
+}
+
 // POST /api/tools/combination/generate
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -136,6 +148,85 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ status: 'submitted' })
+      }
+
+      case 'jimeng-image': {
+        if (!modelImageId || !poseId) {
+          return NextResponse.json({ error: 'Missing modelImageId or poseId' }, { status: 400 })
+        }
+
+        console.log('\n========== JIMENG-IMAGE REQUEST ==========')
+        console.log('URL: http://127.0.0.1:8765/v1/single/jimeng-image')
+        console.log('BODY:', JSON.stringify({ modelImageId, poseId }, null, 2))
+        console.log('==========================================\n')
+
+        // 1. 查找 pose 的文字描述（从 Material 表）
+        const pose = await db.material.findUnique({
+          where: { id: poseId },
+          select: { prompt: true },
+        })
+        const poseText = pose?.prompt || ''
+
+        // 2. 生成虚假 styleImageId：jimeng_${hashStrings(modelImageId, poseId)}
+        const styleImageId = `jimeng_${hashStrings(modelImageId, poseId)}`
+        const inputHash = hashStrings(modelImageId, poseId)
+
+        // 3. 检查 styleImage 是否已存在，不存在则创建虚假记录（url 为空字符串）
+        const existingStyleImage = await db.styleImage.findUnique({
+          where: { id: styleImageId },
+        })
+
+        if (!existingStyleImage) {
+          // 获取 modelImage 以便复制 productId 和 ipId
+          const modelImage = await db.modelImage.findUnique({
+            where: { id: modelImageId },
+            select: { productId: true, ipId: true },
+          })
+
+          await db.styleImage.create({
+            data: {
+              id: styleImageId,
+              productId: modelImage?.productId || '',
+              ipId: modelImage?.ipId || '',
+              modelImageId,
+              url: '',
+              prompt: poseText,
+              poseId,
+              makeupId: '',
+              accessoryId: '',
+              inputHash,
+            },
+          })
+        }
+
+        // 4. 调用即梦接口
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 60000)
+
+        let response
+        try {
+          response = await fetch('http://127.0.0.1:8765/v1/single/jimeng-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ modelImageId, poseId }),
+            signal: controller.signal,
+          })
+        } catch (err) {
+          clearTimeout(timeoutId)
+          console.error('>>> Jimeng-image API call failed:', err)
+          return NextResponse.json({ error: 'Failed to submit task: network error' }, { status: 500 })
+        }
+
+        clearTimeout(timeoutId)
+        console.log('>>> Jimeng-image API response status:', response.status)
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Unknown error')
+          console.error('Jimeng-image API returned error:', response.status, errorText)
+          return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
+        }
+
+        return NextResponse.json({ styleImageId, status: 'submitted' })
       }
 
       default:
