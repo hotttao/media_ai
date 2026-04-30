@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ProductCard } from '@/components/product/ProductCard'
+import { useDailyPublishPlan } from '@/components/daily-publish-plan/DailyPublishPlanProvider'
 
 interface Product {
   id: string
@@ -27,7 +28,9 @@ export default function ProductsPage() {
   const [targetAudience, setTargetAudience] = useState('ALL')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set())
   const searchRef = useRef<HTMLInputElement>(null)
+  const { addPlansBatch } = useDailyPublishPlan()
 
   useEffect(() => {
     fetchProducts()
@@ -60,6 +63,21 @@ export default function ProductsPage() {
   }, [search, targetAudience])
 
   const selectedFilter = audienceOptions.find(o => o.value === targetAudience) || audienceOptions[0]
+
+  const handleSelectAll = () => {
+    if (selectedProductIds.size === products.length) {
+      setSelectedProductIds(new Set())
+    } else {
+      setSelectedProductIds(new Set(products.map(p => p.id)))
+    }
+  }
+
+  const handleAddSelectedToPublishPlan = async () => {
+    if (selectedProductIds.size === 0) return
+    const today = new Date().toISOString().split('T')[0]
+    await addPlansBatch(Array.from(selectedProductIds), today)
+    setSelectedProductIds(new Set())
+  }
 
   return (
     <div className={`min-h-screen transition-all duration-700 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
@@ -186,6 +204,27 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* Selection Banner */}
+      {selectedProductIds.size > 0 && (
+        <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
+          <span className="text-sm text-emerald-700">
+            已选择 {selectedProductIds.size} 个产品
+          </span>
+          <button
+            onClick={handleSelectAll}
+            className="text-sm text-emerald-600 hover:text-emerald-700 underline"
+          >
+            {selectedProductIds.size === products.length ? '取消全选' : '全选'}
+          </button>
+          <button
+            onClick={handleAddSelectedToPublishPlan}
+            className="ml-auto px-4 py-1.5 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+          >
+            加入发布计划
+          </button>
+        </div>
+      )}
+
       {/* Products Grid */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
@@ -242,14 +281,26 @@ export default function ProductsPage() {
           {products.map((product, index) => (
             <div
               key={product.id}
-              className="animate-in"
+              className="animate-in cursor-pointer"
               style={{
                 animationDuration: '500ms',
                 animationDelay: `${index * 50}ms`,
                 animationFillMode: 'backwards',
               }}
+              onClick={() => {
+                const next = new Set(selectedProductIds)
+                if (next.has(product.id)) {
+                  next.delete(product.id)
+                } else {
+                  next.add(product.id)
+                }
+                setSelectedProductIds(next)
+              }}
             >
-              <ProductCard product={product as any} />
+              <ProductCard
+                product={product as any}
+                selected={selectedProductIds.has(product.id)}
+              />
             </div>
           ))}
         </div>
