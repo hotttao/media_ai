@@ -38,6 +38,14 @@ const tools = [
     outputs: SceneReplaceTool.outputs,
   },
   {
+    id: 'jimeng-image',
+    name: '即梦生图',
+    description: '选择人物、服装、姿势、场景生成首帧图',
+    icon: '✨',
+    gradient: 'from-yellow-400 to-orange-500',
+    href: '/tools/jimeng-image',
+  },
+  {
     id: ImageToVideoTool.id,
     name: '图生视频',
     description: '输入首帧图和动作文字描述，生成视频',
