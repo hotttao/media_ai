@@ -17,7 +17,7 @@ import { getImageUrl } from '@/foundation/lib/utils'
 
 interface JimengVideoCombination {
   id: string
-  firstFrame: { id: string; url: string; poseId: string | null }
+  firstFrame: { id: string; url: string; poseId: string | null; productId: string }
   movement: { id: string; content: string }
   existingVideoId: string | null
 }
@@ -45,7 +45,8 @@ export default function VideoWizardPage() {
       })
       .then((data: JimengVideoCombination[]) => {
         // Filter to only show combinations for this product (by checking if any combination matches product's firstFrame)
-        setCombinations(data)
+        const filtered = data.filter(combo => combo.firstFrame.productId === productId)
+        setCombinations(filtered)
         setLoading(false)
       })
       .catch(err => {
