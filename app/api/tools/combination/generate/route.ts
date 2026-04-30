@@ -250,7 +250,11 @@ export async function POST(request: NextRequest) {
           select: { content: true },
         })
 
-        const prompt = movement?.content || ''
+        if (!movement) {
+          return NextResponse.json({ error: 'Movement not found' }, { status: 404 })
+        }
+
+        const prompt = movement.content
 
         console.log('\n========== JIMENG-VIDEO REQUEST ==========')
         console.log('URL: http://127.0.0.1:8765/v1/single/jimeng-video')
