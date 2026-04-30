@@ -210,6 +210,7 @@ model Product {
   user             User              @relation("UserToProducts", fields: [userId], references: [id])
   videos           Video[]           @relation("ProductToVideos")
   dailyPublishPlans DailyPublishPlan[] @relation("ProductToDailyPublishPlans")
+  videoPushes      VideoPush[]      @relation("ProductToVideoPushes")
 
   @@index([teamId], map: "products_team_id_fkey")
   @@index([userId], map: "products_user_id_fkey")
@@ -331,6 +332,9 @@ enum MaterialType {
   POSE
   MAKEUP
   ACCESSORY
+  CLIP_TEMPLATE      // Video clip template
+  BACKGROUND_MUSIC   // Background music
+  COVER_TEMPLATE     // Cover template
   OTHER
 }
 
@@ -457,6 +461,31 @@ model AlternativeImage {
   @@index([materialType], map: "idx_alternative_images_type")
   @@index([isConfirmed], map: "idx_alternative_images_confirmed")
   @@map("alternative_images")
+}
+
+model VideoPush {
+  id              String   @id @default(uuid()) @db.VarChar(36)
+  videoId         String   @map("video_id") @db.VarChar(36)
+  productId       String   @map("product_id") @db.VarChar(36)
+  ipId            String   @map("ip_id") @db.VarChar(36)
+  templateId      String?  @map("template_id")
+  templateName    String?  @map("template_name")
+  musicId         String?  @map("music_id")
+  url             String   @db.VarChar(500)
+  thumbnail       String?  @db.VarChar(500)
+  title           String?  @db.VarChar(200)
+  description     String?  @db.Text
+  clipParams      String?  @db.Text
+  isQualified     Boolean  @default(false) @map("is_qualified")
+  isPublished     Boolean  @default(false) @map("is_published")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  product         Product  @relation(fields: [productId], references: [id])
+  @@index([productId], map: "idx_video_push_product")
+  @@index([ipId], map: "idx_video_push_ip")
+  @@index([isQualified], map: "idx_video_push_qualified")
+  @@map("video_pushes")
 }
 
 enum AlternativeType {
