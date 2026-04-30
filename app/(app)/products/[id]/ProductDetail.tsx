@@ -475,6 +475,15 @@ export function ProductDetail({ product }: { product: any }) {
                   生图向导
                 </button>
                 <button
+                  onClick={() => router.push(`/products/${product.id}/video-wizard`)}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-6 py-3.5 font-medium text-white shadow-lg shadow-rose-500/30 transition-all duration-300 hover:from-rose-400 hover:to-pink-500 hover:shadow-rose-500/50 group active:scale-[0.98]"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  生视频
+                </button>
+                <button
                   onClick={() => router.push(`/products/${product.id}/edit`)}
                     className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 py-3.5 font-medium text-white shadow-lg shadow-violet-500/30 transition-all duration-300 hover:from-violet-500 hover:to-fuchsia-500 hover:shadow-violet-500/50 group active:scale-[0.98]"
                 >
