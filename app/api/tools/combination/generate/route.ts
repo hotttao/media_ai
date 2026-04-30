@@ -27,8 +27,6 @@ export async function POST(request: NextRequest) {
   const { type, ipId, productId, modelImageId, poseId, styleImageId, sceneId } = body
 
   try {
-    let result
-
     switch (type) {
       case 'model-image': {
         if (!ipId || !productId) {
@@ -151,13 +149,13 @@ export async function POST(request: NextRequest) {
       }
 
       case 'jimeng-image': {
-        if (!modelImageId || !poseId) {
-          return NextResponse.json({ error: 'Missing modelImageId or poseId' }, { status: 400 })
+        if (!modelImageId || !poseId || !sceneId) {
+          return NextResponse.json({ error: 'Missing modelImageId, poseId, or sceneId' }, { status: 400 })
         }
 
         console.log('\n========== JIMENG-IMAGE REQUEST ==========')
         console.log('URL: http://127.0.0.1:8765/v1/single/jimeng-image')
-        console.log('BODY:', JSON.stringify({ modelImageId, poseId }, null, 2))
+        console.log('BODY:', JSON.stringify({ styleImageId, sceneId, poseId, force: false }, null, 2))
         console.log('==========================================\n')
 
         // 1. 查找 pose 的文字描述（从 Material 表）
@@ -168,8 +166,8 @@ export async function POST(request: NextRequest) {
         const poseText = pose?.prompt || ''
 
         // 2. 生成虚假 styleImageId：jimeng_${hashStrings(modelImageId, poseId)}
-        const styleImageId = `jimeng_${hashStrings(modelImageId, poseId)}`
         const inputHash = hashStrings(modelImageId, poseId)
+        const styleImageId = `jimeng_${inputHash}`
 
         // 3. 检查 styleImage 是否已存在，不存在则创建虚假记录（url 为空字符串）
         const existingStyleImage = await db.styleImage.findUnique({
@@ -208,7 +206,7 @@ export async function POST(request: NextRequest) {
           response = await fetch('http://127.0.0.1:8765/v1/single/jimeng-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ modelImageId, poseId }),
+            body: JSON.stringify({ styleImageId, sceneId, poseId, force: false }),
             signal: controller.signal,
           })
         } catch (err) {
@@ -232,8 +230,6 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
     }
-
-    return NextResponse.json(result)
   } catch (error) {
     console.error('Generation error:', error)
     return NextResponse.json({ error: 'Generation failed' }, { status: 500 })
