@@ -46,6 +46,14 @@ const tools = [
     href: '/tools/jimeng-image',
   },
   {
+    id: 'jimeng-video',
+    name: '即梦生视频',
+    description: '选择首帧图和动作生成即梦视频',
+    icon: '🎬',
+    gradient: 'from-pink-400 to-rose-500',
+    href: '/tools/jimeng-video',
+  },
+  {
     id: ImageToVideoTool.id,
     name: '图生视频',
     description: '输入首帧图和动作文字描述，生成视频',
