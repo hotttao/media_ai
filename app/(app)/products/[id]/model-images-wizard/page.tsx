@@ -37,6 +37,7 @@ export default function ModelImagesWizardPage() {
   const [selectedCombinations, setSelectedCombinations] = useState<Set<string>>(new Set())
   const [generating, setGenerating] = useState(false)
 
+  // Initial data fetch
   useEffect(() => {
     fetch('/api/tools/combination/model-images')
       .then(res => {
@@ -47,12 +48,6 @@ export default function ModelImagesWizardPage() {
         // Filter to only show combinations for this product
         const filtered = data.filter(c => c.product.id === productId)
         setCombinations(filtered)
-
-        // Set initial selected IP if not set
-        if (!selectedIpId && filtered.length > 0) {
-          setSelectedIpId(filtered[0].ip.id)
-        }
-
         setLoading(false)
       })
       .catch(err => {
@@ -60,6 +55,13 @@ export default function ModelImagesWizardPage() {
         setLoading(false)
       })
   }, [productId])
+
+  // Set initial selected IP once on mount
+  useEffect(() => {
+    if (!selectedIpId && combinations.length > 0) {
+      setSelectedIpId(combinations[0].ip.id)
+    }
+  }, [selectedIpId, combinations])
 
   // Get unique IPs from combinations
   const ips = useMemo(() => {
@@ -115,8 +117,9 @@ export default function ModelImagesWizardPage() {
     setGenerating(true)
     try {
       const combos = combinationsForSelectedIp.filter(c => selectedCombinations.has(c.id))
+      const failures: string[] = []
       for (const combo of combos) {
-        await fetch('/api/tools/combination/generate', {
+        const res = await fetch('/api/tools/combination/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -125,8 +128,15 @@ export default function ModelImagesWizardPage() {
             productId: combo.product.id,
           }),
         })
+        if (!res.ok) {
+          failures.push(combo.ip.nickname)
+        }
       }
-      alert('已提交生成任务')
+      if (failures.length > 0) {
+        alert(`部分生成失败: ${failures.join(', ')}`)
+      } else {
+        alert('已提交生成任务')
+      }
       // Refresh page to update status
       router.refresh()
     } catch (err) {
