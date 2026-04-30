@@ -730,6 +730,42 @@ function MaterialsTab({
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [alternatives, setAlternatives] = useState<any[]>([])
+  const [showAlternatives, setShowAlternatives] = useState(false)
+
+  useEffect(() => {
+    if (materials?.firstFrames.length > 0) {
+      const ffId = materials.firstFrames[0].id
+      fetch(`/api/alternative-images?materialType=FIRST_FRAME&relatedId=${ffId}`)
+        .then(res => res.json())
+        .then(data => setAlternatives(data.alternatives || []))
+        .catch(console.error)
+    }
+  }, [materials?.firstFrames])
+
+  const handleConfirmAlternative = async (alternativeId: string) => {
+    if (!confirm('确定使用这张备选图作为主图吗？')) return
+    try {
+      const res = await fetch(`/api/alternative-images/${alternativeId}/confirm`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        // Refresh alternatives
+        if (materials?.firstFrames.length > 0) {
+          const ffId = materials.firstFrames[0].id
+          const altRes = await fetch(`/api/alternative-images?materialType=FIRST_FRAME&relatedId=${ffId}`)
+          if (altRes.ok) {
+            const altData = await altRes.json()
+            setAlternatives(altData.alternatives || [])
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err)
+      alert('确认失败')
+    }
+  }
+
   const handleDelete = async (type: string, id: string) => {
     try {
       await onDelete(type, id)
@@ -859,12 +895,47 @@ function MaterialsTab({
       {/* 首帧图 */}
       {materials.firstFrames.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-gray-500 mb-4">首帧图 ({materials.firstFrames.length})</h3>
+          <h3 className="text-sm font-medium text-gray-500 mb-4">
+            首帧图 ({materials.firstFrames.length})
+            {alternatives.length > 0 && (
+              <button
+                onClick={() => setShowAlternatives(!showAlternatives)}
+                className="ml-2 text-xs text-violet-600 hover:text-violet-700 underline"
+              >
+                {showAlternatives ? '收起' : `+ 备选图 (${alternatives.length})`}
+              </button>
+            )}
+          </h3>
           <div className="grid grid-cols-2 justify-items-start gap-3 md:grid-cols-3 lg:grid-cols-4">
             {materials.firstFrames.map(f => (
               renderGeneratedMaterial('firstFrame', f.id, f.url, '首帧图')
             ))}
           </div>
+
+          {/* Alternative images list */}
+          {showAlternatives && alternatives.length > 0 && (
+            <div className="mt-4">
+              <p className="text-xs text-gray-400 mb-2">备选图</p>
+              <div className="flex flex-wrap gap-2">
+                {alternatives.map(alt => (
+                  <div key={alt.id} className="relative group">
+                    <img
+                      src={getImageUrl(alt.url)}
+                      alt="备选图"
+                      className="h-20 w-20 rounded-lg object-cover cursor-pointer hover:ring-2 hover:ring-violet-500"
+                      onClick={() => handleConfirmAlternative(alt.id)}
+                    />
+                    {alt.isConfirmed && (
+                      <span className="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 rounded">✓</span>
+                    )}
+                    {alt.source === 'AI_GENERATED' && (
+                      <span className="absolute bottom-1 right-1 bg-blue-500 text-white text-xs px-1 rounded">AI</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
