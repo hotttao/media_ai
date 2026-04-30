@@ -227,6 +227,80 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ styleImageId, status: 'submitted' })
       }
 
+      case 'jimeng-video': {
+        const { firstFrameId, movementId } = body
+
+        if (!firstFrameId || !movementId) {
+          return NextResponse.json({ error: 'Missing firstFrameId or movementId' }, { status: 400 })
+        }
+
+        // 1. 获取首帧图信息（包含 productId, ipId）
+        const firstFrame = await db.firstFrame.findUnique({
+          where: { id: firstFrameId },
+          select: { productId: true, ipId: true },
+        })
+
+        if (!firstFrame) {
+          return NextResponse.json({ error: 'FirstFrame not found' }, { status: 404 })
+        }
+
+        // 2. 获取动作信息（获取 content 作为 prompt）
+        const movement = await db.movementMaterial.findUnique({
+          where: { id: movementId },
+          select: { content: true },
+        })
+
+        const prompt = movement?.content || ''
+
+        console.log('\n========== JIMENG-VIDEO REQUEST ==========')
+        console.log('URL: http://127.0.0.1:8765/v1/single/jimeng-video')
+        console.log('BODY:', JSON.stringify({
+          productId: firstFrame.productId,
+          ipId: firstFrame.ipId,
+          firstFrameId,
+          movementId,
+          prompt,
+          force: false,
+        }, null, 2))
+        console.log('==========================================\n')
+
+        // 3. 调用即梦接口
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 60000)
+
+        let response
+        try {
+          response = await fetch('http://127.0.0.1:8765/v1/single/jimeng-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              productId: firstFrame.productId,
+              ipId: firstFrame.ipId,
+              firstFrameId,
+              movementId,
+              prompt,
+              force: false,
+            }),
+            signal: controller.signal,
+          })
+        } catch (err) {
+          clearTimeout(timeoutId)
+          console.error('>>> Jimeng-video API call failed:', err)
+          return NextResponse.json({ error: 'Failed to submit task: network error' }, { status: 500 })
+        }
+
+        clearTimeout(timeoutId)
+        console.log('>>> Jimeng-video API response status:', response.status)
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Unknown error')
+          console.error('Jimeng-video API returned error:', response.status, errorText)
+          return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
+        }
+
+        return NextResponse.json({ status: 'submitted' })
+      }
+
       default:
         return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
     }
