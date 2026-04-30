@@ -443,3 +443,30 @@ model DailyPublishPlan {
   @@index([planDate], map: "idx_daily_publish_plan_date")
   @@map("daily_publish_plans")
 }
+
+model AlternativeImage {
+  id            String           @id @default(uuid()) @db.VarChar(36)
+  materialType  AlternativeType
+  relatedId     String           @map("related_id") @db.VarChar(36)
+  url           String           @db.VarChar(500)
+  source        AlternativeSource
+  isConfirmed   Boolean          @default(false) @map("is_confirmed")
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  @@index([relatedId], map: "idx_alternative_images_related")
+  @@index([materialType], map: "idx_alternative_images_type")
+  @@index([isConfirmed], map: "idx_alternative_images_confirmed")
+  @@map("alternative_images")
+}
+
+enum AlternativeType {
+  MODEL_IMAGE
+  STYLE_IMAGE
+  FIRST_FRAME
+  VIDEO
+}
+
+enum AlternativeSource {
+  AI_GENERATED
+  USER_UPLOADED
+}
