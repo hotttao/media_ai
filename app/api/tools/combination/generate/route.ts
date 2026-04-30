@@ -2,7 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { generateModelImage, generateStyleImage, generateFirstFrame } from '@/domains/video-generation/service'
-import { db } from '@/foundation/lib/db'
+import { db, PrismaClient } from '@/foundation/lib/db'
+
+// Helper function to create alternative image after successful AI generation
+// Note: For async operations (jimeng-image, jimeng-video), URL is empty because
+// the actual image/video URL will be provided later via callback mechanism.
+// This creates a placeholder record that will be updated when callback arrives.
+async function createAlternativeImage(
+  db: PrismaClient,
+  materialType: 'FIRST_FRAME' | 'MODEL_IMAGE' | 'STYLE_IMAGE' | 'VIDEO',
+  relatedId: string,
+  url: string
+) {
+  await db.alternativeImage.create({
+    data: {
+      materialType,
+      relatedId,
+      url,
+      source: 'AI_GENERATED',
+      isConfirmed: false,
+    },
+  })
+}
 
 // Simple hash function for generating deterministic IDs
 function hashStrings(...inputs: (string | undefined | null)[]): string {
@@ -67,6 +88,15 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
         }
 
+        // 创建备选记录（AI生成）- URL将通过回调更新
+        const modelImageAltId = `model_${hashStrings(ipId, productId)}`
+        try {
+          await createAlternativeImage(db, 'MODEL_IMAGE', modelImageAltId, '')
+        } catch (err) {
+          console.error('Failed to create alternative image for model-image:', err)
+          // Don't fail the main flow - log and continue
+        }
+
         return NextResponse.json({ status: 'submitted' })
       }
 
@@ -106,6 +136,15 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
         }
 
+        // 创建备选记录（AI生成）- URL将通过回调更新
+        const styleImageAltId = `style_${hashStrings(modelImageId, poseId)}`
+        try {
+          await createAlternativeImage(db, 'STYLE_IMAGE', styleImageAltId, '')
+        } catch (err) {
+          console.error('Failed to create alternative image for style-image:', err)
+          // Don't fail the main flow - log and continue
+        }
+
         return NextResponse.json({ status: 'submitted' })
       }
 
@@ -143,6 +182,15 @@ export async function POST(request: NextRequest) {
           const errorText = await response.text().catch(() => 'Unknown error')
           console.error('First-frame API returned error:', response.status, errorText)
           return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
+        }
+
+        // 创建备选记录（AI生成）- URL将通过回调更新
+        const firstFrameAltId = `frame_${hashStrings(styleImageId, sceneId)}`
+        try {
+          await createAlternativeImage(db, 'FIRST_FRAME', firstFrameAltId, '')
+        } catch (err) {
+          console.error('Failed to create alternative image for first-frame:', err)
+          // Don't fail the main flow - log and continue
         }
 
         return NextResponse.json({ status: 'submitted' })
@@ -224,6 +272,14 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
         }
 
+        // 创建备选记录（AI生成）- URL将通过回调更新
+        try {
+          await createAlternativeImage(db, 'STYLE_IMAGE', styleImageId, '')
+        } catch (err) {
+          console.error('Failed to create alternative image for jimeng-image:', err)
+          // Don't fail the main flow - log and continue
+        }
+
         return NextResponse.json({ styleImageId, status: 'submitted' })
       }
 
@@ -302,7 +358,15 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to submit task' }, { status: 500 })
         }
 
-        return NextResponse.json({ status: 'submitted' })
+        // 创建备选记录（AI生成）- URL将通过回调更新
+        try {
+          await createAlternativeImage(db, 'VIDEO', firstFrameId, '')
+        } catch (err) {
+          console.error('Failed to create alternative image for jimeng-video:', err)
+          // Don't fail the main flow - log and continue
+        }
+
+        return NextResponse.json({ firstFrameId, status: 'submitted' })
       }
 
       default:
