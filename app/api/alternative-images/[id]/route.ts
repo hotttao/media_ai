@@ -30,8 +30,32 @@ export async function DELETE(
       return NextResponse.json({ error: 'Alternative not found' }, { status: 404 })
     }
 
-    // Check ownership
-    if (alternative.userId !== session.user.id) {
+    // Check ownership through related resource's teamId
+    let teamId: string | null = null
+    switch (alternative.materialType) {
+      case 'FIRST_FRAME': {
+        const ff = await db.firstFrame.findUnique({ where: { id: alternative.relatedId } })
+        teamId = ff?.teamId ?? null
+        break
+      }
+      case 'MODEL_IMAGE': {
+        const mi = await db.modelImage.findUnique({ where: { id: alternative.relatedId } })
+        teamId = mi?.teamId ?? null
+        break
+      }
+      case 'STYLE_IMAGE': {
+        const si = await db.styleImage.findUnique({ where: { id: alternative.relatedId } })
+        teamId = si?.teamId ?? null
+        break
+      }
+      case 'VIDEO': {
+        const v = await db.video.findUnique({ where: { id: alternative.relatedId } })
+        teamId = v?.teamId ?? null
+        break
+      }
+    }
+
+    if (!teamId || teamId !== session.user.teamId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
