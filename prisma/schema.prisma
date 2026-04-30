@@ -39,6 +39,7 @@ model User {
   videoTasks   VideoTask[]  @relation("UserToVideoTasks")
   videos       Video[]      @relation("UserToVideos")
   virtualIps   VirtualIp[]  @relation("UserToVirtualIps")
+  dailyPublishPlans DailyPublishPlan[] @relation("UserToDailyPublishPlans")
 
   @@index([teamId], map: "users_team_id_fkey")
   @@map("users")
@@ -208,6 +209,7 @@ model Product {
   team             Team              @relation("TeamToProducts", fields: [teamId], references: [id])
   user             User              @relation("UserToProducts", fields: [userId], references: [id])
   videos           Video[]           @relation("ProductToVideos")
+  dailyPublishPlans DailyPublishPlan[] @relation("ProductToDailyPublishPlans")
 
   @@index([teamId], map: "products_team_id_fkey")
   @@index([userId], map: "products_user_id_fkey")
@@ -424,4 +426,20 @@ model VirtualIpScene {
   @@index([virtualIpId], map: "idx_virtual_ip_scenes_ip")
   @@index([materialId], map: "idx_virtual_ip_scenes_material")
   @@map("virtual_ip_scenes")
+}
+
+model DailyPublishPlan {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  userId     String   @map("user_id") @db.VarChar(36)
+  productId  String   @map("product_id") @db.VarChar(36)
+  planDate   DateTime @db.Date @map("plan_date")
+  createdAt  DateTime @default(now()) @map("created_at")
+  product    Product  @relation("ProductToDailyPublishPlans", fields: [productId], references: [id], onDelete: Cascade)
+  user       User     @relation("UserToDailyPublishPlans", fields: [userId], references: [id])
+
+  @@unique([userId, productId, planDate], name: "uk_daily_publish_plan_user_product_date")
+  @@index([userId], map: "idx_daily_publish_plan_user")
+  @@index([productId], map: "idx_daily_publish_plan_product")
+  @@index([planDate], map: "idx_daily_publish_plan_date")
+  @@map("daily_publish_plans")
 }
