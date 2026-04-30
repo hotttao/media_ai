@@ -287,7 +287,8 @@ export default function ProductsPage() {
                 animationDelay: `${index * 50}ms`,
                 animationFillMode: 'backwards',
               }}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation()
                 const next = new Set(selectedProductIds)
                 if (next.has(product.id)) {
                   next.delete(product.id)
