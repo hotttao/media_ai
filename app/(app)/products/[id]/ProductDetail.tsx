@@ -466,6 +466,15 @@ export function ProductDetail({ product }: { product: any }) {
                   生成视频
                 </button>
                 <button
+                  onClick={() => router.push(`/products/${product.id}/model-images-wizard`)}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3.5 font-medium text-white shadow-lg shadow-amber-500/30 transition-all duration-300 hover:from-amber-400 hover:to-orange-500 hover:shadow-amber-500/50 group active:scale-[0.98]"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707m5.656-5.656l-.707-.707m-4.243 12.243l-.707-.707m-5.656 5.656l-.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                  </svg>
+                  生图向导
+                </button>
+                <button
                   onClick={() => router.push(`/products/${product.id}/edit`)}
                     className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 py-3.5 font-medium text-white shadow-lg shadow-violet-500/30 transition-all duration-300 hover:from-violet-500 hover:to-fuchsia-500 hover:shadow-violet-500/50 group active:scale-[0.98]"
                 >
