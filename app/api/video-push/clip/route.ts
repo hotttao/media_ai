@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
             url: clip.url,
             thumbnail: clip.thumbnail,
             clipParams: JSON.stringify(clip.params),
+            isQualified: true,
           },
         })
       )
