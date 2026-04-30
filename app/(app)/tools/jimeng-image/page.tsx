@@ -160,12 +160,16 @@ export default function JimengImagePage() {
     if (pendingCount === 0) return
 
     setGenerating(true)
+    const results: { combo: typeof validCombinations[0]; success: boolean }[] = []
     try {
       for (const combo of validCombinations.filter(c => !c.existingFirstFrameId)) {
         const comboData = combinations.find(c => c.id === combo.id)
-        if (!comboData) continue
+        if (!comboData) {
+          results.push({ combo, success: false })
+          continue
+        }
 
-        await fetch('/api/tools/combination/generate', {
+        const res = await fetch('/api/tools/combination/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -175,8 +179,14 @@ export default function JimengImagePage() {
             sceneId: comboData.scene.id,
           }),
         })
+        results.push({ combo, success: res.ok })
       }
-      alert('已提交生成任务')
+      const failed = results.filter(r => !r.success)
+      if (failed.length > 0) {
+        alert(`生成完成，${failed.length} 个失败`)
+      } else {
+        alert('已提交生成任务')
+      }
       window.location.reload()
     } catch (err) {
       console.error(err)
