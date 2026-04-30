@@ -11,13 +11,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
-
     // 获取用户的所有首帧图（包含 styleImage.poseId）
     const firstFrames = await db.firstFrame.findMany({
-      where: {
-        ipId: session.user.teamId ? { userId } : undefined,
-      },
+      where: { userId },
       include: {
         styleImage: {
           select: { poseId: true },
