@@ -39,6 +39,16 @@ interface FirstFrame {
   createdAt: string
 }
 
+interface AlternativeImage {
+  id: string
+  materialType: string
+  relatedId: string
+  url: string
+  source: string
+  isConfirmed: boolean
+  createdAt: string
+}
+
 interface GeneratedMaterials {
   modelImages: ModelImage[]
   styleImages: StyleImage[]
@@ -730,39 +740,47 @@ function MaterialsTab({
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [alternatives, setAlternatives] = useState<any[]>([])
+  const [alternatives, setAlternatives] = useState<AlternativeImage[]>([])
   const [showAlternatives, setShowAlternatives] = useState(false)
 
   useEffect(() => {
+    let ignore = false
     if (materials?.firstFrames.length > 0) {
       const ffId = materials.firstFrames[0].id
       fetch(`/api/alternative-images?materialType=FIRST_FRAME&relatedId=${ffId}`)
-        .then(res => res.json())
-        .then(data => setAlternatives(data.alternatives || []))
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          return res.json()
+        })
+        .then(data => {
+          if (!ignore) setAlternatives(data.alternatives || [])
+        })
         .catch(console.error)
     }
+    return () => { ignore = true }
   }, [materials?.firstFrames])
 
   const handleConfirmAlternative = async (alternativeId: string) => {
     if (!confirm('确定使用这张备选图作为主图吗？')) return
     try {
+      const ffId = materials.firstFrames[0]?.id
+      if (!ffId) return
       const res = await fetch(`/api/alternative-images/${alternativeId}/confirm`, {
         method: 'POST',
       })
-      if (res.ok) {
-        // Refresh alternatives
-        if (materials?.firstFrames.length > 0) {
-          const ffId = materials.firstFrames[0].id
-          const altRes = await fetch(`/api/alternative-images?materialType=FIRST_FRAME&relatedId=${ffId}`)
-          if (altRes.ok) {
-            const altData = await altRes.json()
-            setAlternatives(altData.alternatives || [])
-          }
-        }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || '确认失败')
+      }
+      // Refresh alternatives
+      const altRes = await fetch(`/api/alternative-images?materialType=FIRST_FRAME&relatedId=${ffId}`)
+      if (altRes.ok) {
+        const altData = await altRes.json()
+        setAlternatives(altData.alternatives || [])
       }
     } catch (err) {
       console.error(err)
-      alert('确认失败')
+      alert(err instanceof Error ? err.message : '确认失败')
     }
   }
 
