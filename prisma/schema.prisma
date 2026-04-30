@@ -485,6 +485,7 @@ model VideoPush {
   @@index([productId], map: "idx_video_push_product")
   @@index([ipId], map: "idx_video_push_ip")
   @@index([isQualified], map: "idx_video_push_qualified")
+  @@index([videoId], map: "idx_video_push_video")
   @@map("video_pushes")
 }
 
