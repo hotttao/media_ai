@@ -1,0 +1,5 @@
+export * from './types'
+export { CombinationEngine } from './engine/CombinationEngine'
+export { ConstraintRegistry } from './engine/ConstraintRegistry'
+export { PrismaMaterialPoolProvider } from './engine/MaterialPoolProvider'
+export type { MaterialPoolProvider } from './engine/MaterialPoolProvider'
