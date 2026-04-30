@@ -14,6 +14,7 @@ interface ProductCardProps {
     images: { url: string; isMain: boolean }[]
     createdAt: string
   }
+  selected?: boolean
 }
 
 const audienceConfig = {
@@ -22,7 +23,7 @@ const audienceConfig = {
   KIDS: { label: '童装', gradient: 'from-amber-500/40 to-orange-600/40', accent: '#fcd34d' },
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, selected }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const mainImage = product.images?.find(img => img.isMain) || product.images?.[0]
   const tags = product.tags ? JSON.parse(product.tags) : []
@@ -38,6 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
           transition-all duration-500 cursor-pointer
           group
           ${isHovered ? 'scale-[1.03] z-20' : ''}
+          ${selected ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}
         `}
         style={{
           background: `linear-gradient(135deg, ${config.gradient}), rgba(10,10,15,0.8)`,
@@ -105,6 +107,15 @@ export function ProductCard({ product }: ProductCardProps) {
               {config.label}
             </span>
           </div>
+
+          {/* Selected checkmark badge */}
+          {selected && (
+            <div className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
 
           {/* Image count badge */}
           {product.images && product.images.length > 1 && (
