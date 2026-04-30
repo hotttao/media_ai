@@ -937,6 +937,27 @@ function SecondaryImagesSection({
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
+  const createAlternativeImage = async (firstFrameId: string, url: string) => {
+  try {
+    const altRes = await fetch('/api/alternative-images', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        materialType: 'FIRST_FRAME',
+        relatedId: firstFrameId,
+        url: url,
+        source: 'USER_UPLOADED',
+      }),
+    })
+    if (!altRes.ok) {
+      console.error('Failed to create alternative image:', await altRes.text())
+    }
+  } catch (err) {
+    console.error('Failed to create alternative image:', err)
+    // Don't throw - we don't want to fail the whole upload if alternative creation fails
+  }
+}
+
   const handleUpload = async (file: File) => {
     setUploading(true)
     try {
@@ -955,22 +976,13 @@ function SecondaryImagesSection({
       const newImage = await res2.json()
       setSecondaryImages(prev => [...prev, newImage])
 
-      // Create alternative image record for main image uploads
+      // Create alternative image record for main image uploads (non-blocking, best effort)
       if (mainImage) {
         const ffRes = await fetch(`/api/products/${productId}/first-frames?mainImageUrl=${encodeURIComponent(mainImage.url)}`)
         if (ffRes.ok) {
           const ffs = await ffRes.json()
           if (ffs.length > 0) {
-            await fetch('/api/alternative-images', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                materialType: 'FIRST_FRAME',
-                relatedId: ffs[0].id,
-                url: data.url,
-                source: 'USER_UPLOADED',
-              }),
-            })
+            createAlternativeImage(ffs[0].id, data.url)
           }
         }
       }
