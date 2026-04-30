@@ -355,7 +355,7 @@ export function ProductDetail({ product }: { product: any }) {
               )}
 
               {/* Secondary Images */}
-              <SecondaryImagesSection productId={product.id} images={product.images} />
+              <SecondaryImagesSection productId={product.id} images={product.images} mainImage={mainImage} />
             </div>
 
             {/* Right: Product Info */}
@@ -925,9 +925,11 @@ function VideosTab({
 function SecondaryImagesSection({
   productId,
   images,
+  mainImage,
 }: {
   productId: string
   images: any[]
+  mainImage?: any
 }) {
   const [secondaryImages, setSecondaryImages] = useState<any[]>(
     images.filter(img => !img.isMain)
@@ -952,6 +954,26 @@ function SecondaryImagesSection({
       if (!res2.ok) throw new Error('Failed to save image')
       const newImage = await res2.json()
       setSecondaryImages(prev => [...prev, newImage])
+
+      // Create alternative image record for main image uploads
+      if (mainImage) {
+        const ffRes = await fetch(`/api/products/${productId}/first-frames?mainImageUrl=${encodeURIComponent(mainImage.url)}`)
+        if (ffRes.ok) {
+          const ffs = await ffRes.json()
+          if (ffs.length > 0) {
+            await fetch('/api/alternative-images', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                materialType: 'FIRST_FRAME',
+                relatedId: ffs[0].id,
+                url: data.url,
+                source: 'USER_UPLOADED',
+              }),
+            })
+          }
+        }
+      }
     } catch (err) {
       console.error(err)
       alert('上传失败')
