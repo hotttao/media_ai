@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { GenerateVideoWizard } from './GenerateVideoWizard'
 import { VideoGrid } from '@/components/video/VideoGrid'
 import { getImageUrl } from '@/foundation/lib/utils'
+import { useDailyPublishPlan } from '@/components/daily-publish-plan/DailyPublishPlanProvider'
 import type { VideoListItem } from '@/components/video/video-types'
 
 // Types for generated materials
@@ -75,6 +76,18 @@ export function ProductDetail({ product }: { product: any }) {
   const [availableScenes, setAvailableScenes] = useState<{ id: string; name: string; url: string }[]>([])
   const [showSceneSelector, setShowSceneSelector] = useState(false)
   const [sceneSaving, setSceneSaving] = useState(false)
+  const [isAdding, setIsAdding] = useState(false)
+
+  const { addPlan } = useDailyPublishPlan()
+
+  const handleAddToPublishPlan = async () => {
+    setIsAdding(true)
+    try {
+      await addPlan(product.id, new Date().toISOString().split('T')[0])
+    } finally {
+      setIsAdding(false)
+    }
+  }
 
   const fetchGeneratedMaterials = () => {
     setMaterialsLoading(true)
@@ -482,6 +495,20 @@ export function ProductDetail({ product }: { product: any }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                   生视频
+                </button>
+                <button
+                  onClick={handleAddToPublishPlan}
+                  disabled={isAdding}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-3.5 font-medium text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/50 group active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isAdding ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  )}
+                  加入发布计划
                 </button>
                 <button
                   onClick={() => router.push(`/products/${product.id}/edit`)}
