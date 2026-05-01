@@ -7,7 +7,7 @@ import { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/video-push?productId=xxx&qualified=true
+// GET /api/video-push?productId=xxx&ipId=xxx&qualified=true
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const productId = searchParams.get('productId')
+  const ipId = searchParams.get('ipId')
   const qualified = searchParams.get('qualified')
 
   try {
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
       product: { teamId: session.user.teamId },
     }
     if (productId) where.productId = productId
+    if (ipId) where.ipId = ipId
     if (qualified === 'true') where.isQualified = true
 
     const videos = await db.videoPush.findMany({
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
       include: {
         product: { select: { id: true, name: true } },
+        video: { select: { id: true, url: true, thumbnail: true } },
       },
     })
 
