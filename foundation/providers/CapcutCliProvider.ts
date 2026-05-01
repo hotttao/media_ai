@@ -23,6 +23,11 @@ export interface CapcutClipResult {
   error?: string
 }
 
+export interface CapcutClipDryRunResult {
+  count: number
+  error?: string
+}
+
 export interface CapcutClip {
   template: string
   templateId: string
@@ -156,6 +161,75 @@ export class CapcutCliProvider {
     } catch (error) {
       return {
         success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }
+    } finally {
+      this.cleanupFiles(tempFiles)
+    }
+  }
+
+  /**
+   * Dry run clip command - returns the number of clips that would be generated
+   */
+  async clipDryRun(input: CapcutClipInput): Promise<{ count: number; error?: string }> {
+    const tempFiles: string[] = []
+    try {
+      // Download all videos to temp files
+      const videoPaths = await Promise.all(
+        input.videoUrls.map(url => this.downloadVideo(url))
+      )
+      tempFiles.push(...videoPaths)
+
+      // Download music if provided
+      let musicPath: string | undefined
+      if (input.musicUrl) {
+        musicPath = await this.downloadMusic(input.musicUrl)
+        tempFiles.push(musicPath)
+      }
+
+      // Build command with --dry-run flag
+      const args = [
+        'clip',
+        '--dry-run',
+        '--videos', videoPaths.join(','),
+        '--output', this.tmpDir,
+      ]
+
+      if (musicPath) {
+        args.push('--music', musicPath)
+      }
+
+      const command = `${this.config.capcutPath} ${args.join(' ')}`
+      console.log('[CapcutCli] Dry run:', command)
+
+      // cap_cut may take a long time, set long timeout
+      const { stdout, stderr } = await execAsync(command, { timeout: 600000 })
+
+      if (stderr) {
+        console.warn('[CapcutCli] stderr:', stderr)
+      }
+
+      // Parse JSON output - dry run returns { "count": N }
+      const jsonMatch = stdout.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        try {
+          const result = JSON.parse(jsonMatch[0])
+          return { count: result.count || 0 }
+        } catch {
+          return { count: 0, error: 'Failed to parse CLI output' }
+        }
+      }
+
+      // Try to parse count from non-JSON output
+      const countMatch = stdout.match(/count[:\s=]+(\d+)/i)
+      if (countMatch) {
+        return { count: parseInt(countMatch[1], 10) }
+      }
+
+      return { count: 0, error: 'No count found in output' }
+    } catch (error) {
+      return {
+        count: 0,
         error: error instanceof Error ? error.message : 'Unknown error',
       }
     } finally {
