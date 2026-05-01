@@ -40,7 +40,7 @@ describe('CombinationSelector', () => {
         type="style-image"
         itemsA={mockPoses}
         itemsB={mockModels}
-        existingIds={['pose-1-model-1']}
+        existingIds={['pose-1::model-1']}  // Use :: separator to match component's key format
       />
     )
 

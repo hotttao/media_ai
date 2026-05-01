@@ -389,6 +389,15 @@ POST http://localhost:8765/v1/single/jimeng-image
   }
 ```
 
+即梦生图工具，是直接生成的首帧图，它不符合系统当前从 模特图 -> 定妆图 -> 首帧图的流程。但是为了让首帧图符合整个系统的设计规范即
+
+能从首帧图反推到定妆图在反推到模特图。我可以这样做么？
+1. 发送任务前要检查，组合内容 人物+服装有没有对应的 modelImageId，如果没有，不允许发送生图任务，如果有读取 modelImageId。
+2. 在素材库内生成一个特殊的 pose id，用这个图书的 pose id + modelImageId 生成一条 styleImageId，对应的 url 是空字符串或者是默认的图片。
+3. 用这个 styleImageId 和 scenceID 发送请求。
+
+
+
 ### 9.4 即梦生视频工具
 即梦生图任务，用户需要选择三个参数:
 1. 首帧图
@@ -411,3 +420,310 @@ POST http://localhost:8765/v1/single/jimeng-image
     "force": false
   }
 ```
+
+
+## 10. 每日发布计划以及相关功能优化
+### 产品详情页
+产品详情页现有一个生成视频的按钮，本来的目标是进去生成视频的向导页面。但是这样的逻辑太长，点击太慢了。现在做如下优化:
+1. 添加生图按钮：
+    - 进入到现在的生成视频向导页面，但是每一步不是让用户选择怎么生成图片，而是展示每一个步骤下，所有排列组合，哪些已经生成哪些未生成，也可以可以筛选快速切换
+    - 举例来说: 以定妆图为例，定妆图生成有四个选项 模特图-姿势-饰品-妆容，页面要显示这四个条件下所有排列组合，然后标识出，哪些已经生成，哪些未生成。还要有一列展示备选图(备选图是什么后面详细描述)
+    - 模特图，首帧图的逻辑类似。他们怎么排列组合要看对应表的唯一键
+    - 第一步不变是选择虚拟IP，最后一步是生成视频。生成视图就是进入到与下面点击生成视频同样的按钮
+    - 对于未生图的组合，可以点击 gpt 生图、即梦生图(只对首帧图可用)，点击后调用相应的视频生成工具发送生图请求。组合可多选。
+    - 如果所有的组合都生成完了，上传和生成不可选。
+    - 首帧图表要增加一个平台字段，表示首帧图是哪个平台生成的，也要添加成唯一键。还有要一个是否确认标识，这个跟备选图有关系。后面详述。
+2. 添加生视频按钮
+    - 进入到这个页面时，页面需要展示所有首帧图+动作的组合，显示组合中哪些已经生成视频了，哪些未生成，以筛选未生成或者已经生成的组合。
+    - 对于未生成视频的组合，可以点击即梦生视频，点击后调用相应的视频生成工具发送生视频请求。组合可多选
+    - 对于已经生成视频的组合，可以点击即梦生视频，但是要确认是否重新生成。
+    - 姿势和动作有对应关系，首帧图中有姿势信息，需要用来过滤动作。限定用户只能选择首帧图中包含的姿势。
+3. 添加加入当日发布按钮(作用后面描述)
+    - 当日发布按钮有一个右边的浮窗，类似商城购物车，用户将产品添加到当日发布计划后，就可以在浮窗内看到
+    - 用户也可以在产品首页，批量添加产品到当日发布计划。
+
+### 备选图
+即梦生图工具中也描述了，即梦可能生成多张图片，一开始计划都放在首帧图表中，但是这样太过混乱。我还是认为需要选择一张最好的图作为首帧图。
+所以我决定增加一个备选图标，有如下几个字段:
+1. 素材类型: 定妆图，模特图、首帧图、ai视频
+2. 关联ID: 关联的首帧图ID，模特图ID，定妆图ID，ai视频ID
+3. 素材URL: 素材的url
+
+以用户上传首帧图为例子，其他图片视频类似。即梦调用工具也是调用的上传接口回传的视频，这个地方是统一的。
+1. 尝试往首帧图插入记录，如果唯一键冲突说明首帧图已经存在，则跳过，获取对应首帧图的ID作为关联ID，然后将用户上传的素材写入备选表(上传的路径还是按照首帧图的路径)。
+2. 如果没有对应首帧图，就直接在首帧图插入，获取首帧图的ID作为关联ID，然后在将这个素材写入备选图一份。
+3. 用户在上面所说的生图向导页面，可以从备选图中选择确认哪一张图为需要的首帧图。确认好之后，用选择的图片路径更新首帧图标中的路径。
+
+增加备选图的好处是，我可以记录所有生成的图片、视频，不丢失。
+
+### 视频剪辑和发布
+调用即梦生视频后生成的是 ai 视频。一个产品+虚拟IP的组合，可以生成多张首帧图，每个首帧图通过不同动作可以生成多条 ai 视频。这些 ai 视频作为一个集合(ai 素材库)，可以剪辑出多条视频可发布视频。这些视频保存在 video_push 表中。这个表包含以下信息 
+1. 输入视频: ai 视频的 id，列表，表示这条可发布视频时基于哪些 ai 视频剪辑出来的，去重字段之一
+2. 剪辑模板: 剪辑模板 id，剪辑模板是核心素材库新增的素材之一。
+3. 输出视频: 剪辑出来的视频的 id
+4. 背景音乐： 背景音乐的 id，背景音乐是核心素材库新增的素材之一。
+5. 封面模板： 封面模板的 id，封面模板是核心素材库新增的素材之一。
+6. 标题： 视频的标题。
+7. 描述： 视频的描述。
+8. 封面:  视频的封面，基于封面模板生成的封面。标题、描述、封面，是通过 ai 生成的，这是另一个工具后面我们会详细介绍他如何实现。
+8. 是否达标: 手工检验字段，标识视频质量是否达标，达标的视频就是可发布视频。
+9. 是否发布: 是否在平台上发布
+
+剪辑工具的交互接口我还么设计好。后面我们在讨论。
+
+### 视频详情
+首页视频tab页现在进去可以看到所有视频、未生成组合。这个我感觉不实用。我现在希望用户点击每日生成计划，可以进入到这个页面的当日发布计划子页，在里面能看到用户所选择的所有产品的一下信息:
+1. 最上层是虚拟IP 的筛选
+2. 下面是每个虚拟 IP 对应要发布产品的视频详情，包括产品图片、已有 ai视频数量、已经发布视频数量、可发布视频数量、可剪辑视频数量。以及操作列，选择当天要发布的视频。
+    - 已有 ai 视频: videos 表里保存的 ai 视频数量。
+    - 已发布视频数量: video_push 表里保存的标识的已经发布的视频数量。
+    - 可发布视频数量: video_push 表里保存的标识的可发布，未发布的视频数量。
+    - 可剪辑视频数量: 当用户新生成 ai 视频后，ai 素材库就会扩充，扩充后用户就可以多剪辑出新的视频。这个字段保存的就是还能剪辑出多少视频
+    - 可新增 ai 视频数: 当用户，新增姿势、动作等等元素时，通过排列组合就可以生成更多的 ai 视频，这个字段就是减去已生成的 ai 视频，当前素材库组合还能生成的 ai 视频数量。
+
+操作:
+1. 发布视频: 可以进到可发布视频列表选择今天要发布的视频，每个产品可以发布多条视频
+2. 剪辑视频: 调用剪辑工具，剪辑出所有视频
+3. 新增 ai 视频: 跳转到产品的生图页面，让用户去生成新的 ai 视频。
+
+这里面的设计的功能很多。又不懂的一定要问我。重点理解需求里面的整个处理的流程。后续用户在使用系统时，一定是以产品为中心的：
+1. 用户会先选品。选好之后加入当日发布计划。
+2. 查看发布计划，如果产品有可发布视频，直接选择
+3. 如果没有，就要按照可剪辑视频 -> 可新增 ai 视频 这样的顺序，检测基于产品当前的素材库是否还能生成更多的视频。如果不能就要提醒用户要更新素材库。
+
+
+## 11. 组合引擎模块设计
+
+### 11.1 问题背景
+
+当前系统计算组合数量的逻辑分散在各处，导致：
+- 难以维护和扩展
+- 新增组合要素（如产品副图）改动范围大
+- 统计计算不统一
+- pose-movement 关联关系处理逻辑不统一
+
+### 11.2 核心需求
+
+**统一组合引擎模块**，所有组件复用：
+- 计算 product + IP 的各种组合
+- 支持快速统计（不依赖数据库，量大时可缓存）
+- 支持约束规则系统，方便扩展
+
+### 11.3 数据关联关系
+
+```
+Product ──1:N──> Video ──属于──> IP
+                 │
+                 └── VideoPush（发布状态）
+```
+
+- 一个 **Product** 可以有多个 **IP** 的视频
+- **Video** 属于某个 **IP**，有 `ipId`
+- **VideoPush** 记录视频的发布状态（qualified, published）
+
+### 11.4 需要计算的统计指标
+
+| 指标 | 说明 | 计算方式 |
+|------|------|----------|
+| AI视频数 (aiVideoCount) | 该 product + ip 组合下，所有 AI 生成的视频总数 | `db.video.count({ where: { productId, ipId } })` |
+| 已发布数 (publishedCount) | 已经发布到平台（isPublished=true）的视频数量 | `db.videoPush.count({ where: { productId, ipId, isPublished: true } })` |
+| 可发布数 (pushableCount) | 质量合格（isQualified=true）但尚未发布（isPublished=false）的视频数量 | `db.videoPush.count({ where: { productId, ipId, isQualified: true, isPublished: false } })` |
+| 可新增AI视频数 (newGeneratableCount) | 根据排列组合规则，还能新生成多少 AI 视频 | `理论最大组合数 - 已生成的视频数` |
+| 可剪辑数 (clippableCount) | 可以进行剪辑的视频数量（有素材但尚未生成视频的组合） | 待确认 |
+
+**可新增AI视频数计算流程：**
+```
+1. 获取有效的 pose-movement 组合（考虑关联关系）
+2. 获取 scene、styleImage 等其他要素
+3. 计算理论最大组合数 = pose_movement_combinations × scenes × styleImages × ...
+4. 可新增 = max(0, 理论最大组合数 - 已有视频数)
+```
+
+### 11.5 组合类型
+
+| 类型 | 组成要素 | 说明 |
+|------|----------|------|
+| modelImage | 模特图 | product + ip → 模特图 |
+| styleImage | 定妆图 | modelImage + pose + makeup + accessory |
+| firstFrame | 首帧图 | styleImage + scene + composition |
+| video | 视频 | firstFrame + movement（多要素组合） |
+
+### 11.6 Pose-Movement 关联关系（关键！）
+
+**不是直接组合，而是关联关系：**
+- 动作(Movement)分为 `general`（通用）和 `pose-specific`（绑定pose）
+- 绑定pose的动作只能用于关联的pose
+- `getAllowedMovementsForPose()` 过滤逻辑：
+  ```typescript
+  if (!poseId) return all movements
+  return movements.filter(m => m.isGeneral || m.poseIds.includes(poseId))
+  ```
+
+### 11.7 未来约束扩展
+
+| 约束 | 作用对象 | 说明 |
+|------|----------|------|
+| MovementConstraint | PRODUCT | product 只能使用特定范围的动作 |
+| SceneConstraint | IP | IP 只能使用特定范围的场景 |
+| PoseConstraint | PRODUCT/IP | 限制使用的 pose |
+| MaterialConstraint | PRODUCT/IP | 限制使用的素材 |
+
+### 11.8 约束规则系统设计
+
+#### 核心类型定义
+
+```typescript
+// 约束类型
+type ConstraintType = 'POSE' | 'MOVEMENT' | 'SCENE' | 'MATERIAL' | 'STYLE' | 'CUSTOM'
+
+// 约束作用对象
+type ConstraintSubjectType = 'PRODUCT' | 'IP'
+
+// 约束定义
+interface Constraint {
+  id: string
+  type: ConstraintType
+  subjectType: ConstraintSubjectType  // 约束作用于 PRODUCT 还是 IP
+  subjectId: string                   // 具体 ID
+  allowedValues: string[]             // 允许的值列表
+  priority: number                     // 优先级，数字越大越优先
+  description?: string
+}
+
+// 素材池
+interface MaterialPool {
+  poses: Pose[]
+  movements: Movement[]
+  scenes: Scene[]
+  styleImages: StyleImage[]
+  modelImages: ModelImage[]
+}
+
+// 组合配置
+interface CombinationConfig {
+  type: CombinationType
+  includeQualified?: boolean  // 是否包含已合格
+  includePublished?: boolean // 是否包含已发布
+  constraints?: Constraint[]  // 额外约束
+}
+
+// 组合结果
+interface CombinationResult {
+  combinations: Combination[]
+  stats: CombinationStats
+  appliedConstraints: Constraint[]  // 实际应用的约束
+}
+
+// 统计
+interface CombinationStats {
+  total: number
+  qualified: number
+  published: number
+  pending: number  // 可发布未发布
+  newGeneratable: number  // 可新增AI视频数
+}
+```
+
+#### 约束注册表
+
+```typescript
+class ConstraintRegistry {
+  private constraints: Map<string, Constraint> = new Map()
+
+  // 注册约束
+  register(constraint: Constraint): void
+
+  // 获取适用于某 product 的约束
+  getForProduct(productId: string): Constraint[]
+
+  // 获取适用于某 IP 的约束
+  getForIP(ipId: string): Constraint[]
+
+  // 获取所有适用的约束
+  getAllApplicable(productId: string, ipId: string): Constraint[]
+}
+```
+
+#### 组合引擎核心
+
+```typescript
+class CombinationEngine {
+  private registry: ConstraintRegistry
+  private cache: Map<string, CombinationResult>
+
+  // 注册约束
+  addConstraint(constraint: Constraint): void
+
+  // 计算组合
+  compute(productId: string, ipId: string, config: CombinationConfig): CombinationResult
+
+  // 应用约束过滤素材
+  private applyConstraints(
+    productId: string,
+    ipId: string,
+    pool: MaterialPool,
+    constraints: Constraint[]
+  ): MaterialPool
+
+  // movement 约束过滤（考虑 pose-movement 关联）
+  private filterMovementsWithConstraints(
+    movements: Movement[],
+    poses: Pose[],
+    movementConstraint: Constraint
+  ): Movement[]
+}
+```
+
+#### 约束变更时缓存失效
+
+```typescript
+// 约束变更时触发
+invalidateRelatedCache(constraint: Constraint): void
+
+// 素材变更时触发
+invalidateMaterialCache(productId: string, ipId?: string): void
+```
+
+### 11.9 使用示例
+
+```typescript
+// 添加 product 级别的 movement 约束
+engine.addConstraint({
+  id: 'prod_mv_limit_123',
+  type: 'MOVEMENT',
+  subjectType: 'PRODUCT',
+  subjectId: 'prod_123',
+  allowedValues: ['mv_001', 'mv_002', 'mv_003'],
+  priority: 10,
+  description: '产品123只能使用指定的动作'
+})
+
+// 添加 IP 级别的 scene 约束
+engine.addConstraint({
+  id: 'ip_scene_limit_456',
+  type: 'SCENE',
+  subjectType: 'IP',
+  subjectId: 'ip_456',
+  allowedValues: ['scene_001', 'scene_002'],
+  priority: 10,
+  description: 'IP456只能使用指定的场景'
+})
+
+// 计算统计
+const result = engine.compute('prod_123', 'ip_456', {
+  type: 'VIDEO',
+  includeQualified: true,
+  includePublished: false
+})
+
+console.log(result.stats)
+// { total: 50, qualified: 20, published: 10, pending: 10, newGeneratable: 30 }
+```
+
+### 11.10 设计原则
+
+- **规则化**而非硬编码：新增约束类型只需实现接口
+- **可组合**：约束可叠加，按优先级生效
+- **可缓存**：支持内存缓存/DB缓存
+- **失效机制**：素材或约束变更时自动失效
+- **统一计算**：所有统计指标通过同一引擎计算

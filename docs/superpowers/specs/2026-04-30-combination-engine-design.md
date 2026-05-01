@@ -1,0 +1,242 @@
+# Combination Engine Module Design
+
+> **Created:** 2026-04-30T17:16:38Z
+> **Status:** completed
+
+## Goal
+
+建立统一的组合引擎模块，所有组件复用此模块计算组合和统计，解决当前组合逻辑分散、难以维护和扩展的问题。
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      CombinationEngine                      │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐    ┌─────────────────────────────────┐│
+│  │ ConstraintRegistry │    │      MaterialPoolProvider      ││
+│  │  - register()     │    │  - getPool(productId, ipId)   ││
+│  │  - getForProduct()│    │  - getExistingCombinations()  ││
+│  │  - getForIP()     │    │                               ││
+│  └─────────────────┘    └─────────────────────────────────┘│
+│                              │                                │
+│                              ▼                                │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │                   核心计算逻辑                            ││
+│  │  1. applyConstraints()   - 应用约束过滤素材            ││
+│  │  2. generateCombinations() - 生成组合                  ││
+│  │  3. computeStats()      - 计算统计                     ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+```
+
+## File Structure
+
+```
+domains/combination/
+├── types.ts                  # 类型定义
+├── index.ts                  # 导出
+└── engine/
+    ├── CombinationEngine.ts   # 引擎主类
+    ├── ConstraintRegistry.ts # 约束注册表
+    ├── MaterialPoolProvider.ts # 素材池提供者
+    └── generators/
+        ├── Generator.ts      # 生成器接口
+        ├── ModelImageGenerator.ts
+        ├── StyleImageGenerator.ts
+        ├── FirstFrameGenerator.ts
+        └── VideoGenerator.ts
+```
+
+## Core Types
+
+### CombinationType
+
+```typescript
+enum CombinationType {
+  MODEL_IMAGE = 'MODEL_IMAGE',   // 模特图
+  STYLE_IMAGE = 'STYLE_IMAGE',   // 定妆图
+  FIRST_FRAME = 'FIRST_FRAME',  // 首帧图
+  VIDEO = 'VIDEO'               // 视频
+}
+```
+
+### Constraint
+
+```typescript
+interface Constraint {
+  id: string
+  type: 'POSE' | 'MOVEMENT' | 'SCENE' | 'MATERIAL' | 'STYLE' | 'CUSTOM'
+  subjectType: 'PRODUCT' | 'IP'
+  subjectId: string
+  allowedValues: string[]
+  priority: number
+  description?: string
+}
+```
+
+### MaterialPool
+
+```typescript
+interface MaterialPool {
+  poses: Pose[]
+  movements: Movement[]
+  scenes: Scene[]
+  styleImages: StyleImage[]
+  modelImages: ModelImage[]
+}
+```
+
+### CombinationStats
+
+```typescript
+interface CombinationStats {
+  total: number           // 理论最大组合数
+  generated: number       // 已生成数
+  qualified: number       // 合格数
+  published: number       // 已发布数
+  pending: number         // 可发布未发布数
+  newGeneratable: number  // 可新增AI视频数
+}
+```
+
+### CombinationResult
+
+```typescript
+interface CombinationResult {
+  combinations: Combination[]
+  stats: CombinationStats
+  appliedConstraints: Constraint[]
+}
+```
+
+## ConstraintRegistry
+
+```typescript
+class ConstraintRegistry {
+  register(constraint: Constraint): void
+  registerMany(constraints: Constraint[]): void
+  unregister(id: string): void
+  getForProduct(productId: string): Constraint[]
+  getForIP(ipId: string): Constraint[]
+  getAllApplicable(productId: string, ipId: string): Constraint[]
+}
+```
+
+## CombinationEngine API
+
+```typescript
+class CombinationEngine {
+  constructor(registry: ConstraintRegistry, poolProvider: MaterialPoolProvider)
+
+  // 添加约束
+  addConstraint(constraint: Constraint): void
+
+  // 移除约束
+  removeConstraint(id: string): void
+
+  // 计算组合和统计
+  async compute(
+    productId: string,
+    ipId: string,
+    config: CombinationConfig
+  ): Promise<CombinationResult>
+}
+```
+
+### compute() 流程
+
+1. 获取适用的约束（product 约束 + IP 约束）
+2. 获取素材池
+3. 应用约束过滤素材
+4. 生成理论组合
+5. 标记已存在的组合
+6. 计算统计
+
+## Pose-Movement 关联关系（关键）
+
+**不是直接组合，而是关联关系：**
+
+- Movement 分为 `general`（通用）和 `pose-specific`（绑定 pose）
+- 通用动作可应用于所有 pose
+- pose-specific 动作只能应用于关联的 pose
+
+```typescript
+function getAllowedMovementsForPose(
+  movements: Movement[],
+  poseId: string | null
+): Movement[] {
+  if (!poseId) return movements
+  return movements.filter(m => m.isGeneral || m.poseIds.includes(poseId))
+}
+```
+
+### 视频组合生成逻辑
+
+```typescript
+// 1. 获取有效的 pose-movement 映射
+const poseMovementMap = getPoseMovementMap(poses, movements)
+// 结果: { pose1: [gen_mv, pose1_mv], pose2: [gen_mv, pose2_mv] }
+
+// 2. 遍历生成组合
+for (const [poseId, movements] of Object.entries(poseMovementMap)) {
+  for (const movement of movements) {
+    for (const scene of pool.scenes) {
+      for (const styleImage of pool.styleImages) {
+        // 生成一个 video 组合
+      }
+    }
+  }
+}
+```
+
+## 统计指标计算
+
+| 指标 | 计算方式 |
+|------|----------|
+| total | 理论最大组合数 = pose_movement × scenes × styleImages |
+| generated | 已存在于数据库的组合数 |
+| qualified | isQualified=true 的组合数 |
+| published | isPublished=true 的组合数 |
+| pending | qualified - published |
+| newGeneratable | total - generated |
+
+## 未来约束扩展
+
+| 约束类型 | 作用对象 | 说明 |
+|----------|----------|------|
+| MovementConstraint | PRODUCT | product 只能使用特定范围的动作 |
+| SceneConstraint | IP | IP 只能使用特定范围的场景 |
+| PoseConstraint | PRODUCT/IP | 限制使用的 pose |
+| MaterialConstraint | PRODUCT/IP | 限制使用的素材 |
+
+## Design Principles
+
+1. **规则化而非硬编码** - 新增约束类型只需实现接口
+2. **可组合** - 约束可叠加，按优先级生效
+3. **统一计算** - 所有统计指标通过同一引擎计算
+4. **与现有 API 共存** - 工具页面继续用现有 API，需要完整状态的地方用引擎
+
+## Integration Points
+
+### 保持不变的
+
+- `/api/tools/combination/model-images` - 工具页面 API
+- `/api/tools/combination/style-images` - 工具页面 API
+- `/api/tools/combination/first-frames` - 工具页面 API
+
+### 使用引擎的地方
+
+- 产品详情页向导（显示所有组合状态）
+- 当日发布计划页面（统计数量）
+- 需要统一统计的地方
+
+## Implementation Tasks
+
+1. 创建 `domains/combination/types.ts` - 类型定义
+2. 创建 `domains/combination/engine/ConstraintRegistry.ts` - 约束注册表
+3. 创建 `domains/combination/engine/MaterialPoolProvider.ts` - 素材池提供者
+4. 创建 `domains/combination/engine/CombinationEngine.ts` - 引擎主类
+5. 创建 `domains/combination/index.ts` - 导出
+6. 实现各组合生成器
+7. 集成到需要的地方
