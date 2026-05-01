@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { cn, getImageUrl } from '@/foundation/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface ProductStats {
   productId: string
@@ -17,6 +18,21 @@ interface ProductStats {
   publishedCount: number
   clippableCount: number
   newGeneratableCount: number
+}
+
+interface VideoPushItem {
+  id: string
+  url: string
+  thumbnail: string | null
+  title: string | null
+  isQualified: boolean
+  isPublished: boolean
+  createdAt: string
+  video: {
+    id: string
+    url: string
+    thumbnail: string | null
+  } | null
 }
 
 interface IpOption {
@@ -34,6 +50,14 @@ export default function DailyPublishPlanPage() {
   const [error, setError] = useState<string | null>(null)
   const [clippingProductId, setClippingProductId] = useState<string | null>(null)
   const [selectedIpId, setSelectedIpId] = useState<string | null>(null)
+
+  // 发布视频弹窗状态
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false)
+  const [publishingProduct, setPublishingProduct] = useState<ProductStats | null>(null)
+  const [publishableVideos, setPublishableVideos] = useState<VideoPushItem[]>([])
+  const [selectedVideoIds, setSelectedVideoIds] = useState<Set<string>>(new Set())
+  const [loadingPublishable, setLoadingPublishable] = useState(false)
+  const [publishing, setPublishing] = useState(false)
 
   // Fetch products for selected date
   const fetchProducts = async () => {
@@ -105,6 +129,67 @@ export default function DailyPublishPlanPage() {
     } finally {
       setClippingProductId(null)
     }
+  }
+
+  // 打开发布视频弹窗
+  const openPublishDialog = async (product: ProductStats) => {
+    setPublishingProduct(product)
+    setPublishDialogOpen(true)
+    setLoadingPublishable(true)
+    setSelectedVideoIds(new Set())
+
+    try {
+      const res = await fetch(`/api/video-push?productId=${product.productId}&ipId=${product.ipId}&qualified=true`)
+      if (res.ok) {
+        const data = await res.json()
+        // 过滤出可发布且未发布的视频
+        const unpublished = (data.videos || []).filter((v: VideoPushItem) => v.isQualified && !v.isPublished)
+        setPublishableVideos(unpublished)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingPublishable(false)
+    }
+  }
+
+  // 发布选中的视频
+  const handlePublish = async () => {
+    if (!publishingProduct || selectedVideoIds.size === 0) return
+
+    setPublishing(true)
+    try {
+      const promises = Array.from(selectedVideoIds).map(videoId =>
+        fetch(`/api/video-push/${videoId}/publish`, { method: 'POST' })
+      )
+      const results = await Promise.all(promises)
+
+      const successCount = results.filter(r => r.ok).length
+      alert(`成功发布 ${successCount} 个视频`)
+
+      if (successCount > 0) {
+        fetchProducts()
+        setPublishDialogOpen(false)
+      }
+    } catch (err) {
+      console.error(err)
+      alert('发布失败')
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  // 切换视频选中状态
+  const toggleVideoSelection = (videoId: string) => {
+    setSelectedVideoIds(prev => {
+      const next = new Set(prev)
+      if (next.has(videoId)) {
+        next.delete(videoId)
+      } else {
+        next.add(videoId)
+      }
+      return next
+    })
   }
 
   return (
@@ -190,6 +275,14 @@ export default function DailyPublishPlanPage() {
                     <p className="text-sm text-warm-silver mt-1">IP: {product.ipId}</p>
                   </div>
                   <div className="flex gap-2">
+                    {product.pushableCount > 0 && (
+                      <Button
+                        onClick={() => openPublishDialog(product)}
+                        className="bg-green-600 hover:bg-green-500"
+                      >
+                        发布视频 ({product.pushableCount})
+                      </Button>
+                    )}
                     <Button
                       onClick={() => handleClip(product.productId, product.productName)}
                       disabled={clippingProductId === product.productId || product.clippableCount === 0}
@@ -197,8 +290,8 @@ export default function DailyPublishPlanPage() {
                     >
                       {clippingProductId === product.productId ? '剪辑中...' : '剪辑'}
                     </Button>
-                    <Link href={`/products/${product.productId}`}>
-                      <Button variant="outline">查看产品</Button>
+                    <Link href={`/products/${product.productId}?tab=generate`}>
+                      <Button variant="outline">新增AI视频</Button>
                     </Link>
                   </div>
                 </div>
@@ -257,6 +350,87 @@ export default function DailyPublishPlanPage() {
           )}
         </div>
       )}
+
+      {/* 发布视频弹窗 */}
+      <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              发布视频 - {publishingProduct?.productName}
+            </DialogTitle>
+          </DialogHeader>
+
+          {loadingPublishable ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-matcha-600 border-t-transparent"></div>
+              <span className="ml-3 text-sm text-warm-silver">加载中...</span>
+            </div>
+          ) : publishableVideos.length === 0 ? (
+            <div className="text-center py-12 text-warm-silver">
+              暂无可发布的视频
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto">
+                <div className="grid grid-cols-3 gap-4">
+                  {publishableVideos.map(video => (
+                    <div
+                      key={video.id}
+                      className={cn(
+                        'relative rounded-lg border-2 cursor-pointer transition-all',
+                        selectedVideoIds.has(video.id)
+                          ? 'border-matcha-600 bg-matcha-50'
+                          : 'border-transparent hover:border-oat'
+                      )}
+                      onClick={() => toggleVideoSelection(video.id)}
+                    >
+                      {video.thumbnail || video.video?.thumbnail ? (
+                        <img
+                          src={getImageUrl(video.thumbnail || video.video?.thumbnail || '')}
+                          alt=""
+                          className="w-full aspect-video object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-full aspect-video bg-oat rounded-lg flex items-center justify-center">
+                          <span className="text-warm-silver text-sm">无封面</span>
+                        </div>
+                      )}
+                      {selectedVideoIds.has(video.id) && (
+                        <div className="absolute top-2 right-2 w-6 h-6 bg-matcha-600 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="mt-2 text-xs text-warm-silver truncate">
+                        {video.title || '无标题'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="text-sm text-warm-silver">
+                  已选择 {selectedVideoIds.size} 个视频
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setPublishDialogOpen(false)}>
+                    取消
+                  </Button>
+                  <Button
+                    onClick={handlePublish}
+                    disabled={selectedVideoIds.size === 0 || publishing}
+                    className="bg-green-600 hover:bg-green-500"
+                  >
+                    {publishing ? '发布中...' : `确认发布 (${selectedVideoIds.size})`}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
