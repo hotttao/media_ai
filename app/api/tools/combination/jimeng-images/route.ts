@@ -70,7 +70,7 @@ export async function GET() {
     const scenes = await db.material.findMany({
       where: {
         type: 'SCENE',
-        id: { in: Array.from(allowedSceneMaterialIds) },
+        ...(allowedSceneMaterialIds.size > 0 && { id: { in: Array.from(allowedSceneMaterialIds) } }),
         OR: [{ userId }, { visibility: 'PUBLIC' }],
       },
       select: { id: true, name: true, url: true },
