@@ -112,6 +112,10 @@ export default function JimengImagePage() {
             poseName: poses.find(p => p.id === poseId)?.name || '',
             sceneName: scenes.find(s => s.id === sceneId)?.name || '',
             modelImageId: combo.modelImageId,
+            modelImageUrl: combo.modelImageUrl,
+            poseId: poseId,
+            sceneId: sceneId,
+            sceneUrl: scenes.find(s => s.id === sceneId)?.url || '',
             existingFirstFrameId: combo.existingFirstFrameId,
           }))
         })
@@ -489,16 +493,47 @@ export default function JimengImagePage() {
                       combo.existingFirstFrameId && 'border-matcha-600/30 bg-matcha-50'
                     )}
                   >
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">{combo.productName}</span>
+                    <div className="flex items-center gap-3">
+                      {/* 模特图缩略图 */}
+                      <img
+                        src={getImageUrl(combo.modelImageUrl)}
+                        alt={combo.productName}
+                        className="h-10 w-10 rounded-lg object-cover"
+                      />
                       <span className="text-warm-silver">×</span>
-                      <span>{combo.poseName}</span>
-                      <span className="text-warm-silver">×</span>
-                      <span>{combo.sceneName}</span>
+                      {/* 场景图缩略图 */}
+                      <img
+                        src={getImageUrl(combo.sceneUrl)}
+                        alt={combo.sceneName}
+                        className="h-10 w-10 rounded-lg object-cover"
+                      />
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium">{combo.productName}</span>
+                        <span className="text-warm-silver">×</span>
+                        <span>{combo.poseName}</span>
+                        <span className="text-warm-silver">×</span>
+                        <span>{combo.sceneName}</span>
+                      </div>
                     </div>
-                    {combo.existingFirstFrameId && (
-                      <Badge variant="success" className="text-xs">已存在</Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {combo.existingFirstFrameId && (
+                        <Badge variant="success" className="text-xs">已存在</Badge>
+                      )}
+                      {/* 复制参数按钮 */}
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify({
+                            type: 'jimeng-image',
+                            modelImageId: combo.modelImageId,
+                            poseId: combo.poseId,
+                            sceneId: combo.sceneId,
+                          }, null, 2))
+                        }}
+                        className="rounded-lg border border-oat px-2 py-1 text-xs text-warm-silver hover:border-matcha-600 hover:text-foreground"
+                      >
+                        复制参数
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
