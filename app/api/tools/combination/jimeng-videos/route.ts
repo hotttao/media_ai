@@ -3,26 +3,38 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
 
-// GET /api/tools/combination/jimeng-videos
-export async function GET() {
+// GET /api/tools/combination/jimeng-videos?productId=xxx
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 获取用户的所有首帧图（包含 styleImage.poseId）
+    const { searchParams } = new URL(request.url)
+    const productId = searchParams.get('productId')
+    const teamId = session.user.teamId
+
+    // 获取该产品的首帧图（只获取有 styleImage 关联的）
+    const firstFrameWhere: any = {
+      styleImageId: { not: '' },
+    }
+
+    if (productId) {
+      firstFrameWhere.productId = productId
+    } else {
+      // 没有 productId 时，获取团队所有产品的首帧图
+      const products = await db.product.findMany({
+        where: { teamId },
+        select: { id: true },
+      })
+      const productIds = products.map(p => p.id)
+      firstFrameWhere.productId = { in: productIds }
+    }
+
     const firstFrames = await db.firstFrame.findMany({
-      where: { userId },
+      where: firstFrameWhere,
       include: {
-        styleImage: {
-          select: { poseId: true },
-        },
-      },
-      select: {
-        id: true,
-        ipId: true,
-        url: true,
         styleImage: {
           select: { poseId: true },
         },

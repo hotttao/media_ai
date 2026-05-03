@@ -3,26 +3,34 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
 
-// GET /api/tools/combination/style-images
-export async function GET() {
+// GET /api/tools/combination/style-images?productId=xxx
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const productId = searchParams.get('productId')
     const userId = session.user.id
+    const teamId = session.user.teamId
 
-    // 获取用户的 IP
+    // 获取团队的 IP
     const ips = await db.virtualIp.findMany({
-      where: { userId },
+      where: { teamId },
       select: { id: true },
     })
     const ipIds = ips.map(ip => ip.id)
 
-    // 获取这些 IP 的所有模特图
+    // 获取这些 IP 的所有模特图（可按 productId 过滤）
+    const modelImageWhere: any = { ipId: { in: ipIds } }
+    if (productId) {
+      modelImageWhere.productId = productId
+    }
+
     const modelImages = await db.modelImage.findMany({
-      where: { ipId: { in: ipIds } },
+      where: modelImageWhere,
       include: {
         styleImages: { select: { id: true, poseId: true } },
       },
@@ -43,22 +51,21 @@ export async function GET() {
     })
 
     interface StyleImageCombination {
-  id: string
-  pose: { id: string; name: string; url: string | null }
-  modelImage: { id: string; url: string; productName?: string | null }
-  existingStyleImageId: string | null
-}
+      id: string
+      pose: { id: string; name: string; url: string | null }
+      modelImage: { id: string; url: string; productName?: string | null }
+      existingStyleImageId: string | null
+    }
 
-// 构建可用组合
-const combinations: StyleImageCombination[] = []
+    // 构建所有组合（已生成的标记 existingStyleImageId）
+    const combinations: StyleImageCombination[] = []
     for (const modelImage of modelImages) {
       const existingStyleImageMap = new Map(
         modelImage.styleImages.map(s => [s.poseId, s.id])
       )
 
       for (const pose of poses) {
-        if (existingStyleImageMap.has(pose.id)) continue
-
+        const existingId = existingStyleImageMap.get(pose.id) || null
         combinations.push({
           id: `${pose.id}-${modelImage.id}`,
           pose,
@@ -67,7 +74,7 @@ const combinations: StyleImageCombination[] = []
             url: modelImage.url,
             productName: productMap.get(modelImage.productId),
           },
-          existingStyleImageId: null,
+          existingStyleImageId: existingId,
         })
       }
     }

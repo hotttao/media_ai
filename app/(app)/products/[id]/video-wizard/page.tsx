@@ -38,7 +38,7 @@ export default function VideoWizardPage() {
 
   // Fetch combinations
   useEffect(() => {
-    fetch('/api/tools/combination/jimeng-videos')
+    fetch(`/api/tools/combination/jimeng-videos?productId=${productId}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch')
         return res.json()

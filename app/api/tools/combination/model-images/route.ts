@@ -12,16 +12,17 @@ export async function GET() {
     }
 
     const userId = session.user.id
+    const teamId = session.user.teamId
 
-    // 获取用户的所有 IP
+    // 获取团队的所有 IP
     const ips = await db.virtualIp.findMany({
-      where: { userId },
+      where: { teamId },
       select: { id: true, nickname: true, fullBodyUrl: true },
     })
 
-    // 获取用户的所有产品
+    // 获取团队的所有产品
     const products = await db.product.findMany({
-      where: { userId },
+      where: { teamId },
       select: { id: true, name: true, images: { where: { isMain: true }, take: 1 } },
     })
 
@@ -36,10 +37,9 @@ export async function GET() {
 
     const existingSet = new Set(existingModelImages.map(m => `${m.ipId}-${m.productId}`))
 
-    // 构建可用组合（排除已生成的）
+    // 构建所有组合（已生成的标记 existingModelImageId）
     const combinations = ips.flatMap(ip =>
       products
-        .filter(p => !existingSet.has(`${ip.id}-${p.id}`))
         .map(product => ({
           id: `${ip.id}-${product.id}`,
           ip,
@@ -48,7 +48,7 @@ export async function GET() {
             name: product.name,
             mainImageUrl: product.images[0]?.url,
           },
-          existingModelImageId: null,
+          existingModelImageId: existingSet.has(`${ip.id}-${product.id}`) ? 'generated' : null,
         }))
     )
 
