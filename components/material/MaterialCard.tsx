@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 interface MaterialCardProps {
   material: {
@@ -76,7 +77,7 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
         <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
         <div className="absolute inset-0 p-1">
           <img
-            src={material.url}
+            src={getImageUrl(material.url)}
             alt={material.name}
             className={`
               relative z-10 h-full w-full rounded-xl object-contain

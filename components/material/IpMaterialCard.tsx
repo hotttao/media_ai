@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 interface IpMaterial {
   id: string
@@ -46,7 +47,7 @@ export function IpMaterialCard({ material }: IpMaterialCardProps) {
         >
           {(material.threeViewUrl || material.fullBodyUrl || material.nineViewUrl) ? (
             <img
-              src={material.threeViewUrl || material.fullBodyUrl || material.nineViewUrl || ''}
+              src={getImageUrl(material.threeViewUrl || material.fullBodyUrl || material.nineViewUrl || '')}
               alt={material.name}
               className="w-full h-full object-contain"
             />
@@ -95,7 +96,7 @@ export function IpMaterialCard({ material }: IpMaterialCardProps) {
                   setLightboxImage(material.fullBodyUrl)
                 }}
               >
-                <img src={material.fullBodyUrl} alt="全身" className="w-full h-full object-contain" />
+                <img src={getImageUrl(material.fullBodyUrl)} alt="全身" className="w-full h-full object-contain" />
               </div>
             )}
             {material.threeViewUrl && (
@@ -106,7 +107,7 @@ export function IpMaterialCard({ material }: IpMaterialCardProps) {
                   setLightboxImage(material.threeViewUrl)
                 }}
               >
-                <img src={material.threeViewUrl} alt="三视图" className="w-full h-full object-contain" />
+                <img src={getImageUrl(material.threeViewUrl)} alt="三视图" className="w-full h-full object-contain" />
               </div>
             )}
             {material.nineViewUrl && (
@@ -117,7 +118,7 @@ export function IpMaterialCard({ material }: IpMaterialCardProps) {
                   setLightboxImage(material.nineViewUrl)
                 }}
               >
-                <img src={material.nineViewUrl} alt="九视图" className="w-full h-full object-contain" />
+                <img src={getImageUrl(material.nineViewUrl)} alt="九视图" className="w-full h-full object-contain" />
               </div>
             )}
           </div>
@@ -138,7 +139,7 @@ export function IpMaterialCard({ material }: IpMaterialCardProps) {
               ✕
             </button>
             <img
-              src={lightboxImage}
+              src={getImageUrl(lightboxImage)}
               alt=""
               className="max-w-full max-h-[80vh] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { formatDateTime, getTaskStatusLabel, type VideoDetail } from './video-types'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 export function VideoPlayerPanel({ video }: { video: VideoDetail }) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -13,8 +14,8 @@ export function VideoPlayerPanel({ video }: { video: VideoDetail }) {
         <div className="xl:sticky xl:top-6">
           <div className="mx-auto max-w-[320px] overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/30 shadow-xl shadow-black/20">
             <video
-              src={video.url}
-              poster={video.thumbnail || undefined}
+              src={getImageUrl(video.url)}
+              poster={video.thumbnail ? getImageUrl(video.thumbnail) : undefined}
               controls
               onDoubleClick={() => setIsExpanded(true)}
               className="aspect-[9/16] w-full cursor-zoom-in bg-black object-cover"
@@ -81,8 +82,8 @@ export function VideoPlayerPanel({ video }: { video: VideoDetail }) {
             onClick={(event) => event.stopPropagation()}
           >
             <video
-              src={video.url}
-              poster={video.thumbnail || undefined}
+              src={getImageUrl(video.url)}
+              poster={video.thumbnail ? getImageUrl(video.thumbnail) : undefined}
               controls
               autoPlay
               className="max-h-[85vh] w-full bg-black object-contain"
