@@ -11,9 +11,9 @@ export interface MaterialPoolProvider {
 export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
   async getPool(productId: string, ipId: string): Promise<MaterialPool> {
     const [poses, movements, scenes, styleImages, modelImages] = await Promise.all([
-      // Poses - 从 material 表获取 type='POSE' 且属于该 IP 的记录
+      // Poses - 从 material 表获取 type='POSE' 的记录（不直接关联 ipId）
       db.material.findMany({
-        where: { type: 'POSE', ipId },
+        where: { type: 'POSE' },
         select: { id: true, name: true, url: true, prompt: true, ipId: true }
       }),
       // Movements - 从 movement_materials 表获取，包含 poseLinks
