@@ -34,31 +34,31 @@ export async function adaptFirstFrameCombinations(
   // Get all existing first frames for these styleImages to extract both GPT and Jimeng IDs
   const firstFrameRecords = await db.firstFrame.findMany({
     where: { styleImageId: { in: styleImageIds } },
-    select: { id: true, styleImageId: true, generationPath: true }
+    select: { id: true, styleImageId: true, sceneId: true, generationPath: true }
   })
 
   const sceneMap = new Map(scenes.map(s => [s.id, s]))
   const styleImageMap = new Map(styleImages.map(s => [s.id, s]))
 
-  // Group existing first frames by styleImageId and generationPath
-  const existingByStyleImage = new Map<string, { gpt?: string; jimeng?: string }>()
+  // Build a map of [styleImageId + sceneId + generationPath] -> firstFrameId
+  // Key format: "styleImageId|sceneId|generationPath"
+  const existingKeyMap = new Map<string, string>()
   for (const ff of firstFrameRecords) {
-    if (!existingByStyleImage.has(ff.styleImageId)) {
-      existingByStyleImage.set(ff.styleImageId, {})
-    }
-    const entry = existingByStyleImage.get(ff.styleImageId)!
-    if (ff.generationPath === GenerationPath.GPT) {
-      entry.gpt = ff.id
-    } else if (ff.generationPath === GenerationPath.JIMENG) {
-      entry.jimeng = ff.id
-    }
+    const key = `${ff.styleImageId}|${ff.sceneId}|${ff.generationPath}`
+    existingKeyMap.set(key, ff.id)
   }
 
   return combinations.map(combo => {
     // Fallback to empty objects if scene/styleImage not found - this is intentional for graceful degradation
     const sceneData = sceneMap.get(combo.elements.sceneId ?? '')
     const styleImageData = styleImageMap.get(combo.elements.styleImageId ?? '')
-    const existing = existingByStyleImage.get(combo.elements.styleImageId ?? '')
+
+    // Check existing for both platforms using the exact key
+    const styleImageId = combo.elements.styleImageId ?? ''
+    const sceneId = combo.elements.sceneId ?? ''
+
+    const gptKey = `${styleImageId}|${sceneId}|${GenerationPath.GPT}`
+    const jimengKey = `${styleImageId}|${sceneId}|${GenerationPath.JIMENG}`
 
     return {
       id: combo.id,
@@ -74,8 +74,8 @@ export async function adaptFirstFrameCombinations(
       productId: styleImageData?.productId ?? '',
       ipId: styleImageData?.ipId ?? '',
       existingFirstFrameId: combo.status !== 'pending' ? (combo.existingRecordId ?? null) : null,
-      existingFirstFrameIdGpt: existing?.gpt ?? null,
-      existingFirstFrameIdJimeng: existing?.jimeng ?? null
+      existingFirstFrameIdGpt: existingKeyMap.get(gptKey) ?? null,
+      existingFirstFrameIdJimeng: existingKeyMap.get(jimengKey) ?? null
     }
   })
 }
