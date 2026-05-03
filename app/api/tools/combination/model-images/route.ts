@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
+import { CombinationEngine, ConstraintRegistry, PrismaMaterialPoolProvider } from '@/domains/combination'
+import { CombinationType } from '@/domains/combination/types'
+import { adaptModelImageCombinations } from '@/domains/combination/adapters'
 
 // GET /api/tools/combination/model-images
 export async function GET() {
@@ -26,35 +29,24 @@ export async function GET() {
       select: { id: true, name: true, images: { where: { isMain: true }, take: 1 } },
     })
 
-    // 获取已生成的模特图
-    const existingModelImages = await db.modelImage.findMany({
-      where: {
-        ipId: { in: ips.map(ip => ip.id) },
-        productId: { in: products.map(p => p.id) },
-      },
-      select: { id: true, ipId: true, productId: true },
-    })
+    // Initialize Engine
+    const engine = new CombinationEngine(new ConstraintRegistry(), new PrismaMaterialPoolProvider(db))
 
-    const existingSet = new Set(existingModelImages.map(m => `${m.ipId}-${m.productId}`))
+    // For each (ip, product) pair, compute combinations
+    const allCombinations = []
+    for (const ip of ips) {
+      for (const product of products) {
+        const result = await engine.compute(product.id, ip.id, { type: CombinationType.MODEL_IMAGE })
+        allCombinations.push(...result.combinations)
+      }
+    }
 
-    // 构建所有组合（已生成的标记 existingModelImageId）
-    const combinations = ips.flatMap(ip =>
-      products
-        .map(product => ({
-          id: `${ip.id}-${product.id}`,
-          ip,
-          product: {
-            id: product.id,
-            name: product.name,
-            mainImageUrl: product.images[0]?.url,
-          },
-          existingModelImageId: existingSet.has(`${ip.id}-${product.id}`) ? 'generated' : null,
-        }))
-    )
+    // Adapt combinations to API format
+    const adaptedCombinations = await adaptModelImageCombinations(allCombinations, teamId)
 
-    return NextResponse.json(combinations)
+    return NextResponse.json(adaptedCombinations)
   } catch (error) {
-    console.error('Database error:', error)
+    console.error('Error in model-images API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
