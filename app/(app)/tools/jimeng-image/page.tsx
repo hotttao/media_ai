@@ -244,10 +244,10 @@ export default function JimengImagePage() {
                       <img
                         src={getImageUrl(ip.fullBodyUrl)}
                         alt={ip.nickname}
-                        className="h-16 w-16 rounded-lg object-cover"
+                        className="w-20 aspect-[9/16] rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-oat text-sm text-warm-silver">
+                      <div className="flex w-20 aspect-[9/16] items-center justify-center rounded-lg bg-oat text-sm text-warm-silver">
                         无图片
                       </div>
                     )}
