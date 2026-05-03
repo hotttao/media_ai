@@ -361,12 +361,23 @@ export default function JimengImagePage() {
                     key={pose.id}
                     onClick={() => handlePoseToggle(pose.id)}
                     className={cn(
-                      'relative rounded-xl border-2 px-3 py-2 transition-all',
+                      'relative flex flex-col items-center gap-2 rounded-xl border-2 px-3 py-2 transition-all',
                       selectedPoseIds.has(pose.id)
                         ? 'border-matcha-600 bg-matcha-50'
                         : 'border-oat hover:border-matcha-600'
                     )}
                   >
+                    {pose.url ? (
+                      <img
+                        src={getImageUrl(pose.url)}
+                        alt={pose.name}
+                        className="h-16 w-16 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-oat text-xs text-warm-silver">
+                        无图片
+                      </div>
+                    )}
                     <span className="text-sm font-medium">{pose.name}</span>
                     {selectedPoseIds.has(pose.id) && (
                       <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-matcha-600 text-white">
