@@ -534,7 +534,7 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
               ×
             </button>
             <img
-              src={lightboxImage}
+              src={getImageUrl(lightboxImage)}
               alt=""
               className="max-h-[80vh] max-w-full rounded-lg object-contain"
               onClick={(event) => event.stopPropagation()}
@@ -592,7 +592,7 @@ function ImageCard({
         onClick={onClick}
       >
         {imageUrl ? (
-          <img src={imageUrl} alt={alt} className="h-full w-full object-contain" />
+          <img src={getImageUrl(imageUrl)} alt={alt} className="h-full w-full object-contain" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-white/[0.03]">
             <ImagePlaceholder icon={icon} />
