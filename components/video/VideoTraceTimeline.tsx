@@ -1,4 +1,5 @@
 import { formatDateTime, type VideoDetail, type VideoTraceResource } from './video-types'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 const TRACE_STEPS: Array<{
   key: keyof NonNullable<VideoDetail['trace']>
@@ -65,7 +66,7 @@ function TraceCard({
         <div className="space-y-2 p-3">
           {resource.url ? (
             <div className="aspect-[3/4] overflow-hidden rounded-xl bg-white/5">
-              <img src={resource.url} alt={label} className="h-full w-full object-contain" />
+              <img src={getImageUrl(resource.url)} alt={label} className="h-full w-full object-contain" />
             </div>
           ) : (
             <div className="flex aspect-[3/4] items-center justify-center rounded-xl bg-white/5 text-2xl text-white/25">

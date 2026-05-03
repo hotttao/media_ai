@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { formatDateTime, getTaskStatusLabel, type VideoListItem } from './video-types'
+import { getImageUrl } from '@/foundation/lib/utils'
 
 export function VideoCard({
   video,
@@ -18,7 +19,7 @@ export function VideoCard({
       <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-matcha-900 via-slate-900 to-stone-900">
         {video.thumbnail ? (
           <img
-            src={video.thumbnail}
+            src={getImageUrl(video.thumbnail)}
             alt={video.product?.name || '视频封面'}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />

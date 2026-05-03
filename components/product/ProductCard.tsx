@@ -15,6 +15,8 @@ interface ProductCardProps {
     createdAt: string
   }
   selected?: boolean
+  onSelect?: (e: React.MouseEvent) => void
+  selectMode?: boolean
 }
 
 const audienceConfig = {
@@ -23,17 +25,25 @@ const audienceConfig = {
   KIDS: { label: '童装', gradient: 'from-amber-500/40 to-orange-600/40', accent: '#fcd34d' },
 }
 
-export function ProductCard({ product, selected }: ProductCardProps) {
+export function ProductCard({ product, selected, onSelect, selectMode }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const mainImage = product.images?.find(img => img.isMain) || product.images?.[0]
   const tags = product.tags ? JSON.parse(product.tags) : []
   const config = audienceConfig[product.targetAudience] || audienceConfig.WOMENS
 
-  return (
-    <Link href={`/products/${product.id}`}>
-      <div
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.nativeEvent.stopImmediatePropagation()
+    if (onSelect) {
+      onSelect(e)
+    }
+  }
+
+  const cardContent = (
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
         className={`
           relative w-full overflow-hidden rounded-3xl
           transition-all duration-500 cursor-pointer
@@ -108,13 +118,26 @@ export function ProductCard({ product, selected }: ProductCardProps) {
             </span>
           </div>
 
-          {/* Selected checkmark badge */}
-          {selected && (
-            <div className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
+          {/* Checkbox button - top right, always visible when onSelect is provided */}
+          {onSelect && (
+            <button
+              type="button"
+              onClick={handleCheckboxClick}
+              className={`
+                absolute top-2 right-2 z-10 w-6 h-6 rounded-md flex items-center justify-center
+                transition-all duration-200
+                ${selected
+                  ? 'bg-emerald-500 shadow-lg shadow-emerald-500/30'
+                  : 'bg-black/40 backdrop-blur-sm border border-white/50 hover:bg-black/60'
+                }
+              `}
+            >
+              {selected && (
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
           )}
 
           {/* Image count badge */}
@@ -170,6 +193,15 @@ export function ProductCard({ product, selected }: ProductCardProps) {
           </div>
         </div>
       </div>
+  )
+
+  if (selectMode) {
+    return cardContent
+  }
+
+  return (
+    <Link href={`/products/${product.id}`} className="block">
+      {cardContent}
     </Link>
   )
 }

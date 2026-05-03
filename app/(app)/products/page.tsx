@@ -204,26 +204,31 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Selection Banner */}
-      {selectedProductIds.size > 0 && (
-        <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
-          <span className="text-sm text-emerald-700">
-            已选择 {selectedProductIds.size} 个产品
-          </span>
-          <button
-            onClick={handleSelectAll}
-            className="text-sm text-emerald-600 hover:text-emerald-700 underline"
-          >
-            {selectedProductIds.size === products.length ? '取消全选' : '全选'}
-          </button>
-          <button
-            onClick={handleAddSelectedToPublishPlan}
-            className="ml-auto px-4 py-1.5 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
-          >
-            加入发布计划
-          </button>
-        </div>
-      )}
+      {/* Selection Banner - Floating at bottom */}
+      <div className={`
+        fixed bottom-24 left-1/2 -translate-x-1/2 z-40
+        flex items-center gap-3 px-6 py-3 rounded-2xl
+        bg-white/95 backdrop-blur-md shadow-xl border border-emerald-200
+        transition-all duration-300 ease-out
+        ${selectedProductIds.size > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
+      `}>
+        <span className="text-sm text-emerald-700 font-medium">
+          已选择 <span className="text-emerald-600">{selectedProductIds.size}</span> 个产品
+        </span>
+        <div className="w-px h-6 bg-emerald-200 mx-1" />
+        <button
+          onClick={handleSelectAll}
+          className="text-sm text-emerald-600 hover:text-emerald-700 hover:underline transition-colors"
+        >
+          {selectedProductIds.size === products.length ? '取消全选' : '全选'}
+        </button>
+        <button
+          onClick={handleAddSelectedToPublishPlan}
+          className="px-5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-medium hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-500/20 transition-all duration-300 active:scale-95"
+        >
+          加入发布计划
+        </button>
+      </div>
 
       {/* Products Grid */}
       {loading ? (
@@ -277,30 +282,30 @@ export default function ProductsPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,180px))] justify-center gap-5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,180px))] justify-center gap-5 pb-32">
           {products.map((product, index) => (
             <div
               key={product.id}
-              className="animate-in cursor-pointer"
+              className="animate-in"
               style={{
                 animationDuration: '500ms',
                 animationDelay: `${index * 50}ms`,
                 animationFillMode: 'backwards',
               }}
-              onClick={(e) => {
-                e.stopPropagation()
-                const next = new Set(selectedProductIds)
-                if (next.has(product.id)) {
-                  next.delete(product.id)
-                } else {
-                  next.add(product.id)
-                }
-                setSelectedProductIds(next)
-              }}
             >
               <ProductCard
                 product={product as any}
                 selected={selectedProductIds.has(product.id)}
+                selectMode={true}
+                onSelect={() => {
+                  const next = new Set(selectedProductIds)
+                  if (next.has(product.id)) {
+                    next.delete(product.id)
+                  } else {
+                    next.add(product.id)
+                  }
+                  setSelectedProductIds(next)
+                }}
               />
             </div>
           ))}
