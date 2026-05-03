@@ -50,10 +50,27 @@ export async function GET() {
       select: { id: true, name: true, prompt: true, url: true },
     })
 
-    // 获取场景素材（type: SCENE）
+    // 获取与 IP 或产品关联的场景素材ID
+    const virtualIpSceneMaterialIds = await db.virtualIpScene.findMany({
+      where: { virtualIpId: { in: ips.map(ip => ip.id) } },
+      select: { materialId: true },
+    })
+
+    const productSceneMaterialIds = await db.productScene.findMany({
+      where: { productId: { in: products.map(p => p.id) } },
+      select: { materialId: true },
+    })
+
+    const allowedSceneMaterialIds = new Set([
+      ...virtualIpSceneMaterialIds.map(v => v.materialId),
+      ...productSceneMaterialIds.map(p => p.materialId),
+    ])
+
+    // 获取场景素材（只获取与 IP 或产品关联的）
     const scenes = await db.material.findMany({
       where: {
         type: 'SCENE',
+        id: { in: Array.from(allowedSceneMaterialIds) },
         OR: [{ userId }, { visibility: 'PUBLIC' }],
       },
       select: { id: true, name: true, url: true },
