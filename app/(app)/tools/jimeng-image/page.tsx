@@ -375,10 +375,10 @@ export default function JimengImagePage() {
                       <img
                         src={getImageUrl(pose.url)}
                         alt={pose.name}
-                        className="h-16 w-16 rounded-lg object-cover"
+                        className="w-20 aspect-[9/16] rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-oat text-xs text-warm-silver">
+                      <div className="flex w-20 aspect-[9/16] items-center justify-center rounded-lg bg-oat text-xs text-warm-silver">
                         无图片
                       </div>
                     )}
@@ -446,10 +446,10 @@ export default function JimengImagePage() {
                       <img
                         src={getImageUrl(scene.url)}
                         alt={scene.name}
-                        className="h-16 w-16 rounded-lg object-cover"
+                        className="w-20 aspect-[9/16] rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-oat text-xs text-warm-silver">
+                      <div className="flex w-20 aspect-[9/16] items-center justify-center rounded-lg bg-oat text-xs text-warm-silver">
                         无图片
                       </div>
                     )}
