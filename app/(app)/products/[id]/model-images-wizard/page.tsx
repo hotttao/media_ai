@@ -44,7 +44,11 @@ interface FirstFrameCombination {
   productId: string
   ipId: string
   existingFirstFrameId: string | null
+  existingFirstFrameIdGpt?: string | null
+  existingFirstFrameIdJimeng?: string | null
 }
+
+type GenerationPlatform = 'gpt' | 'jimeng'
 
 // ============ Step Indicator ============
 
@@ -476,6 +480,7 @@ function Step2StyleImage({ productId }: { productId: string }) {
 function Step3FirstFrame({ productId }: { productId: string }) {
   const [combinations, setCombinations] = useState<FirstFrameCombination[]>([])
   const [selectedSceneIds, setSelectedSceneIds] = useState<Set<string>>(new Set())
+  const [selectedPlatform, setSelectedPlatform] = useState<GenerationPlatform>('gpt')
   const [selectedCombinations, setSelectedCombinations] = useState<Set<string>>(new Set())
   const [generating, setGenerating] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -503,11 +508,13 @@ function Step3FirstFrame({ productId }: { productId: string }) {
     return combinations.filter(c => selectedSceneIds.has(c.scene.id))
   }, [combinations, selectedSceneIds])
 
+  const existingIdKey = selectedPlatform === 'gpt' ? 'existingFirstFrameIdGpt' : 'existingFirstFrameIdJimeng'
+
   const stats = useMemo(() => ({
     total: filteredCombinations.length,
-    generated: filteredCombinations.filter(c => c.existingFirstFrameId).length,
-    pending: filteredCombinations.filter(c => !c.existingFirstFrameId).length,
-  }), [filteredCombinations])
+    generated: filteredCombinations.filter(c => c[existingIdKey]).length,
+    pending: filteredCombinations.filter(c => !c[existingIdKey]).length,
+  }), [filteredCombinations, existingIdKey])
 
   const handleToggle = (id: string) => {
     setSelectedCombinations(prev => {
@@ -525,7 +532,7 @@ function Step3FirstFrame({ productId }: { productId: string }) {
         await fetch('/api/tools/combination/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'first-frame', styleImageId: combo.styleImage.id, sceneId: combo.scene.id }),
+          body: JSON.stringify({ type: 'first-frame', styleImageId: combo.styleImage.id, sceneId: combo.scene.id, generationPath: selectedPlatform }),
         })
       }
       alert('已提交生成任务')
@@ -540,6 +547,43 @@ function Step3FirstFrame({ productId }: { productId: string }) {
 
   return (
     <div>
+      {/* Platform Selector */}
+      <div className="rounded-xl border border-oat bg-white shadow-clay mb-6">
+        <div className="border-b border-oat px-4 py-3">
+          <h3 className="text-sm font-semibold">选择生成平台</h3>
+        </div>
+        <div className="p-4">
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setSelectedPlatform('gpt')
+                setSelectedCombinations(new Set())
+              }}
+              className={`
+                flex items-center gap-2 rounded-xl border-2 px-4 py-2 transition-all
+                ${selectedPlatform === 'gpt' ? 'border-matcha-600 bg-matcha-50' : 'border-oat hover:border-matcha-600'}
+              `}
+            >
+              <span className="text-lg">🖼️</span>
+              <span className="font-medium">GPT 生图</span>
+            </button>
+            <button
+              onClick={() => {
+                setSelectedPlatform('jimeng')
+                setSelectedCombinations(new Set())
+              }}
+              className={`
+                flex items-center gap-2 rounded-xl border-2 px-4 py-2 transition-all
+                ${selectedPlatform === 'jimeng' ? 'border-matcha-600 bg-matcha-50' : 'border-oat hover:border-matcha-600'}
+              `}
+            >
+              <span className="text-lg">🎨</span>
+              <span className="font-medium">即梦生图</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Scene Filter */}
       <div className="rounded-xl border border-oat bg-white shadow-clay mb-6">
         <div className="border-b border-oat px-4 py-3">
@@ -582,7 +626,7 @@ function Step3FirstFrame({ productId }: { productId: string }) {
         <div className="p-4">
           <div className="space-y-2">
             {filteredCombinations.map(combo => {
-              const isGenerated = !!combo.existingFirstFrameId
+              const isGenerated = !!combo[existingIdKey]
               const isSelected = selectedCombinations.has(combo.id)
               return (
                 <div key={combo.id} className={`
@@ -605,6 +649,7 @@ function Step3FirstFrame({ productId }: { productId: string }) {
                     <span className="text-warm-silver">×</span>
                     <img src={getImageUrl(combo.styleImage.url)} alt="定妆图" className="h-10 w-10 rounded-lg object-cover" />
                     <span className="text-sm text-warm-silver">定妆图</span>
+                    <span className="text-xs text-warm-silver ml-2">({selectedPlatform === 'gpt' ? 'GPT' : '即梦'})</span>
                   </div>
                   <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
                     {isGenerated ? '已生成' : '待生成'}
