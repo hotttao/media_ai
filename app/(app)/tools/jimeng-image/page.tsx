@@ -244,10 +244,10 @@ export default function JimengImagePage() {
                       <img
                         src={getImageUrl(ip.fullBodyUrl)}
                         alt={ip.nickname}
-                        className="w-full aspect-[9/16] rounded-lg object-cover"
+                        className="h-16 w-16 rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="flex w-full aspect-[9/16] items-center justify-center rounded-lg bg-oat text-sm text-warm-silver">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-oat text-sm text-warm-silver">
                         无图片
                       </div>
                     )}
@@ -522,12 +522,17 @@ export default function JimengImagePage() {
                       {/* 复制参数按钮 */}
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(JSON.stringify({
-                            type: 'jimeng-image',
-                            modelImageId: combo.modelImageId,
-                            poseId: combo.poseId,
-                            sceneId: combo.sceneId,
-                          }, null, 2))
+                          try {
+                            navigator.clipboard.writeText(JSON.stringify({
+                              type: 'jimeng-image',
+                              modelImageId: combo.modelImageId,
+                              poseId: combo.poseId,
+                              sceneId: combo.sceneId,
+                            }, null, 2))
+                            alert('已复制到剪贴板')
+                          } catch (err) {
+                            alert('复制失败，请手动复制')
+                          }
                         }}
                         className="rounded-lg border border-oat px-2 py-1 text-xs text-warm-silver hover:border-matcha-600 hover:text-foreground"
                       >
