@@ -1,0 +1,1 @@
+ALTER TABLE first_frames ADD COLUMN generation_path VARCHAR(20) NOT NULL DEFAULT 'gpt' AFTER input_hash;
