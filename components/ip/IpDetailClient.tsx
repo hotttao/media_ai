@@ -123,10 +123,10 @@ export function IpDetailClient({ ip }: IpDetailClientProps) {
 
   const displayedImages = showAllImages ? currentTabImages : currentTabImages.slice(0, 3)
   const imageUrl =
-    displayIp.avatarUrl ||
-    displayIp.fullBodyUrl ||
-    displayIp.threeViewUrl ||
-    displayIp.nineViewUrl ||
+    getImageUrl(displayIp.avatarUrl) ||
+    getImageUrl(displayIp.fullBodyUrl) ||
+    getImageUrl(displayIp.threeViewUrl) ||
+    getImageUrl(displayIp.nineViewUrl) ||
     'https://via.placeholder.com/300'
 
   const handleUploadSuccess = () => {
