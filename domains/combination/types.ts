@@ -9,6 +9,11 @@ export enum CombinationType {
   VIDEO = 'VIDEO'
 }
 
+export enum GenerationPath {
+  GPT = 'gpt',
+  JIMENG = 'jimeng'
+}
+
 export enum ConstraintType {
   POSE = 'POSE',
   MOVEMENT = 'MOVEMENT',
@@ -101,6 +106,7 @@ export interface CombinationElement {
   accessoryId?: string
   productId?: string
   ipId?: string
+  generationPath?: GenerationPath
 }
 
 export type CombinationStatus = 'pending' | 'generated' | 'qualified' | 'published'
@@ -135,6 +141,7 @@ export interface CombinationConfig {
   includeQualified?: boolean
   includePublished?: boolean
   extraConstraints?: Constraint[]
+  generationPath?: GenerationPath  // 仅 FIRST_FRAME 类型使用，指定生成平台
 }
 
 // ============ 接口定义（供外部使用）============

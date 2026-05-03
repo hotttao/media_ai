@@ -3,7 +3,7 @@ name: jimeng-image-optimization-design
 description: 即梦生图工具优化设计 - 场景关联、图片比例、姿势图片、组合预览增强
 status: approved
 created: 2026-05-03T06:34:59Z
-updated: 2026-05-03T06:34:59Z
+updated: 2026-05-03T07:45:00Z
 ---
 
 # 即梦生图工具优化设计
@@ -11,6 +11,43 @@ updated: 2026-05-03T06:34:59Z
 ## 概述
 
 对即梦生图工具进行四项优化：场景关联IP限定、图片比例调整、姿势显示图片、组合预览增强。
+
+## 背景：多平台生图支持
+
+### 背景说明
+
+最初只有 GPT 生图工具，所以 `FirstFrame` 表没有 `generationPath` 字段。现在可能有多个生图工具（GPT、即梦等），所以增加了 `generationPath` 字段来区分生成平台。
+
+### 数据追溯链路
+
+**GPT 生图流程**（原始流程）：
+```
+ModelImage (GPT生成)
+  ↓
+StyleImage (modelImageId + pose描述 生成 虚假记录)
+  ↓
+FirstFrame (styleImageId + sceneId + composition 生成)
+```
+
+**即梦生图流程**（保持一致）：
+虽然即梦是直接通过 `modelImageId, poseId, sceneId` 直接调用的，但数据库记录还是要按照 GPT 的流程创建：
+1. 创建一个虚假的 `styleImageId`（hash of modelImageId + pose描述）
+2. 创建 `firstFrame` 记录（styleImageId + sceneId + composition + generationPath='JIMENG'）
+
+这样做的好处：
+- 保证可以从首帧图反向追溯到模特图和定妆图
+- 多平台生成的图可以区分开来（通过 `generationPath`）
+
+### generationPath 字段说明
+
+- **字段位置**：`FirstFrame` 表（已在 `prisma/schema.prisma` 中添加）
+- **用途**：标识首帧图的生成平台
+- **枚举来源**：`GENERATION_PLATFORMS = ['gpt', 'jimeng']`
+- **类型**：`String` (db VarChar(20))
+- **默认值**：`'gpt'`
+- **唯一键变更**：`[styleImageId, sceneId, composition]` → `[styleImageId, sceneId, composition, generationPath]`
+
+---
 
 ## 变更1: 场景选择关联IP
 

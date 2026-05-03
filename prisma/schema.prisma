@@ -399,20 +399,21 @@ model StyleImage {
 }
 
 model FirstFrame {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  productId    String   @map("product_id") @db.VarChar(36)
-  ipId         String   @map("ip_id") @db.VarChar(36)
-  styleImageId String   @default("") @map("style_image_id") @db.VarChar(36)
-  url          String   @db.VarChar(500)
-  prompt       String?  @db.Text
-  sceneId      String   @default("") @map("scene_id") @db.VarChar(36)
-  composition  String   @default("") @db.VarChar(500)
-  inputHash    String   @map("input_hash") @db.VarChar(64)
-  createdAt    DateTime @default(now()) @map("created_at")
+  id              String   @id @default(uuid()) @db.VarChar(36)
+  productId       String   @map("product_id") @db.VarChar(36)
+  ipId            String   @map("ip_id") @db.VarChar(36)
+  styleImageId    String   @default("") @map("style_image_id") @db.VarChar(36)
+  url             String   @db.VarChar(500)
+  prompt          String?  @db.Text
+  sceneId         String   @default("") @map("scene_id") @db.VarChar(36)
+  composition     String   @default("") @db.VarChar(500)
+  inputHash       String   @map("input_hash") @db.VarChar(64)
+  generationPath  String   @default("gpt") @map("generation_path") @db.VarChar(20)
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  styleImage   StyleImage? @relation(fields: [styleImageId], references: [id])
+  styleImage      StyleImage? @relation(fields: [styleImageId], references: [id])
 
-  @@unique([styleImageId, sceneId, composition], name: "uniq_first_frames_dedup")
+  @@unique([styleImageId, sceneId, composition, generationPath], name: "uniq_first_frames_dedup")
   @@index([productId], map: "idx_first_frames_product")
   @@index([styleImageId], map: "idx_first_frames_style_image")
   @@map("first_frames")
@@ -481,7 +482,7 @@ model VideoPush {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  product         Product  @relation(fields: [productId], references: [id])
+  product         Product  @relation("ProductToVideoPushes", fields: [productId], references: [id])
   @@index([productId], map: "idx_video_push_product")
   @@index([ipId], map: "idx_video_push_ip")
   @@index([isQualified], map: "idx_video_push_qualified")

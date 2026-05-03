@@ -9,6 +9,7 @@ import {
   CombinationType,
   Constraint,
   ConstraintType,
+  GenerationPath,
   MaterialPool,
   Movement,
   Pose
@@ -41,11 +42,11 @@ export class CombinationEngine implements ICombinationEngine {
 
     // 4. 获取已存在的组合
     const existingCombinations = await this.poolProvider.getExistingCombinations(
-      productId, ipId, config.type
+      productId, ipId, config.type, config.generationPath
     )
 
     // 5. 生成理论组合
-    const allCombinations = this.generateCombinations(filteredPool, config.type)
+    const allCombinations = this.generateCombinations(filteredPool, config)
 
     // 6. 标记已存在的组合
     const combinations = this.markExisting(allCombinations, existingCombinations)
@@ -112,14 +113,14 @@ export class CombinationEngine implements ICombinationEngine {
     })
   }
 
-  private generateCombinations(pool: MaterialPool, type: CombinationType): Combination[] {
-    switch (type) {
+  private generateCombinations(pool: MaterialPool, config: CombinationConfig): Combination[] {
+    switch (config.type) {
       case CombinationType.MODEL_IMAGE:
         return this.generateModelImageCombinations(pool)
       case CombinationType.STYLE_IMAGE:
         return this.generateStyleImageCombinations(pool)
       case CombinationType.FIRST_FRAME:
-        return this.generateFirstFrameCombinations(pool)
+        return this.generateFirstFrameCombinations(pool, config.generationPath)
       case CombinationType.VIDEO:
         return this.generateVideoCombinations(pool)
     }
@@ -163,7 +164,7 @@ export class CombinationEngine implements ICombinationEngine {
     return combinations
   }
 
-  private generateFirstFrameCombinations(pool: MaterialPool): Combination[] {
+  private generateFirstFrameCombinations(pool: MaterialPool, generationPath?: GenerationPath): Combination[] {
     const combinations: Combination[] = []
 
     for (const styleImage of pool.styleImages) {
@@ -171,12 +172,14 @@ export class CombinationEngine implements ICombinationEngine {
         combinations.push({
           id: this.generateCombinationId({
             styleImageId: styleImage.id,
-            sceneId: scene.id
+            sceneId: scene.id,
+            generationPath: generationPath || GenerationPath.GPT
           }),
           type: CombinationType.FIRST_FRAME,
           elements: {
             styleImageId: styleImage.id,
-            sceneId: scene.id
+            sceneId: scene.id,
+            generationPath: generationPath || GenerationPath.GPT
           },
           status: 'pending'
         })

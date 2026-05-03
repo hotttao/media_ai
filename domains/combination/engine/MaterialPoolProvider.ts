@@ -1,11 +1,11 @@
 // domains/combination/engine/MaterialPoolProvider.ts
 
 import { db } from '@/foundation/lib/db'
-import { MaterialPool, Combination, CombinationType, Pose, Movement, Scene } from '../types'
+import { MaterialPool, Combination, CombinationType, Pose, Movement, Scene, GenerationPath } from '../types'
 
 export interface MaterialPoolProvider {
   getPool(productId: string, ipId: string): Promise<MaterialPool>
-  getExistingCombinations(productId: string, ipId: string, type: CombinationType): Promise<Combination[]>
+  getExistingCombinations(productId: string, ipId: string, type: CombinationType, generationPath?: GenerationPath): Promise<Combination[]>
 }
 
 export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
@@ -86,7 +86,8 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
   async getExistingCombinations(
     productId: string,
     ipId: string,
-    type: CombinationType
+    type: CombinationType,
+    generationPath?: GenerationPath
   ): Promise<Combination[]> {
     switch (type) {
       case CombinationType.MODEL_IMAGE:
@@ -94,7 +95,7 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
       case CombinationType.STYLE_IMAGE:
         return this.getExistingStyleImages(productId, ipId)
       case CombinationType.FIRST_FRAME:
-        return this.getExistingFirstFrames(productId, ipId)
+        return this.getExistingFirstFrames(productId, ipId, generationPath)
       case CombinationType.VIDEO:
         return this.getExistingVideos(productId, ipId)
     }
@@ -136,10 +137,14 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
     }))
   }
 
-  private async getExistingFirstFrames(productId: string, ipId: string): Promise<Combination[]> {
+  private async getExistingFirstFrames(productId: string, ipId: string, generationPath?: GenerationPath): Promise<Combination[]> {
+    const whereClause = generationPath
+      ? { productId, ipId, generationPath }
+      : { productId, ipId }
+
     const records = await db.firstFrame.findMany({
-      where: { productId, ipId },
-      select: { id: true, styleImageId: true, sceneId: true }
+      where: whereClause,
+      select: { id: true, styleImageId: true, sceneId: true, generationPath: true }
     })
 
     return records.map(r => ({
@@ -148,6 +153,7 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
       elements: {
         styleImageId: r.styleImageId,
         sceneId: r.sceneId,
+        generationPath: r.generationPath as GenerationPath,
         firstFrameId: r.id
       },
       status: 'generated' as const,

@@ -27,7 +27,7 @@ updated: 2026-04-30T08:50:58Z
 对每个待生成的组合：
 
 1. **查找 modelImageId**：从人物×服装组合中找到已有的 modelImageId（必须存在，否则跳过）
-2. **创建 styleImageId**：在数据库中创建虚假记录（无实际图片）
+2. **创建 styleImageId**：如果数据库没有对应的 styleImageId，则在数据库中创建虚假记录（无实际图片）。如果 GPT 已经生成了对应的 styleImageId，则直接使用。
    - `styleImageId = hash(modelImageId + pose描述)`
    - `url = ""` 或默认值
 3. **调用即梦接口**：
