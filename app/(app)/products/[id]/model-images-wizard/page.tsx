@@ -480,6 +480,7 @@ function Step2StyleImage({ productId }: { productId: string }) {
 function Step3FirstFrame({ productId }: { productId: string }) {
   const [combinations, setCombinations] = useState<FirstFrameCombination[]>([])
   const [selectedSceneIds, setSelectedSceneIds] = useState<Set<string>>(new Set())
+  const [selectedStyleImageIds, setSelectedStyleImageIds] = useState<Set<string>>(new Set())
   const [selectedPlatform, setSelectedPlatform] = useState<GenerationPlatform>('gpt')
   const [selectedCombinations, setSelectedCombinations] = useState<Set<string>>(new Set())
   const [generating, setGenerating] = useState(false)
@@ -495,6 +496,14 @@ function Step3FirstFrame({ productId }: { productId: string }) {
       .catch(() => setLoading(false))
   }, [productId])
 
+  const availableStyleImages = useMemo(() => {
+    const styleImageMap = new Map<string, FirstFrameCombination['styleImage']>()
+    for (const c of combinations) {
+      if (!styleImageMap.has(c.styleImage.id)) styleImageMap.set(c.styleImage.id, c.styleImage)
+    }
+    return Array.from(styleImageMap.values())
+  }, [combinations])
+
   const availableScenes = useMemo(() => {
     const sceneMap = new Map<string, FirstFrameCombination['scene']>()
     for (const c of combinations) {
@@ -504,9 +513,12 @@ function Step3FirstFrame({ productId }: { productId: string }) {
   }, [combinations])
 
   const filteredCombinations = useMemo(() => {
-    if (selectedSceneIds.size === 0) return combinations
-    return combinations.filter(c => selectedSceneIds.has(c.scene.id))
-  }, [combinations, selectedSceneIds])
+    return combinations.filter(c => {
+      const sceneMatch = selectedSceneIds.size === 0 || selectedSceneIds.has(c.scene.id)
+      const styleImageMatch = selectedStyleImageIds.size === 0 || selectedStyleImageIds.has(c.styleImage.id)
+      return sceneMatch && styleImageMatch
+    })
+  }, [combinations, selectedSceneIds, selectedStyleImageIds])
 
   const existingIdKey = selectedPlatform === 'gpt' ? 'existingFirstFrameIdGpt' : 'existingFirstFrameIdJimeng'
 
@@ -581,6 +593,47 @@ function Step3FirstFrame({ productId }: { productId: string }) {
               <span className="font-medium">即梦生图</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* StyleImage Filter */}
+      <div className="rounded-xl border border-oat bg-white shadow-clay mb-6">
+        <div className="flex items-center justify-between border-b border-oat px-4 py-3">
+          <h3 className="text-sm font-semibold">选择定妆图</h3>
+          {availableStyleImages.length > 0 && (
+            <div className="flex gap-2 text-xs text-warm-silver">
+              <button onClick={() => setSelectedStyleImageIds(new Set(availableStyleImages.map(s => s.id)))}>全选</button>
+              <span>|</span>
+              <button onClick={() => setSelectedStyleImageIds(new Set())}>清空</button>
+            </div>
+          )}
+        </div>
+        <div className="p-4">
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {availableStyleImages.map(styleImage => (
+              <button
+                key={styleImage.id}
+                onClick={() => {
+                  setSelectedStyleImageIds(prev => {
+                    const next = new Set(prev)
+                    next.has(styleImage.id) ? next.delete(styleImage.id) : next.add(styleImage.id)
+                    return next
+                  })
+                }}
+                className={`
+                  flex flex-col items-center gap-2 rounded-xl border-2 p-2 transition-all flex-shrink-0
+                  ${selectedStyleImageIds.has(styleImage.id) ? 'border-matcha-600 bg-matcha-50' : 'border-oat hover:border-matcha-600'}
+                `}
+              >
+                <img src={getImageUrl(styleImage.url)} alt="定妆图" className="h-16 w-16 rounded-lg object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="border-t border-oat px-4 py-2">
+          <p className="text-xs text-warm-silver">
+            已选择 {selectedStyleImageIds.size} / {availableStyleImages.length}
+          </p>
         </div>
       </div>
 
