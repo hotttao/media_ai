@@ -32,22 +32,23 @@ export async function adaptModelImageCombinations(
   const productMap = new Map(products.map(p => [p.id, p]))
 
   return combinations.map(combo => {
-    const ip = ipMap.get(combo.elements.ipId!) || { id: '', nickname: '', fullBodyUrl: null }
-    const product = productMap.get(combo.elements.productId!) || { id: '', name: '', mainImageUrl: null }
+    // Fallback to empty objects if IP/product not found - this is intentional for graceful degradation
+    const ipData = ipMap.get(combo.elements.ipId ?? '')
+    const productData = productMap.get(combo.elements.productId ?? '')
 
     return {
       id: combo.id,
       ip: {
-        id: ip.id,
-        nickname: ip.nickname,
-        fullBodyUrl: ip.fullBodyUrl
+        id: ipData?.id ?? '',
+        nickname: ipData?.nickname ?? '',
+        fullBodyUrl: ipData?.fullBodyUrl ?? null
       },
       product: {
-        id: product.id,
-        name: product.name,
-        mainImageUrl: product.images?.[0]?.url || null
+        id: productData?.id ?? '',
+        name: productData?.name ?? '',
+        mainImageUrl: productData?.images?.[0]?.url ?? null
       },
-      existingModelImageId: combo.status !== 'pending' ? combo.existingRecordId! : null
+      existingModelImageId: combo.status !== 'pending' ? (combo.existingRecordId ?? null) : null
     }
   })
 }

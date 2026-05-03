@@ -16,14 +16,14 @@ export async function adaptFirstFrameCombinations(
   combinations: Combination[]
 ): Promise<FirstFrameApiResult[]> {
   // Get scene information
-  const sceneIds = [...new Set(combinations.map(c => c.elements.sceneId).filter(Boolean))]
+  const sceneIds = [...new Set(combinations.map(c => c.elements.sceneId).filter((id): id is string => Boolean(id)))]
   const scenes = await db.material.findMany({
     where: { id: { in: sceneIds }, type: 'SCENE' },
     select: { id: true, name: true, url: true }
   })
 
   // Get styleImage information
-  const styleImageIds = [...new Set(combinations.map(c => c.elements.styleImageId).filter(Boolean))]
+  const styleImageIds = [...new Set(combinations.map(c => c.elements.styleImageId).filter((id): id is string => Boolean(id)))]
   const styleImages = await db.styleImage.findMany({
     where: { id: { in: styleImageIds } },
     select: { id: true, url: true, productId: true, ipId: true }
@@ -33,23 +33,24 @@ export async function adaptFirstFrameCombinations(
   const styleImageMap = new Map(styleImages.map(s => [s.id, s]))
 
   return combinations.map(combo => {
-    const scene = sceneMap.get(combo.elements.sceneId!) || { id: '', name: '', url: null }
-    const styleImage = styleImageMap.get(combo.elements.styleImageId!) || { id: '', url: '', productId: '', ipId: '' }
+    // Fallback to empty objects if scene/styleImage not found - this is intentional for graceful degradation
+    const sceneData = sceneMap.get(combo.elements.sceneId ?? '')
+    const styleImageData = styleImageMap.get(combo.elements.styleImageId ?? '')
 
     return {
       id: combo.id,
       scene: {
-        id: scene.id,
-        name: scene.name,
-        url: scene.url
+        id: sceneData?.id ?? '',
+        name: sceneData?.name ?? '',
+        url: sceneData?.url ?? null
       },
       styleImage: {
-        id: styleImage.id,
-        url: styleImage.url
+        id: styleImageData?.id ?? '',
+        url: styleImageData?.url ?? ''
       },
-      productId: styleImage.productId,
-      ipId: styleImage.ipId,
-      existingFirstFrameId: combo.status !== 'pending' ? combo.existingRecordId! : null
+      productId: styleImageData?.productId ?? '',
+      ipId: styleImageData?.ipId ?? '',
+      existingFirstFrameId: combo.status !== 'pending' ? (combo.existingRecordId ?? null) : null
     }
   })
 }
