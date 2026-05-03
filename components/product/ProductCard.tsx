@@ -195,10 +195,6 @@ export function ProductCard({ product, selected, onSelect, selectMode }: Product
       </div>
   )
 
-  if (selectMode) {
-    return cardContent
-  }
-
   return (
     <Link href={`/products/${product.id}`} className="block">
       {cardContent}
