@@ -12,6 +12,8 @@ export interface FirstFrameApiResult {
   existingFirstFrameId: string | null
   existingFirstFrameIdGpt: string | null
   existingFirstFrameIdJimeng: string | null
+  resultUrlGpt: string | null
+  resultUrlJimeng: string | null
 }
 
 export async function adaptFirstFrameCombinations(
@@ -34,18 +36,18 @@ export async function adaptFirstFrameCombinations(
   // Get all existing first frames for these styleImages to extract both GPT and Jimeng IDs
   const firstFrameRecords = await db.firstFrame.findMany({
     where: { styleImageId: { in: styleImageIds } },
-    select: { id: true, styleImageId: true, sceneId: true, generationPath: true }
+    select: { id: true, styleImageId: true, sceneId: true, generationPath: true, url: true }
   })
 
   const sceneMap = new Map(scenes.map(s => [s.id, s]))
   const styleImageMap = new Map(styleImages.map(s => [s.id, s]))
 
-  // Build a map of [styleImageId + sceneId + generationPath] -> firstFrameId
+  // Build a map of [styleImageId + sceneId + generationPath] -> firstFrame record
   // Key format: "styleImageId|sceneId|generationPath"
-  const existingKeyMap = new Map<string, string>()
+  const existingKeyMap = new Map<string, { id: string; url: string }>()
   for (const ff of firstFrameRecords) {
     const key = `${ff.styleImageId}|${ff.sceneId}|${ff.generationPath}`
-    existingKeyMap.set(key, ff.id)
+    existingKeyMap.set(key, { id: ff.id, url: ff.url })
   }
 
   return combinations.map(combo => {
@@ -74,8 +76,10 @@ export async function adaptFirstFrameCombinations(
       productId: styleImageData?.productId ?? '',
       ipId: styleImageData?.ipId ?? '',
       existingFirstFrameId: combo.status !== 'pending' ? (combo.existingRecordId ?? null) : null,
-      existingFirstFrameIdGpt: existingKeyMap.get(gptKey) ?? null,
-      existingFirstFrameIdJimeng: existingKeyMap.get(jimengKey) ?? null
+      existingFirstFrameIdGpt: existingKeyMap.get(gptKey)?.id ?? null,
+      existingFirstFrameIdJimeng: existingKeyMap.get(jimengKey)?.id ?? null,
+      resultUrlGpt: existingKeyMap.get(gptKey)?.url ?? null,
+      resultUrlJimeng: existingKeyMap.get(jimengKey)?.url ?? null
     }
   })
 }
