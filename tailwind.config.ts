@@ -51,6 +51,19 @@ const config: Config = {
           DEFAULT: '#dad4c8',
           light: '#eee9df',
         },
+        charcoal: {
+          DEFAULT: '#2a2a2e',
+          panel: '#1e1e22',
+          subtle: '#3a3a40',
+          via: '#1a1a1e',
+        },
+        'deep-charcoal': '#0f0f12',
+        emerald: {
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+        },
+        silver: '#9ca3af',
       },
       fontFamily: {
         sans: ['Roobert', 'Arial', 'sans-serif'],
