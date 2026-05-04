@@ -100,15 +100,10 @@ export default function VideoWizardPage() {
     return Array.from(groupMap.values())
   }, [combinations])
 
-  // Filter groups based on filter type AND selections
+  // Filter groups based on filter type AND movement selection
   const filteredGroups = useMemo(() => {
     return groupedByFirstFrame.map(group => {
       let movements = group.movements
-
-      // Filter by firstFrame selection
-      if (selectedFirstFrameIds.size > 0 && !selectedFirstFrameIds.has(group.firstFrame.id)) {
-        return { ...group, movements: [] }
-      }
 
       // Filter by movement selection
       if (selectedMovementIds.size > 0) {
@@ -123,7 +118,7 @@ export default function VideoWizardPage() {
 
       return { ...group, movements }
     }).filter(group => group.movements.length > 0)
-  }, [groupedByFirstFrame, filter, selectedFirstFrameIds, selectedMovementIds])
+  }, [groupedByFirstFrame, filter, selectedMovementIds])
 
   // Count statistics
   const stats = useMemo(() => {
@@ -370,135 +365,71 @@ export default function VideoWizardPage() {
           </div>
         </div>
 
-        {/* FirstFrame Cards */}
-        <div className="space-y-4">
-          {filteredGroups.length === 0 ? (
-            <div className="rounded-xl border border-oat bg-white shadow-clay px-6 py-12 text-center">
-              <p className="text-sm text-warm-silver">暂无可用组合</p>
-              <p className="text-sm text-warm-silver/60 mt-1">请先在生图向导中生成首帧图</p>
+        {/* Combinations List */}
+        <div className="rounded-xl border border-oat bg-white shadow-clay">
+          <div className="flex items-center justify-between border-b border-oat px-4 py-3">
+            <h3 className="text-sm font-semibold">首帧图 × 动作 组合</h3>
+            <div className="flex items-center gap-4 text-xs text-warm-silver">
+              <span>已生成 <span className="font-medium text-matcha-600">{stats.generated}</span></span>
+              <span>待生成 <span className="font-medium text-amber-600">{stats.pending}</span></span>
             </div>
-          ) : (
-            filteredGroups.map(group => {
-              const generatedCount = group.movements.filter(m => m.existingVideoId).length
-
-              return (
-                <div key={group.firstFrame.id} className="rounded-xl border border-oat bg-white shadow-clay overflow-hidden">
-                  {/* FirstFrame Header */}
-                  <div className="flex items-center gap-4 px-4 py-3 border-b border-oat">
-                    {group.firstFrame.url ? (
-                      <img
-                        src={getImageUrl(group.firstFrame.url)}
-                        alt="首帧图"
-                        className="w-14 aspect-9x16 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-14 aspect-9x16 rounded-lg bg-oat flex items-center justify-center text-xs text-warm-silver">
-                        无图片
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <span className="text-sm font-medium">首帧图</span>
-                      <span className="ml-2 text-xs text-warm-silver">
-                        {generatedCount}/{group.movements.length} 已生成
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Movements Grid */}
-                  <div className="p-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                      {group.movements.map(combo => {
-                        const isGenerated = !!combo.existingVideoId
-                        const isSelected = selectedCombinations.has(combo.id)
-
-                        return (
-                          <div
-                            key={combo.id}
-                            className={`
-                              relative rounded-xl border overflow-hidden transition-all duration-200
-                              ${isGenerated
-                                ? 'border-matcha-600/30 bg-matcha-50/50'
-                                : isSelected
-                                  ? 'border-matcha-600 bg-matcha-50'
-                                  : 'border-oat bg-white hover:border-matcha-600'
-                              }
-                            `}
+          </div>
+          <div className="p-4">
+            <div className="space-y-2">
+              {filteredGroups.flatMap(group =>
+                group.movements.map(combo => {
+                  const isGenerated = !!combo.existingVideoId
+                  const isSelected = selectedCombinations.has(combo.id)
+                  return (
+                    <div key={combo.id} className={`
+                      flex items-center justify-between rounded-lg border px-4 py-3
+                      ${isGenerated ? 'border-matcha-600/30 bg-matcha-50/50' : 'border-oat bg-white hover:border-matcha-600'}
+                      ${isSelected && !isGenerated ? 'ring-2 ring-matcha-600 ring-offset-1' : ''}
+                    `}>
+                      <div className="flex items-center gap-3">
+                        {!isGenerated && (
+                          <button
+                            onClick={() => handleToggleMovement(combo.id, combo.existingVideoId)}
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center ${isSelected ? 'bg-matcha-600 border-matcha-600' : 'border-gray-300'}`}
                           >
-                            {!isGenerated && (
-                              <button
-                                onClick={() => handleToggleMovement(combo.id, combo.existingVideoId)}
-                                className={`
-                                  absolute top-2 right-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center
-                                  ${isSelected ? 'bg-matcha-600 border-matcha-600' : 'border-gray-300 bg-white'}
-                                `}
-                              >
-                                {isSelected && (
-                                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                              </button>
-                            )}
-
-                            {isGenerated && combo.resultUrl && (
-                              <img
-                                src={getImageUrl(combo.resultUrl)}
-                                alt=""
-                                className="w-full aspect-video object-cover"
-                              />
-                            )}
-
-                            <div className="p-3">
-                              <p className="text-sm text-warm-charcoal">{combo.movement.content}</p>
-                              {isGenerated && (
-                                <Badge variant="success" className="text-xs mt-1">已生成</Badge>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
+                            {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                          </button>
+                        )}
+                        {isGenerated && <div className="w-5" />}
+                        {group.firstFrame.url && <img src={getImageUrl(group.firstFrame.url)} alt="" className="w-12 aspect-9x16 rounded-lg object-cover" />}
+                        <span className="text-warm-silver">×</span>
+                        <span className="text-sm text-warm-charcoal">{combo.movement.content}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {isGenerated && combo.resultUrl && (
+                          <>
+                            <span className="text-warm-silver">→</span>
+                            <img src={getImageUrl(combo.resultUrl)} alt="" className="w-16 aspect-video rounded-lg object-cover" />
+                          </>
+                        )}
+                        <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
+                          {isGenerated ? '已生成' : '待生成'}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )
-            })
+                  )
+                })
+              )}
+            </div>
+          </div>
+          {stats.pending > 0 && (
+            <div className="flex items-center justify-between border-t border-oat px-4 py-3">
+              <div className="flex gap-2 text-xs text-warm-silver">
+                <button onClick={() => setSelectedCombinations(new Set(filteredGroups.flatMap(g => g.movements.filter(m => !m.existingVideoId).map(m => m.id))))}>全选待生成</button>
+                <span>|</span>
+                <button onClick={() => setSelectedCombinations(new Set())}>清空选择</button>
+              </div>
+              <Button onClick={handleGenerate} disabled={selectedCombinations.size === 0 || generating} className="bg-matcha-600 hover:bg-matcha-500">
+                {generating ? '生成中...' : `生成 ${selectedCombinations.size > 0 ? `(${selectedCombinations.size})` : ''}`}
+              </Button>
+            </div>
           )}
         </div>
-
-        {/* Footer Actions */}
-        {stats.total > 0 && stats.pending > 0 && (
-          <div className="flex items-center justify-between mt-6 rounded-xl border border-oat bg-white shadow-clay px-4 py-3">
-            <div className="flex gap-4">
-              <button
-                onClick={handleSelectAll}
-                className="text-xs text-warm-silver hover:text-warm-charcoal transition-colors"
-              >
-                全选待生成
-              </button>
-              <span className="text-warm-silver">|</span>
-              <button
-                onClick={handleDeselectAll}
-                className="text-xs text-warm-silver hover:text-warm-charcoal transition-colors"
-              >
-                清空选择
-              </button>
-            </div>
-            <Button
-              onClick={handleGenerate}
-              disabled={selectedCombinations.size === 0 || generating}
-              className="bg-matcha-600 hover:bg-matcha-500"
-            >
-              {generating ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  生成中...
-                </>
-              ) : (
-                <>生成 {selectedCombinations.size > 0 && `(${selectedCombinations.size})`}</>
-              )}
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Confirm Dialog */}
