@@ -8,6 +8,7 @@ export interface ModelImageApiResult {
   ip: { id: string; nickname: string; fullBodyUrl: string | null }
   product: { id: string; name: string; mainImageUrl: string | null }
   existingModelImageId: string | null
+  resultUrl: string | null
 }
 
 export async function adaptModelImageCombinations(
@@ -31,10 +32,21 @@ export async function adaptModelImageCombinations(
   // Build productId -> product info map
   const productMap = new Map(products.map(p => [p.id, p]))
 
+  // Get all existing modelImages for result URLs
+  const modelImageIds = [...new Set(combinations.map(c => c.elements.modelImageId).filter((id): id is string => Boolean(id)))]
+  const existingModelImages = await db.modelImage.findMany({
+    where: { id: { in: modelImageIds } },
+    select: { id: true, url: true }
+  })
+  const modelImageUrlMap = new Map(existingModelImages.map(m => [m.id, m.url]))
+
   return combinations.map(combo => {
     // Fallback to empty objects if IP/product not found - this is intentional for graceful degradation
     const ipData = ipMap.get(combo.elements.ipId ?? '')
     const productData = productMap.get(combo.elements.productId ?? '')
+
+    // Get result URL from existing modelImage if generated
+    const resultUrl = combo.existingRecordId ? modelImageUrlMap.get(combo.existingRecordId) ?? null : null
 
     return {
       id: combo.id,
@@ -48,7 +60,8 @@ export async function adaptModelImageCombinations(
         name: productData?.name ?? '',
         mainImageUrl: productData?.images?.[0]?.url ?? null
       },
-      existingModelImageId: combo.status !== 'pending' ? (combo.existingRecordId ?? null) : null
+      existingModelImageId: combo.status !== 'pending' ? (combo.existingRecordId ?? null) : null,
+      resultUrl
     }
   })
 }
