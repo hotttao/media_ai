@@ -398,7 +398,7 @@ export default function VideoWizardPage() {
                         {isGenerated && <div className="w-5" />}
                         {group.firstFrame.url && <img src={getImageUrl(group.firstFrame.url)} alt="" className="w-12 aspect-9x16 rounded-lg object-cover" />}
                         <span className="text-warm-silver">×</span>
-                        <span className="text-sm text-warm-charcoal">{combo.movement.content}</span>
+                        <span className="text-sm text-warm-charcoal max-w-[200px] truncate">{combo.movement.content}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         {isGenerated && combo.resultUrl && (
