@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const productId = searchParams.get('productId')
-    const teamId = session.user.teamId
+    const teamId = session.user.teamId as string
 
     // 获取该产品的首帧图（只获取有 styleImage 关联的）
     const firstFrameWhere: any = {
@@ -55,32 +55,36 @@ export async function GET(request: Request) {
       },
     })
 
-    // 获取已生成的视频（用于过滤）
+    // 获取已生成的视频（添加 teamId 过滤）
+    const firstFrameIds = firstFrames.map(ff => ff.id)
     const existingVideos = await db.video.findMany({
       where: {
         firstFrameId: { not: '' },
+        firstFrameId: { in: firstFrameIds },
       },
       select: {
         id: true,
         firstFrameId: true,
         movementId: true,
+        url: true,
       },
     })
 
-    // 构建 firstFrameId + movementId -> videoId 的映射
-    const videoMap = new Map<string, string>()
+    // 构建 firstFrameId + movementId -> video info 的映射
+    const videoMap = new Map<string, { id: string; url: string }>()
     for (const video of existingVideos) {
       if (video.firstFrameId && video.movementId) {
-        videoMap.set(`${video.firstFrameId}-${video.movementId}`, video.id)
+        videoMap.set(`${video.firstFrameId}-${video.movementId}`, { id: video.id, url: video.url })
       }
     }
 
     // 构建组合：首帧图 × 可用动作（根据姿势过滤）
     interface JimengVideoCombination {
       id: string
-      firstFrame: { id: string; url: string; poseId: string | null }
+      firstFrame: { id: string; url: string; poseId: string | null; productId: string }
       movement: { id: string; content: string }
       existingVideoId: string | null
+      resultUrl: string | null
     }
 
     const combinations: JimengVideoCombination[] = []
@@ -98,7 +102,7 @@ export async function GET(request: Request) {
         }
 
         const combinationId = `${ff.id}-${movement.id}`
-        const existingVideoId = videoMap.get(combinationId) || null
+        const videoInfo = videoMap.get(combinationId)
 
         combinations.push({
           id: combinationId,
@@ -106,12 +110,14 @@ export async function GET(request: Request) {
             id: ff.id,
             url: ff.url,
             poseId,
+            productId: ff.productId,
           },
           movement: {
             id: movement.id,
             content: movement.content,
           },
-          existingVideoId,
+          existingVideoId: videoInfo?.id ?? null,
+          resultUrl: videoInfo?.url ?? null,
         })
       }
     }

@@ -42,4 +42,9 @@
   .aspect-9x16 {
     aspect-ratio: 9 / 16;
   }
+
+  /* 16:9 aspect ratio for video/wide images */
+  .aspect-video {
+    aspect-ratio: 16 / 9;
+  }
 }

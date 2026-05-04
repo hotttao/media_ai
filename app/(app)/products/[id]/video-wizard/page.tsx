@@ -20,6 +20,7 @@ interface JimengVideoCombination {
   firstFrame: { id: string; url: string; poseId: string | null; productId: string }
   movement: { id: string; content: string }
   existingVideoId: string | null
+  resultUrl: string | null
 }
 
 type FilterType = 'all' | 'generated' | 'pending'
@@ -294,7 +295,7 @@ export default function VideoWizardPage() {
                       const isSelected = selectedCombinations.has(combo.id)
 
                       return (
-                        <div key={combo.id}>
+                        <div key={combo.id} className="flex items-center gap-2">
                           <button
                             onClick={() => handleToggleMovement(combo.id, combo.existingVideoId)}
                             disabled={isGenerated}
@@ -325,6 +326,9 @@ export default function VideoWizardPage() {
                             )}
                             <span>{combo.movement.content}</span>
                           </button>
+                          {isGenerated && combo.resultUrl && (
+                            <img src={getImageUrl(combo.resultUrl)} alt="" className="w-12 aspect-video rounded-lg object-cover" />
+                          )}
                         </div>
                       )
                     })}
