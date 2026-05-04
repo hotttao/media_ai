@@ -200,9 +200,9 @@ function Step1ModelImage({
                   `}
                 >
                   {ip.fullBodyUrl ? (
-                    <img src={getImageUrl(ip.fullBodyUrl)} alt={ip.nickname} className="h-20 w-20 rounded-lg object-cover" />
+                    <img src={getImageUrl(ip.fullBodyUrl)} alt={ip.nickname} className="w-14 aspect-9x16 rounded-lg object-cover" />
                   ) : (
-                    <div className="h-20 w-20 rounded-lg bg-oat flex items-center justify-center text-sm text-warm-silver">无图片</div>
+                    <div className="w-14 aspect-9x16 rounded-lg bg-oat flex items-center justify-center text-sm text-warm-silver">无图片</div>
                   )}
                   <span className="text-sm font-medium">{ip.nickname}</span>
                 </button>
@@ -242,10 +242,10 @@ function Step1ModelImage({
                       </button>
                     )}
                     {isGenerated && <div className="w-5" />}
-                    <img src={getImageUrl(combo.ip.fullBodyUrl)} alt={combo.ip.nickname} className="h-10 w-10 rounded-lg object-cover" />
+                    <img src={getImageUrl(combo.ip.fullBodyUrl)} alt={combo.ip.nickname} className="w-12 aspect-9x16 rounded-lg object-cover" />
                     <span className="text-sm font-medium">{combo.ip.nickname}</span>
                     <span className="text-warm-silver">×</span>
-                    <img src={getImageUrl(combo.product.mainImageUrl)} alt={combo.product.name} className="h-10 w-10 rounded-lg object-cover" />
+                    <img src={getImageUrl(combo.product.mainImageUrl)} alt={combo.product.name} className="w-12 aspect-9x16 rounded-lg object-cover" />
                     <span className="text-sm text-warm-silver">{combo.product.name}</span>
                   </div>
                   <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
@@ -376,7 +376,7 @@ function Step2StyleImage({ productId }: { productId: string }) {
                   ${selectedPoseIds.has(pose.id) ? 'border-matcha-600 bg-matcha-600 text-white' : 'border-oat hover:border-matcha-600'}
                 `}
               >
-                {pose.url && <img src={getImageUrl(pose.url)} alt={pose.name} className="h-5 w-5 rounded object-cover" />}
+                {pose.url && <img src={getImageUrl(pose.url)} alt={pose.name} className="w-5 h-5 rounded object-cover" />}
                 <span>{pose.name}</span>
               </button>
             ))}
@@ -406,7 +406,7 @@ function Step2StyleImage({ productId }: { productId: string }) {
                   ${selectedModelImageIds.has(mi.id) ? 'border-matcha-600 bg-matcha-50' : 'border-oat hover:border-matcha-600'}
                 `}
               >
-                <img src={getImageUrl(mi.url)} alt={mi.productName} className="h-16 w-16 rounded-lg object-cover" />
+                <img src={getImageUrl(mi.url)} alt={mi.productName} className="w-16 aspect-9x16 rounded-lg object-cover" />
                 <span className="text-xs text-warm-silver">{mi.productName}</span>
               </button>
             ))}
@@ -444,10 +444,10 @@ function Step2StyleImage({ productId }: { productId: string }) {
                       </button>
                     )}
                     {isGenerated && <div className="w-5" />}
-                    {combo.pose.url && <img src={getImageUrl(combo.pose.url)} alt={combo.pose.name} className="h-10 w-10 rounded-lg object-cover" />}
+                    {combo.pose.url && <img src={getImageUrl(combo.pose.url)} alt={combo.pose.name} className="w-12 aspect-9x16 rounded-lg object-cover" />}
                     <span className="text-sm">{combo.pose.name}</span>
                     <span className="text-warm-silver">×</span>
-                    <img src={getImageUrl(combo.modelImage.url)} alt={combo.modelImage.productName} className="h-10 w-10 rounded-lg object-cover" />
+                    <img src={getImageUrl(combo.modelImage.url)} alt={combo.modelImage.productName} className="w-12 aspect-9x16 rounded-lg object-cover" />
                     <span className="text-sm text-warm-silver">{combo.modelImage.productName}</span>
                   </div>
                   <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
@@ -625,7 +625,7 @@ function Step3FirstFrame({ productId }: { productId: string }) {
                   ${selectedStyleImageIds.has(styleImage.id) ? 'border-matcha-600 bg-matcha-50' : 'border-oat hover:border-matcha-600'}
                 `}
               >
-                <img src={getImageUrl(styleImage.url)} alt="定妆图" className="h-16 w-16 rounded-lg object-cover" />
+                <img src={getImageUrl(styleImage.url)} alt="定妆图" className="w-16 aspect-9x16 rounded-lg object-cover" />
               </button>
             ))}
           </div>
@@ -659,7 +659,7 @@ function Step3FirstFrame({ productId }: { productId: string }) {
                   ${selectedSceneIds.has(scene.id) ? 'border-matcha-600 bg-matcha-600 text-white' : 'border-oat hover:border-matcha-600'}
                 `}
               >
-                {scene.url && <img src={getImageUrl(scene.url)} alt={scene.name} className="h-5 w-5 rounded object-cover" />}
+                {scene.url && <img src={getImageUrl(scene.url)} alt={scene.name} className="w-5 h-5 rounded object-cover" />}
                 <span>{scene.name}</span>
               </button>
             ))}
@@ -697,10 +697,10 @@ function Step3FirstFrame({ productId }: { productId: string }) {
                       </button>
                     )}
                     {isGenerated && <div className="w-5" />}
-                    {combo.scene.url && <img src={getImageUrl(combo.scene.url)} alt={combo.scene.name} className="h-10 w-10 rounded-lg object-cover" />}
+                    {combo.scene.url && <img src={getImageUrl(combo.scene.url)} alt={combo.scene.name} className="w-12 aspect-9x16 rounded-lg object-cover" />}
                     <span className="text-sm">{combo.scene.name}</span>
                     <span className="text-warm-silver">×</span>
-                    <img src={getImageUrl(combo.styleImage.url)} alt="定妆图" className="h-10 w-10 rounded-lg object-cover" />
+                    <img src={getImageUrl(combo.styleImage.url)} alt="定妆图" className="w-12 aspect-9x16 rounded-lg object-cover" />
                     <span className="text-sm text-warm-silver">定妆图</span>
                     <span className="text-xs text-warm-silver ml-2">({selectedPlatform === 'gpt' ? 'GPT' : '即梦'})</span>
                   </div>

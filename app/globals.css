@@ -37,4 +37,9 @@
       transform: translateY(0);
     }
   }
+
+  /* 9:16 aspect ratio for portrait images */
+  .aspect-9x16 {
+    aspect-ratio: 9 / 16;
+  }
 }
