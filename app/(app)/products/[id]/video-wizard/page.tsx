@@ -35,6 +35,7 @@ export default function VideoWizardPage() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [selectedCombinations, setSelectedCombinations] = useState<Set<string>>(new Set())
   const [selectedFirstFrameIds, setSelectedFirstFrameIds] = useState<Set<string>>(new Set())
+  const [selectedMovementIds, setSelectedMovementIds] = useState<Set<string>>(new Set())
   const [generating, setGenerating] = useState(false)
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
 
@@ -67,6 +68,17 @@ export default function VideoWizardPage() {
     return Array.from(ffMap.values())
   }, [combinations])
 
+  // Available movements (for top filter)
+  const availableMovements = useMemo(() => {
+    const mvMap = new Map<string, JimengVideoCombination['movement']>()
+    for (const c of combinations) {
+      if (!mvMap.has(c.movement.id)) {
+        mvMap.set(c.movement.id, c.movement)
+      }
+    }
+    return Array.from(mvMap.values())
+  }, [combinations])
+
   // Group combinations by firstFrame
   const groupedByFirstFrame = useMemo(() => {
     const groupMap = new Map<string, {
@@ -88,7 +100,7 @@ export default function VideoWizardPage() {
     return Array.from(groupMap.values())
   }, [combinations])
 
-  // Filter groups based on filter type AND firstFrame selection
+  // Filter groups based on filter type AND selections
   const filteredGroups = useMemo(() => {
     return groupedByFirstFrame.map(group => {
       let movements = group.movements
@@ -96,6 +108,11 @@ export default function VideoWizardPage() {
       // Filter by firstFrame selection
       if (selectedFirstFrameIds.size > 0 && !selectedFirstFrameIds.has(group.firstFrame.id)) {
         return { ...group, movements: [] }
+      }
+
+      // Filter by movement selection
+      if (selectedMovementIds.size > 0) {
+        movements = movements.filter(m => selectedMovementIds.has(m.movement.id))
       }
 
       if (filter === 'generated') {
@@ -106,7 +123,7 @@ export default function VideoWizardPage() {
 
       return { ...group, movements }
     }).filter(group => group.movements.length > 0)
-  }, [groupedByFirstFrame, filter, selectedFirstFrameIds])
+  }, [groupedByFirstFrame, filter, selectedFirstFrameIds, selectedMovementIds])
 
   // Count statistics
   const stats = useMemo(() => {
@@ -195,11 +212,16 @@ export default function VideoWizardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-deep-charcoal">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="flex items-center gap-3 px-6 py-4 rounded-xl border border-charcoal-subtle bg-charcoal-panel">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-            <span className="text-sm text-silver">加载中...</span>
+      <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
+        <div className="fixed top-20 left-20 w-96 h-96 bg-violet-300/30 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+        <div
+          className="fixed bottom-20 right-20 w-80 h-80 bg-fuchsia-300/30 rounded-full blur-[100px] pointer-events-none animate-pulse"
+          style={{ animationDelay: '1s' }}
+        />
+        <div className="relative max-w-5xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-center rounded-xl border border-oat bg-white px-6 py-12">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-matcha-600 border-t-transparent"></div>
+            <span className="ml-3 text-sm text-warm-silver">加载中...</span>
           </div>
         </div>
       </div>
@@ -207,33 +229,33 @@ export default function VideoWizardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-deep-charcoal text-white">
-      {/* Subtle grid pattern overlay */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-charcoal-via to-deep-charcoal opacity-50 pointer-events-none" />
-      <div className="fixed inset-0 opacity-[0.03]" style={{
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-        backgroundSize: '40px 40px'
-      }} />
+    <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
+      {/* Floating orbs */}
+      <div className="fixed top-20 left-20 w-96 h-96 bg-violet-300/30 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+      <div
+        className="fixed bottom-20 right-20 w-80 h-80 bg-fuchsia-300/30 rounded-full blur-[100px] pointer-events-none animate-pulse"
+        style={{ animationDelay: '1s' }}
+      />
 
-      <div className="relative max-w-6xl mx-auto px-6 py-10">
+      <div className="relative max-w-5xl mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex items-center gap-5 mb-10">
+        <div className="flex items-center gap-4 mb-8">
           <Link
             href={`/products/${productId}`}
-            className="w-11 h-11 rounded-xl bg-charcoal-panel border border-charcoal-subtle flex items-center justify-center text-silver hover:text-emerald-400 hover:border-emerald-500/50 transition-all"
+            className="w-10 h-10 rounded-xl bg-white shadow-md flex items-center justify-center text-gray-500 hover:text-violet-600 hover:shadow-lg transition-all"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">视频生成</h1>
-            <p className="text-sm text-silver mt-1">首帧图 × 动作 组合 · 批量生成视频</p>
+            <h1 className="text-2xl font-bold text-warm-charcoal tracking-tight">视频生成</h1>
+            <p className="text-sm text-warm-silver mt-0.5">首帧图 × 动作 组合 · 批量生成视频</p>
           </div>
         </div>
 
         {/* Stats Bar */}
-        <div className="flex items-center gap-6 mb-8 px-5 py-4 rounded-2xl bg-charcoal-panel border border-charcoal-subtle">
+        <div className="flex items-center gap-4 mb-6 px-4 py-3 rounded-xl border border-oat bg-white shadow-clay">
           <div className="flex gap-3">
             {(['all', 'generated', 'pending'] as FilterType[]).map(tab => (
               <button
@@ -242,8 +264,8 @@ export default function VideoWizardPage() {
                 className={`
                   px-4 py-2 text-sm font-medium rounded-lg transition-all
                   ${filter === tab
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
-                    : 'text-silver hover:text-white hover:bg-white/5'
+                    ? 'bg-matcha-600 text-white'
+                    : 'text-warm-silver hover:bg-oat'
                   }
                 `}
               >
@@ -251,108 +273,140 @@ export default function VideoWizardPage() {
               </button>
             ))}
           </div>
-          <div className="h-6 w-px bg-charcoal-subtle" />
-          <div className="flex items-center gap-6 text-sm">
-            <span className="text-silver">已生成 <span className="text-emerald-400 font-semibold">{stats.generated}</span></span>
-            <span className="text-silver">待生成 <span className="text-amber-400 font-semibold">{stats.pending}</span></span>
-            <span className="text-silver">共 <span className="text-white font-semibold">{stats.total}</span></span>
+          <div className="h-6 w-px bg-oat" />
+          <div className="flex items-center gap-6 text-sm text-warm-silver">
+            <span>已生成 <span className="font-medium text-matcha-600">{stats.generated}</span></span>
+            <span>待生成 <span className="font-medium text-amber-600">{stats.pending}</span></span>
+            <span>共 <span className="font-medium text-warm-charcoal">{stats.total}</span></span>
+          </div>
+        </div>
+
+        {/* Movement Filter - Top */}
+        <div className="rounded-xl border border-oat bg-white shadow-clay mb-6">
+          <div className="flex items-center justify-between border-b border-oat px-4 py-3">
+            <h3 className="text-sm font-semibold">选择动作</h3>
+            {availableMovements.length > 0 && (
+              <div className="flex gap-3 text-xs text-warm-silver">
+                <button onClick={() => setSelectedMovementIds(new Set(availableMovements.map(m => m.id)))}>全选</button>
+                <span>|</span>
+                <button onClick={() => setSelectedMovementIds(new Set())}>清空</button>
+              </div>
+            )}
+          </div>
+          <div className="p-4">
+            <div className="flex flex-wrap gap-2">
+              {availableMovements.map(mv => (
+                <button
+                  key={mv.id}
+                  onClick={() => {
+                    setSelectedMovementIds(prev => {
+                      const next = new Set(prev)
+                      next.has(mv.id) ? next.delete(mv.id) : next.add(mv.id)
+                      return next
+                    })
+                  }}
+                  className={`
+                    rounded-full border-2 px-4 py-2 text-sm transition-all
+                    ${selectedMovementIds.has(mv.id)
+                      ? 'border-matcha-600 bg-matcha-600 text-white'
+                      : 'border-oat hover:border-matcha-600'
+                    }
+                  `}
+                >
+                  {mv.content}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="border-t border-oat px-4 py-2">
+            <p className="text-xs text-warm-silver">
+              已选择 {selectedMovementIds.size} / {availableMovements.length}
+            </p>
           </div>
         </div>
 
         {/* FirstFrame Filter */}
-        <div className="mb-8 px-5 py-4 rounded-2xl bg-charcoal-panel border border-charcoal-subtle">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-white">选择首帧图</h3>
+        <div className="rounded-xl border border-oat bg-white shadow-clay mb-6">
+          <div className="flex items-center justify-between border-b border-oat px-4 py-3">
+            <h3 className="text-sm font-semibold">选择首帧图</h3>
             {availableFirstFrames.length > 0 && (
-              <div className="flex gap-3 text-xs text-silver">
+              <div className="flex gap-3 text-xs text-warm-silver">
                 <button onClick={() => setSelectedFirstFrameIds(new Set(availableFirstFrames.map(f => f.id)))}>全选</button>
                 <span>|</span>
                 <button onClick={() => setSelectedFirstFrameIds(new Set())}>清空</button>
               </div>
             )}
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {availableFirstFrames.map(ff => (
-              <button
-                key={ff.id}
-                onClick={() => {
-                  setSelectedFirstFrameIds(prev => {
-                    const next = new Set(prev)
-                    next.has(ff.id) ? next.delete(ff.id) : next.add(ff.id)
-                    return next
-                  })
-                }}
-                className={`
-                  flex flex-col items-center gap-2 rounded-xl border-2 p-2 transition-all flex-shrink-0
-                  ${selectedFirstFrameIds.has(ff.id) ? 'border-emerald-500 bg-emerald-500/10' : 'border-charcoal-subtle hover:border-emerald-500/50'}
-                `}
-              >
-                {ff.url ? (
-                  <img src={getImageUrl(ff.url)} alt="" className="w-14 aspect-9x16 rounded-lg object-cover" />
-                ) : (
-                  <div className="w-14 aspect-9x16 rounded-lg bg-charcoal-subtle flex items-center justify-center text-xs text-silver">无图片</div>
-                )}
-              </button>
-            ))}
+          <div className="p-4">
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {availableFirstFrames.map(ff => (
+                <button
+                  key={ff.id}
+                  onClick={() => {
+                    setSelectedFirstFrameIds(prev => {
+                      const next = new Set(prev)
+                      next.has(ff.id) ? next.delete(ff.id) : next.add(ff.id)
+                      return next
+                    })
+                  }}
+                  className={`
+                    flex flex-col items-center gap-2 rounded-xl border-2 p-2 transition-all flex-shrink-0
+                    ${selectedFirstFrameIds.has(ff.id) ? 'border-matcha-600 bg-matcha-50' : 'border-oat hover:border-matcha-600'}
+                  `}
+                >
+                  {ff.url ? (
+                    <img src={getImageUrl(ff.url)} alt="" className="w-14 aspect-9x16 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-14 aspect-9x16 rounded-lg bg-oat flex items-center justify-center text-xs text-warm-silver">无图片</div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="mt-2 text-xs text-silver">
-            已选择 {selectedFirstFrameIds.size} / {availableFirstFrames.length}
+          <div className="border-t border-oat px-4 py-2">
+            <p className="text-xs text-warm-silver">
+              已选择 {selectedFirstFrameIds.size} / {availableFirstFrames.length}
+            </p>
           </div>
         </div>
 
         {/* FirstFrame Cards */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {filteredGroups.length === 0 ? (
-            <div className="rounded-2xl border border-charcoal-subtle bg-charcoal-panel px-8 py-16 text-center">
-              <div className="text-4xl mb-3">🎬</div>
-              <p className="text-silver">暂无可用组合</p>
-              <p className="text-sm text-silver/60 mt-1">请先在生图向导中生成首帧图</p>
+            <div className="rounded-xl border border-oat bg-white shadow-clay px-6 py-12 text-center">
+              <p className="text-sm text-warm-silver">暂无可用组合</p>
+              <p className="text-sm text-warm-silver/60 mt-1">请先在生图向导中生成首帧图</p>
             </div>
           ) : (
-            filteredGroups.map((group, groupIndex) => {
+            filteredGroups.map(group => {
               const generatedCount = group.movements.filter(m => m.existingVideoId).length
-              const progress = generatedCount / group.movements.length
 
               return (
-                <div
-                  key={group.firstFrame.id}
-                  className="rounded-2xl border border-charcoal-subtle bg-charcoal-panel overflow-hidden"
-                >
+                <div key={group.firstFrame.id} className="rounded-xl border border-oat bg-white shadow-clay overflow-hidden">
                   {/* FirstFrame Header */}
-                  <div className="flex items-center gap-4 px-5 py-4 border-b border-charcoal-subtle">
-                    <div className="relative">
-                      {group.firstFrame.url ? (
-                        <img
-                          src={getImageUrl(group.firstFrame.url)}
-                          alt="首帧图"
-                          className="w-14 aspect-9x16 rounded-lg object-cover ring-2 ring-emerald-500/20"
-                        />
-                      ) : (
-                        <div className="w-14 aspect-9x16 rounded-lg bg-charcoal-subtle flex items-center justify-center text-xs text-silver">
-                          无图片
-                        </div>
-                      )}
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                        <span className="text-[10px] font-bold">{generatedCount}</span>
+                  <div className="flex items-center gap-4 px-4 py-3 border-b border-oat">
+                    {group.firstFrame.url ? (
+                      <img
+                        src={getImageUrl(group.firstFrame.url)}
+                        alt="首帧图"
+                        className="w-14 aspect-9x16 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-14 aspect-9x16 rounded-lg bg-oat flex items-center justify-center text-xs text-warm-silver">
+                        无图片
                       </div>
-                    </div>
+                    )}
                     <div className="flex-1">
-                      <span className="text-sm font-medium text-white">首帧图</span>
-                      <div className="flex items-center gap-3 mt-2">
-                        <div className="flex-1 h-1.5 bg-charcoal-subtle rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
-                            style={{ width: `${progress * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-silver">{generatedCount}/{group.movements.length}</span>
-                      </div>
+                      <span className="text-sm font-medium">首帧图</span>
+                      <span className="ml-2 text-xs text-warm-silver">
+                        {generatedCount}/{group.movements.length} 已生成
+                      </span>
                     </div>
                   </div>
 
                   {/* Movements Grid */}
-                  <div className="p-5">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  <div className="p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {group.movements.map(combo => {
                         const isGenerated = !!combo.existingVideoId
                         const isSelected = selectedCombinations.has(combo.id)
@@ -363,21 +417,20 @@ export default function VideoWizardPage() {
                             className={`
                               relative rounded-xl border overflow-hidden transition-all duration-200
                               ${isGenerated
-                                ? 'border-emerald-500/30 bg-emerald-500/5'
+                                ? 'border-matcha-600/30 bg-matcha-50/50'
                                 : isSelected
-                                  ? 'border-emerald-500 bg-emerald-500/10'
-                                  : 'border-charcoal-subtle bg-charcoal-subtle/50 hover:border-emerald-500/50 hover:bg-charcoal-subtle'
+                                  ? 'border-matcha-600 bg-matcha-50'
+                                  : 'border-oat bg-white hover:border-matcha-600'
                               }
                             `}
                           >
                             {!isGenerated && (
                               <button
                                 onClick={() => handleToggleMovement(combo.id, combo.existingVideoId)}
-                                className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
-                                style={{
-                                  backgroundColor: isSelected ? '#10b981' : 'rgba(0,0,0,0.5)',
-                                  borderColor: isSelected ? '#10b981' : 'rgba(255,255,255,0.2)'
-                                }}
+                                className={`
+                                  absolute top-2 right-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center
+                                  ${isSelected ? 'bg-matcha-600 border-matcha-600' : 'border-gray-300 bg-white'}
+                                `}
                               >
                                 {isSelected && (
                                   <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -396,12 +449,9 @@ export default function VideoWizardPage() {
                             )}
 
                             <div className="p-3">
-                              <p className="text-sm font-medium text-white truncate">{combo.movement.content}</p>
+                              <p className="text-sm text-warm-charcoal">{combo.movement.content}</p>
                               {isGenerated && (
-                                <div className="flex items-center gap-1 mt-1">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  <span className="text-xs text-emerald-400">已生成</span>
-                                </div>
+                                <Badge variant="success" className="text-xs mt-1">已生成</Badge>
                               )}
                             </div>
                           </div>
@@ -417,18 +467,18 @@ export default function VideoWizardPage() {
 
         {/* Footer Actions */}
         {stats.total > 0 && stats.pending > 0 && (
-          <div className="flex items-center justify-between mt-8 px-6 py-4 rounded-2xl border border-charcoal-subtle bg-charcoal-panel">
-            <div className="flex gap-5">
+          <div className="flex items-center justify-between mt-6 rounded-xl border border-oat bg-white shadow-clay px-4 py-3">
+            <div className="flex gap-4">
               <button
                 onClick={handleSelectAll}
-                className="text-sm text-silver hover:text-white transition-colors"
+                className="text-xs text-warm-silver hover:text-warm-charcoal transition-colors"
               >
                 全选待生成
               </button>
-              <span className="text-charcoal-subtle">|</span>
+              <span className="text-warm-silver">|</span>
               <button
                 onClick={handleDeselectAll}
-                className="text-sm text-silver hover:text-white transition-colors"
+                className="text-xs text-warm-silver hover:text-warm-charcoal transition-colors"
               >
                 清空选择
               </button>
@@ -436,7 +486,7 @@ export default function VideoWizardPage() {
             <Button
               onClick={handleGenerate}
               disabled={selectedCombinations.size === 0 || generating}
-              className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white border-0 px-6"
+              className="bg-matcha-600 hover:bg-matcha-500"
             >
               {generating ? (
                 <>
@@ -453,19 +503,19 @@ export default function VideoWizardPage() {
 
       {/* Confirm Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <DialogContent className="bg-charcoal-panel border-charcoal-subtle text-white">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">确认生成</DialogTitle>
-            <DialogDescription className="text-silver">
+            <DialogTitle>确认生成</DialogTitle>
+            <DialogDescription>
               已选择 {selectedCombinations.size} 个组合，其中部分已生成过视频。
               重新生成可能会覆盖现有视频，确定要继续吗？
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)} className="border-charcoal-subtle text-silver hover:text-white hover:bg-charcoal-subtle">
+            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={performGenerate} className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white border-0">
+            <Button onClick={performGenerate} className="bg-matcha-600 hover:bg-matcha-500">
               确认生成
             </Button>
           </DialogFooter>
