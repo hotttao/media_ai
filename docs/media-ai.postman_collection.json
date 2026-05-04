@@ -143,6 +143,159 @@
   ],
   "item": [
     {
+      "name": "alternative-images",
+      "item": [
+        {
+          "name": "POST alternative images id confirm",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alternative-images/{{id}}/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alternative-images",
+                "{{id}}",
+                "confirm"
+              ],
+              "query": []
+            },
+            "description": "operationId: postAlternativeImagesIdConfirm"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE alternative images id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alternative-images/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alternative-images",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: deleteAlternativeImagesId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET alternative images",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alternative-images?materialType=sample-materialType&relatedId=sample-relatedId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alternative-images"
+              ],
+              "query": [
+                {
+                  "key": "materialType",
+                  "value": "sample-materialType",
+                  "disabled": true
+                },
+                {
+                  "key": "relatedId",
+                  "value": "sample-relatedId",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getAlternativeImages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST alternative images",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/alternative-images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alternative-images"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postAlternativeImages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "auth",
       "item": [
         {
@@ -274,6 +427,237 @@
               ]
             },
             "description": "operationId: postAuthCallbackCredentials"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "daily-publish-plan",
+      "item": [
+        {
+          "name": "GET daily publish plan date products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-publish-plan/{{date}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "daily-publish-plan",
+                "{{date}}",
+                "products"
+              ],
+              "query": []
+            },
+            "description": "operationId: getDailyPublishPlanDateProducts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST daily publish plan batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-publish-plan/batch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "daily-publish-plan",
+                "batch"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postDailyPublishPlanBatch"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE daily publish plan plans id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-publish-plan/plans/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "daily-publish-plan",
+                "plans",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: deleteDailyPublishPlanPlansId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET daily publish plan products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-publish-plan/products?date=sample-date",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "daily-publish-plan",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "sample-date",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getDailyPublishPlanProducts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET daily publish plan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-publish-plan?date=sample-date",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "daily-publish-plan"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "sample-date",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getDailyPublishPlan"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST daily publish plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-publish-plan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "daily-publish-plan"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postDailyPublishPlan"
           },
           "event": [
             {
@@ -1380,6 +1764,42 @@
                   "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });",
                   "let json = {}; try { json = pm.response.json(); } catch (e) {}",
                   "if (json.id) pm.collectionVariables.set('movementId', json.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "plans",
+      "item": [
+        {
+          "name": "DELETE plans planId",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/{{planId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "plans",
+                "{{planId}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: deletePlansPlanId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
                 ]
               }
             }
@@ -2577,7 +2997,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/tools/combination/first-frames",
+              "raw": "{{baseUrl}}/api/tools/combination/first-frames?productId=%7B%7BproductId%7D%7D",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2587,7 +3007,13 @@
                 "combination",
                 "first-frames"
               ],
-              "query": []
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "{{productId}}",
+                  "disabled": true
+                }
+              ]
             },
             "description": "operationId: getToolsCombinationFirstFrames"
           },
@@ -2650,6 +3076,76 @@
           ]
         },
         {
+          "name": "GET tools combination jimeng images",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tools/combination/jimeng-images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tools",
+                "combination",
+                "jimeng-images"
+              ],
+              "query": []
+            },
+            "description": "operationId: getToolsCombinationJimengImages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET tools combination jimeng videos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tools/combination/jimeng-videos?productId=%7B%7BproductId%7D%7D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tools",
+                "combination",
+                "jimeng-videos"
+              ],
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "{{productId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getToolsCombinationJimengVideos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "GET tools combination model images",
           "request": {
             "method": "GET",
@@ -2687,7 +3183,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/tools/combination/style-images",
+              "raw": "{{baseUrl}}/api/tools/combination/style-images?productId=%7B%7BproductId%7D%7D",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2697,7 +3193,13 @@
                 "combination",
                 "style-images"
               ],
-              "query": []
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "{{productId}}",
+                  "disabled": true
+                }
+              ]
             },
             "description": "operationId: getToolsCombinationStyleImages"
           },
@@ -2825,6 +3327,252 @@
               ]
             },
             "description": "operationId: postUpload"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "video-push",
+      "item": [
+        {
+          "name": "POST video push id publish",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/video-push/{{id}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "video-push",
+                "{{id}}",
+                "publish"
+              ],
+              "query": []
+            },
+            "description": "operationId: postVideoPushIdPublish"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH video push id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/video-push/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "video-push",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: patchVideoPushId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE video push id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/video-push/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "video-push",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "operationId: deleteVideoPushId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET video push clip preview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/video-push/clip-preview?productId=%7B%7BproductId%7D%7D&ipId=%7B%7BipId%7D%7D",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "video-push",
+                "clip-preview"
+              ],
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "{{productId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "ipId",
+                  "value": "{{ipId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getVideoPushClipPreview"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST video push clip",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/video-push/clip",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "video-push",
+                "clip"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "operationId: postVideoPushClip"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET video push",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/video-push?productId=%7B%7BproductId%7D%7D&ipId=%7B%7BipId%7D%7D&qualified=sample-qualified",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "video-push"
+              ],
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "{{productId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "ipId",
+                  "value": "{{ipId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "qualified",
+                  "value": "sample-qualified",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getVideoPush"
           },
           "event": [
             {
