@@ -90,7 +90,6 @@ export default function DailyPublishPlanPage() {
     return products.filter(p => p.ipId === selectedIpId)
   }, [products, selectedIpId])
 
-  // Aggregate stats
   const aggregateStats = useMemo(() => {
     return filteredProducts.reduce((acc, p) => ({
       totalAi: acc.totalAi + p.aiVideoCount,
@@ -186,216 +185,202 @@ export default function DailyPublishPlanPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0c0e] text-white relative overflow-hidden">
-      {/* Background grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,180,60,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,180,60,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_40%,transparent_100%)]" />
+    <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
+      {/* Floating orbs - 与 tools 页面一致 */}
+      <div className="fixed top-20 left-20 w-96 h-96 bg-violet-300/30 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+      <div className="fixed bottom-20 right-20 w-80 h-80 bg-fuchsia-300/30 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
 
-      {/* Ambient glow */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-orange-500/5 rounded-full blur-[100px] pointer-events-none" />
-
-      <div className="relative z-10">
+      <div className="relative max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
-        <header className="border-b border-amber-500/10 bg-[#0c0c0e]/80 backdrop-blur-xl sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold tracking-tight">发布计划</h1>
-                  <p className="text-xs text-white/40">Daily Publish Command</p>
-                </div>
-              </div>
-
-              {/* Date Selector */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    const d = new Date(selectedDate)
-                    d.setDate(d.getDate() - 1)
-                    setSelectedDate(d.toISOString().split('T')[0])
-                  }}
-                  className="w-8 h-8 rounded-lg border border-amber-500/20 flex items-center justify-center hover:bg-amber-500/10 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <div className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <span className="text-amber-400 font-medium">{formatDate(selectedDate)}</span>
-                </div>
-                <button
-                  onClick={() => {
-                    const d = new Date(selectedDate)
-                    d.setDate(d.getDate() + 1)
-                    setSelectedDate(d.toISOString().split('T')[0])
-                  }}
-                  className="w-8 h-8 rounded-lg border border-amber-500/20 flex items-center justify-center hover:bg-amber-500/10 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={e => setSelectedDate(e.target.value)}
-                  className="sr-only"
-                  id="date-input"
-                />
-                <label htmlFor="date-input" className="w-8 h-8 rounded-lg border border-amber-500/20 flex items-center justify-center hover:bg-amber-500/10 transition-colors cursor-pointer">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </label>
-              </div>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-warm-charcoal tracking-tight">当日发布计划</h1>
+              <p className="text-warm-silver text-sm mt-0.5">管理每日视频发布任务</p>
             </div>
           </div>
-        </header>
 
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          {error ? (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 mb-4">
-                <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <p className="text-red-400">{error}</p>
+          {/* Date Selector */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const d = new Date(selectedDate)
+                d.setDate(d.getDate() - 1)
+                setSelectedDate(d.toISOString().split('T')[0])
+              }}
+              className="w-9 h-9 rounded-lg border border-oat bg-white flex items-center justify-center text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="px-4 py-2 rounded-lg bg-white border border-oat shadow-sm">
+              <span className="text-matcha-600 font-semibold">{formatDate(selectedDate)}</span>
             </div>
-          ) : loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full border-2 border-amber-500/20 animate-spin" />
-                <div className="absolute inset-0 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" style={{ animationDuration: '0.8s' }} />
-              </div>
-              <span className="ml-4 text-white/60">加载中...</span>
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-500/5 mb-6">
-                <svg className="w-10 h-10 text-amber-500/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-medium text-white/80 mb-2">暂无产品</h2>
-              <p className="text-white/40 text-sm">在产品详情页添加产品到当日发布计划</p>
-              <Link href="/products" className="inline-flex items-center gap-2 mt-6 px-4 py-2 rounded-lg bg-amber-500/10 text-amber-400 text-sm hover:bg-amber-500/20 transition-colors">
-                浏览产品
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-            </div>
-          ) : (
-            <>
-              {/* IP Filter Tabs */}
-              {availableIps.length > 1 && (
-                <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
-                  <button
-                    onClick={() => setSelectedIpId(null)}
-                    className={cn(
-                      'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all',
-                      !selectedIpId
-                        ? 'bg-amber-500 text-black'
-                        : 'bg-white/5 text-white/60 hover:bg-white/10'
-                    )}
-                  >
-                    全部 · {products.length}
-                  </button>
-                  {availableIps.map(ip => {
-                    const count = products.filter(p => p.ipId === ip.id).length
-                    return (
-                      <button
-                        key={ip.id}
-                        onClick={() => setSelectedIpId(ip.id)}
-                        className={cn(
-                          'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all',
-                          selectedIpId === ip.id
-                            ? 'bg-amber-500 text-black'
-                            : 'bg-white/5 text-white/60 hover:bg-white/10'
-                        )}
-                      >
-                        {ip.id.slice(0, 8)}... · {count}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
+            <button
+              onClick={() => {
+                const d = new Date(selectedDate)
+                d.setDate(d.getDate() + 1)
+                setSelectedDate(d.toISOString().split('T')[0])
+              }}
+              className="w-9 h-9 rounded-lg border border-oat bg-white flex items-center justify-center text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={e => setSelectedDate(e.target.value)}
+              className="sr-only"
+              id="date-input"
+            />
+            <label htmlFor="date-input" className="w-9 h-9 rounded-lg border border-oat bg-white flex items-center justify-center text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm cursor-pointer">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </label>
+          </div>
+        </div>
 
-              {/* Aggregate Stats Bar */}
-              <div className="grid grid-cols-5 gap-3 mb-8">
-                <StatCard label="AI视频" value={aggregateStats.totalAi} icon="🎬" color="from-blue-500/20 to-blue-600/5" />
-                <StatCard label="已发布" value={aggregateStats.totalPublished} icon="✓" color="from-emerald-500/20 to-emerald-600/5" />
-                <StatCard label="待发布" value={aggregateStats.totalPushable} icon="→" color="from-amber-500/20 to-amber-600/5" />
-                <StatCard label="可剪辑" value={aggregateStats.totalClippable} icon="✂" color="from-purple-500/20 to-purple-600/5" />
-                <StatCard label="可新增" value={aggregateStats.totalNewGeneratable} icon="+" color="from-orange-500/20 to-orange-600/5" />
+        {error ? (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-4">
+              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <p className="text-red-500 font-medium">{error}</p>
+          </div>
+        ) : loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            <span className="ml-4 text-warm-silver">加载中...</span>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-violet-50 mb-6">
+              <svg className="w-10 h-10 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-warm-charcoal mb-2">暂无产品</h2>
+            <p className="text-warm-silver text-sm mb-6">在产品详情页添加产品到当日发布计划</p>
+            <Link href="/products" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-sm font-medium shadow-lg shadow-violet-500/30 hover:shadow-xl hover:scale-[1.02] transition-all">
+              浏览产品
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* IP Filter Tabs */}
+            {availableIps.length > 1 && (
+              <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+                <button
+                  onClick={() => setSelectedIpId(null)}
+                  className={cn(
+                    'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all shadow-sm',
+                    !selectedIpId
+                      ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
+                      : 'bg-white text-warm-silver hover:bg-violet-50 border border-oat'
+                  )}
+                >
+                  全部 · {products.length}
+                </button>
+                {availableIps.map(ip => {
+                  const count = products.filter(p => p.ipId === ip.id).length
+                  return (
+                    <button
+                      key={ip.id}
+                      onClick={() => setSelectedIpId(ip.id)}
+                      className={cn(
+                        'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all shadow-sm',
+                        selectedIpId === ip.id
+                          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
+                          : 'bg-white text-warm-silver hover:bg-violet-50 border border-oat'
+                      )}
+                    >
+                      {ip.id.slice(0, 8)}... · {count}
+                    </button>
+                  )
+                })}
               </div>
+            )}
 
-              {/* Product List */}
-              <div className="space-y-4">
-                {filteredProducts.map((product, index) => (
-                  <ProductCard
-                    key={product.productId}
-                    product={product}
-                    index={index}
-                    onClip={handleClip}
-                    onPublish={openPublishDialog}
-                    onNavigateToProduct={() => {}}
-                    clippingProductId={clippingProductId}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </main>
+            {/* Aggregate Stats */}
+            <div className="grid grid-cols-5 gap-4 mb-6">
+              <StatCard label="AI视频" value={aggregateStats.totalAi} color="from-blue-50 to-blue-100/50" borderColor="border-blue-200" textColor="text-blue-600" />
+              <StatCard label="已发布" value={aggregateStats.totalPublished} color="from-emerald-50 to-emerald-100/50" borderColor="border-emerald-200" textColor="text-emerald-600" />
+              <StatCard label="待发布" value={aggregateStats.totalPushable} color="from-amber-50 to-amber-100/50" borderColor="border-amber-200" textColor="text-amber-600" />
+              <StatCard label="可剪辑" value={aggregateStats.totalClippable} color="from-purple-50 to-purple-100/50" borderColor="border-purple-200" textColor="text-purple-600" />
+              <StatCard label="可新增" value={aggregateStats.totalNewGeneratable} color="from-orange-50 to-orange-100/50" borderColor="border-orange-200" textColor="text-orange-600" />
+            </div>
+
+            {/* Product List */}
+            <div className="space-y-4">
+              {filteredProducts.map((product, index) => (
+                <ProductCard
+                  key={product.productId}
+                  product={product}
+                  index={index}
+                  onClip={handleClip}
+                  onPublish={openPublishDialog}
+                  clippingProductId={clippingProductId}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Publish Dialog */}
       <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
-        <DialogContent className="bg-[#1a1a1e] border-amber-500/20 max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-white rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-amber-400">
+            <DialogTitle className="text-warm-charcoal font-bold">
               发布视频 - {publishingProduct?.productName}
             </DialogTitle>
           </DialogHeader>
 
           {loadingPublishable ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-500 animate-spin" />
+              <div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : publishableVideos.length === 0 ? (
-            <div className="text-center py-12 text-white/40">
+            <div className="text-center py-12 text-warm-silver">
               暂无可发布的视频
             </div>
           ) : (
             <>
-              <div className="max-h-[60vh] overflow-y-auto">
+              <div className="flex-1 overflow-y-auto">
                 <div className="grid grid-cols-3 gap-4">
                   {publishableVideos.map(video => (
                     <div
                       key={video.id}
                       onClick={() => toggleVideoSelection(video.id)}
                       className={cn(
-                        'relative rounded-lg border-2 cursor-pointer transition-all overflow-hidden',
+                        'relative rounded-xl border-2 cursor-pointer transition-all overflow-hidden',
                         selectedVideoIds.has(video.id)
-                          ? 'border-amber-500 bg-amber-500/10'
-                          : 'border-transparent hover:border-white/20'
+                          ? 'border-matcha-600 bg-matcha-50'
+                          : 'border-transparent hover:border-oat'
                       )}
                     >
                       {video.thumbnail || video.video?.thumbnail ? (
-                        <img src={getImageUrl(video.thumbnail || video.video?.thumbnail || '')} alt="" className="w-full aspect-video object-cover" />
+                        <img src={getImageUrl(video.thumbnail || video.video?.thumbnail || '')} alt="" className="w-full aspect-video object-cover rounded-lg" />
                       ) : (
-                        <div className="w-full aspect-video bg-white/5 flex items-center justify-center text-white/20">无封面</div>
+                        <div className="w-full aspect-video bg-oat flex items-center justify-center text-warm-silver text-sm rounded-lg">无封面</div>
                       )}
                       {selectedVideoIds.has(video.id) && (
-                        <div className="absolute top-2 right-2 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="absolute top-2 right-2 w-6 h-6 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
@@ -405,11 +390,11 @@ export default function DailyPublishPlanPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                <span className="text-sm text-white/60">已选择 {selectedVideoIds.size} 个视频</span>
+              <div className="flex items-center justify-between pt-4 border-t border-oat">
+                <span className="text-sm text-warm-silver">已选择 {selectedVideoIds.size} 个视频</span>
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setPublishDialogOpen(false)} className="border-white/20 text-white/60 hover:bg-white/5">取消</Button>
-                  <Button onClick={handlePublish} disabled={selectedVideoIds.size === 0 || publishing} className="bg-amber-500 hover:bg-amber-400 text-black">
+                  <Button variant="outline" onClick={() => setPublishDialogOpen(false)} className="border-oat text-warm-silver hover:bg-oat">取消</Button>
+                  <Button onClick={handlePublish} disabled={selectedVideoIds.size === 0 || publishing} className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-lg">
                     {publishing ? '发布中...' : `确认发布 (${selectedVideoIds.size})`}
                   </Button>
                 </div>
@@ -422,15 +407,11 @@ export default function DailyPublishPlanPage() {
   )
 }
 
-function StatCard({ label, value, icon, color }: { label: string; value: number; icon: string; color: string }) {
+function StatCard({ label, value, color, borderColor, textColor }: { label: string; value: number; color: string; borderColor: string; textColor: string }) {
   return (
-    <div className={cn('relative rounded-xl border border-white/5 p-4 overflow-hidden group', `bg-gradient-to-br ${color}`)}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-white/40 uppercase tracking-wider">{label}</span>
-        <span className="text-lg">{icon}</span>
-      </div>
-      <div className="text-3xl font-bold tracking-tight">{value}</div>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className={cn('rounded-xl border p-4 bg-gradient-to-br shadow-sm', color, borderColor)}>
+      <div className="text-xs text-warm-silver uppercase tracking-wider mb-1">{label}</div>
+      <div className={cn('text-2xl font-bold', textColor)}>{value}</div>
     </div>
   )
 }
@@ -446,74 +427,74 @@ function ProductCard({
   index: number
   onClip: (productId: string, productName: string) => void
   onPublish: (product: ProductStats) => void
-  onNavigateToProduct: () => void
   clippingProductId: string | null
 }) {
   return (
     <div
-      className="relative rounded-2xl border border-white/5 bg-[#12121a] overflow-hidden group animate-[fadeInUp_0.4s_ease-out_forwards]"
-      style={{ animationDelay: `${index * 80}ms`, opacity: 0 }}
+      className="relative rounded-2xl border border-oat bg-white shadow-clay overflow-hidden group animate-[fadeInUp_0.4s_ease-out_forwards]"
+      style={{ animationDelay: `${index * 60}ms`, opacity: 0 }}
     >
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+      {/* Top accent line */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-      <div className="p-6">
-        <div className="flex items-start gap-5">
+      <div className="p-5">
+        <div className="flex items-center gap-5">
           {/* Product Image */}
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <img
               src={getImageUrl(product.productImage)}
               alt={product.productName}
-              className="w-20 h-20 rounded-xl object-cover"
+              className="w-16 h-16 rounded-xl object-cover shadow-md"
             />
-            <div className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-[#0c0c0e] border border-white/10 flex items-center justify-center">
-              <span className="text-[10px] font-medium text-white/60">{(index + 1).toString().padStart(2, '0')}</span>
+            <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-white border-2 border-oat flex items-center justify-center shadow-sm">
+              <span className="text-[10px] font-bold text-warm-silver">{(index + 1).toString().padStart(2, '0')}</span>
             </div>
           </div>
 
           {/* Product Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-medium mb-1 truncate">{product.productName}</h3>
-            <p className="text-sm text-white/40 font-mono">IP: {product.ipId.slice(0, 12)}...</p>
+            <h3 className="text-base font-semibold text-warm-charcoal mb-0.5 truncate">{product.productName}</h3>
+            <p className="text-xs text-warm-silver font-mono">IP: {product.ipId.slice(0, 12)}...</p>
 
-            {/* Progress Bars */}
-            <div className="mt-4 space-y-2">
+            {/* Progress bars */}
+            <div className="mt-3 space-y-1.5">
               <ProgressBar
                 label="生成进度"
                 current={product.aiVideoCount}
                 total={product.aiVideoCount + product.newGeneratableCount}
-                color="bg-blue-500"
+                barColor="bg-gradient-to-r from-blue-500 to-blue-600"
               />
               <ProgressBar
                 label="发布进度"
                 current={product.publishedCount}
                 total={product.aiVideoCount}
-                color="bg-emerald-500"
+                barColor="bg-gradient-to-r from-emerald-500 to-emerald-600"
               />
             </div>
           </div>
 
           {/* Stats */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-5 px-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-amber-400">{product.pushableCount}</div>
-              <div className="text-xs text-white/40 mt-1">待发布</div>
+              <div className="text-xl font-bold text-amber-600">{product.pushableCount}</div>
+              <div className="text-[11px] text-warm-silver mt-0.5">待发布</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-400">{product.publishedCount}</div>
-              <div className="text-xs text-white/40 mt-1">已发布</div>
+              <div className="text-xl font-bold text-emerald-600">{product.publishedCount}</div>
+              <div className="text-[11px] text-warm-silver mt-0.5">已发布</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">{product.clippableCount}</div>
-              <div className="text-xs text-white/40 mt-1">可剪辑</div>
+              <div className="text-xl font-bold text-purple-600">{product.clippableCount}</div>
+              <div className="text-[11px] text-warm-silver mt-0.5">可剪辑</div>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {product.pushableCount > 0 && (
               <button
                 onClick={() => onPublish(product)}
-                className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/30 transition-colors"
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
               >
                 发布
               </button>
@@ -521,39 +502,36 @@ function ProductCard({
             <button
               onClick={() => onClip(product.productId, product.productName)}
               disabled={clippingProductId === product.productId || product.clippableCount === 0}
-              className="px-4 py-2 rounded-lg bg-white/5 text-white/80 text-sm font-medium hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-lg bg-oat text-warm-charcoal text-sm font-medium hover:bg-violet-100 hover:text-violet-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-oat disabled:hover:text-warm-charcoal"
             >
               {clippingProductId === product.productId ? '剪辑中...' : '剪辑'}
             </button>
             <Link
               href={`/products/${product.productId}?tab=generate`}
-              className="px-4 py-2 rounded-lg bg-amber-500/20 text-amber-400 text-sm font-medium hover:bg-amber-500/30 transition-colors"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-sm font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
             >
               新增
             </Link>
           </div>
         </div>
       </div>
-
-      {/* Hover glow effect */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-amber-500/0 via-amber-500/5 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
     </div>
   )
 }
 
-function ProgressBar({ label, current, total, color }: { label: string; current: number; total: number; color: string }) {
+function ProgressBar({ label, current, total, barColor }: { label: string; current: number; total: number; barColor: string }) {
   const percentage = total > 0 ? (current / total) * 100 : 0
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-white/40 w-20">{label}</span>
-      <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+    <div className="flex items-center gap-2.5">
+      <span className="text-[11px] text-warm-silver w-16">{label}</span>
+      <div className="flex-1 h-1.5 bg-oat rounded-full overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all duration-500', color)}
+          className={cn('h-full rounded-full transition-all duration-500', barColor)}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="text-xs text-white/60 w-16 text-right">{current}/{total}</span>
+      <span className="text-[11px] text-warm-silver w-14 text-right">{current}/{total}</span>
     </div>
   )
 }
