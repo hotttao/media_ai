@@ -447,20 +447,23 @@ function Step2StyleImage({ productId }: { productId: string }) {
                       </button>
                     )}
                     {isGenerated && <div className="w-5" />}
-                    {isGenerated ? (
-                      <img src={getImageUrl(combo.resultUrl)} alt="定妆图结果" className="w-16 aspect-9x16 rounded-lg object-cover" />
-                    ) : (
+                    {combo.pose.url && <img src={getImageUrl(combo.pose.url)} alt={combo.pose.name} className="w-12 aspect-9x16 rounded-lg object-cover" />}
+                    <span className="text-sm">{combo.pose.name}</span>
+                    <span className="text-warm-silver">×</span>
+                    <img src={getImageUrl(combo.modelImage.url)} alt={combo.modelImage.productName} className="w-12 aspect-9x16 rounded-lg object-cover" />
+                    <span className="text-sm text-warm-silver">{combo.modelImage.productName}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {isGenerated && combo.resultUrl && (
                       <>
-                        {combo.pose.url && <img src={getImageUrl(combo.pose.url)} alt={combo.pose.name} className="w-12 aspect-9x16 rounded-lg object-cover" />}
-                        <span className="text-sm">{combo.pose.name}</span>
-                        <span className="text-warm-silver">×</span>
-                        <img src={getImageUrl(combo.modelImage.url)} alt={combo.modelImage.productName} className="w-12 aspect-9x16 rounded-lg object-cover" />
+                        <span className="text-warm-silver">→</span>
+                        <img src={getImageUrl(combo.resultUrl)} alt="结果图" className="w-16 aspect-9x16 rounded-lg object-cover" />
                       </>
                     )}
+                    <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
+                      {isGenerated ? '已生成' : '待生成'}
+                    </Badge>
                   </div>
-                  <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
-                    {isGenerated ? '已生成' : '待生成'}
-                  </Badge>
                 </div>
               )
             })}
@@ -706,21 +709,24 @@ function Step3FirstFrame({ productId }: { productId: string }) {
                       </button>
                     )}
                     {isGenerated && <div className="w-5" />}
-                    {isGenerated && resultUrl ? (
-                      <img src={getImageUrl(resultUrl)} alt="首帧图结果" className="w-16 aspect-9x16 rounded-lg object-cover" />
-                    ) : (
-                      <>
-                        {combo.scene.url && <img src={getImageUrl(combo.scene.url)} alt={combo.scene.name} className="w-12 aspect-9x16 rounded-lg object-cover" />}
-                        <span className="text-sm">{combo.scene.name}</span>
-                        <span className="text-warm-silver">×</span>
-                        <img src={getImageUrl(combo.styleImage.url)} alt="定妆图" className="w-12 aspect-9x16 rounded-lg object-cover" />
-                      </>
-                    )}
+                    {combo.scene.url && <img src={getImageUrl(combo.scene.url)} alt={combo.scene.name} className="w-12 aspect-9x16 rounded-lg object-cover" />}
+                    <span className="text-sm">{combo.scene.name}</span>
+                    <span className="text-warm-silver">×</span>
+                    <img src={getImageUrl(combo.styleImage.url)} alt="定妆图" className="w-12 aspect-9x16 rounded-lg object-cover" />
+                    <span className="text-sm text-warm-silver">定妆图</span>
                     <span className="text-xs text-warm-silver ml-2">({selectedPlatform === 'gpt' ? 'GPT' : '即梦'})</span>
                   </div>
-                  <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
-                    {isGenerated ? '已生成' : '待生成'}
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    {isGenerated && resultUrl && (
+                      <>
+                        <span className="text-warm-silver">→</span>
+                        <img src={getImageUrl(resultUrl)} alt="结果图" className="w-16 aspect-9x16 rounded-lg object-cover" />
+                      </>
+                    )}
+                    <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
+                      {isGenerated ? '已生成' : '待生成'}
+                    </Badge>
+                  </div>
                 </div>
               )
             })}
