@@ -386,7 +386,7 @@ export default function VideoWizardPage() {
                       ${isGenerated ? 'border-matcha-600/30 bg-matcha-50/50' : 'border-oat bg-white hover:border-matcha-600'}
                       ${isSelected && !isGenerated ? 'ring-2 ring-matcha-600 ring-offset-1' : ''}
                     `}>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         {!isGenerated && (
                           <button
                             onClick={() => handleToggleMovement(combo.id, combo.existingVideoId)}
@@ -398,7 +398,7 @@ export default function VideoWizardPage() {
                         {isGenerated && <div className="w-5" />}
                         {group.firstFrame.url && <img src={getImageUrl(group.firstFrame.url)} alt="" className="w-12 aspect-9x16 rounded-lg object-cover" />}
                         <span className="text-warm-silver">×</span>
-                        <span className="text-sm text-warm-charcoal max-w-[200px] truncate">{combo.movement.content}</span>
+                        <span className="text-sm text-warm-charcoal break-normal">{combo.movement.content}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         {isGenerated && combo.resultUrl && (
