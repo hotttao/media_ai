@@ -119,7 +119,7 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
   private async getExistingStyleImages(productId: string, ipId: string): Promise<Combination[]> {
     const records = await db.styleImage.findMany({
       where: { productId, ipId },
-      select: { id: true, modelImageId: true, poseId: true, makeupId: true, accessoryId: true }
+      select: { id: true, modelImageId: true, poseId: true }
     })
 
     return records.map(r => ({
@@ -127,10 +127,7 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
       type: CombinationType.STYLE_IMAGE,
       elements: {
         modelImageId: r.modelImageId,
-        poseId: r.poseId,
-        makeupId: r.makeupId,
-        accessoryId: r.accessoryId,
-        styleImageId: r.id
+        poseId: r.poseId
       },
       status: 'generated' as const,
       existingRecordId: r.id
