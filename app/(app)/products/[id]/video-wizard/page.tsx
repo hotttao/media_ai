@@ -276,50 +276,6 @@ export default function VideoWizardPage() {
           </div>
         </div>
 
-        {/* Movement Filter - Top */}
-        <div className="rounded-xl border border-oat bg-white shadow-clay mb-6">
-          <div className="flex items-center justify-between border-b border-oat px-4 py-3">
-            <h3 className="text-sm font-semibold">选择动作</h3>
-            {availableMovements.length > 0 && (
-              <div className="flex gap-3 text-xs text-warm-silver">
-                <button onClick={() => setSelectedMovementIds(new Set(availableMovements.map(m => m.id)))}>全选</button>
-                <span>|</span>
-                <button onClick={() => setSelectedMovementIds(new Set())}>清空</button>
-              </div>
-            )}
-          </div>
-          <div className="p-4">
-            <div className="flex flex-wrap gap-2">
-              {availableMovements.map(mv => (
-                <button
-                  key={mv.id}
-                  onClick={() => {
-                    setSelectedMovementIds(prev => {
-                      const next = new Set(prev)
-                      next.has(mv.id) ? next.delete(mv.id) : next.add(mv.id)
-                      return next
-                    })
-                  }}
-                  className={`
-                    rounded-full border-2 px-4 py-2 text-sm transition-all
-                    ${selectedMovementIds.has(mv.id)
-                      ? 'border-matcha-600 bg-matcha-600 text-white'
-                      : 'border-oat hover:border-matcha-600'
-                    }
-                  `}
-                >
-                  {mv.content}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="border-t border-oat px-4 py-2">
-            <p className="text-xs text-warm-silver">
-              已选择 {selectedMovementIds.size} / {availableMovements.length}
-            </p>
-          </div>
-        </div>
-
         {/* FirstFrame Filter */}
         <div className="rounded-xl border border-oat bg-white shadow-clay mb-6">
           <div className="flex items-center justify-between border-b border-oat px-4 py-3">
@@ -365,6 +321,50 @@ export default function VideoWizardPage() {
           </div>
         </div>
 
+        {/* Movement Filter */}
+        <div className="rounded-xl border border-oat bg-white shadow-clay mb-6">
+          <div className="flex items-center justify-between border-b border-oat px-4 py-3">
+            <h3 className="text-sm font-semibold">选择动作</h3>
+            {availableMovements.length > 0 && (
+              <div className="flex gap-3 text-xs text-warm-silver">
+                <button onClick={() => setSelectedMovementIds(new Set(availableMovements.map(m => m.id)))}>全选</button>
+                <span>|</span>
+                <button onClick={() => setSelectedMovementIds(new Set())}>清空</button>
+              </div>
+            )}
+          </div>
+          <div className="p-4">
+            <div className="flex flex-wrap gap-2">
+              {availableMovements.map(mv => (
+                <button
+                  key={mv.id}
+                  onClick={() => {
+                    setSelectedMovementIds(prev => {
+                      const next = new Set(prev)
+                      next.has(mv.id) ? next.delete(mv.id) : next.add(mv.id)
+                      return next
+                    })
+                  }}
+                  className={`
+                    rounded-lg border-2 px-4 py-2 text-sm transition-all break-normal max-w-[240px]
+                    ${selectedMovementIds.has(mv.id)
+                      ? 'border-matcha-600 bg-matcha-600 text-white'
+                      : 'border-oat hover:border-matcha-600'
+                    }
+                  `}
+                >
+                  {mv.content}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="border-t border-oat px-4 py-2">
+            <p className="text-xs text-warm-silver">
+              已选择 {selectedMovementIds.size} / {availableMovements.length}
+            </p>
+          </div>
+        </div>
+
         {/* Combinations List */}
         <div className="rounded-xl border border-oat bg-white shadow-clay">
           <div className="flex items-center justify-between border-b border-oat px-4 py-3">
@@ -398,7 +398,7 @@ export default function VideoWizardPage() {
                         {isGenerated && <div className="w-5" />}
                         {group.firstFrame.url && <img src={getImageUrl(group.firstFrame.url)} alt="" className="w-12 aspect-9x16 rounded-lg object-cover" />}
                         <span className="text-warm-silver">×</span>
-                        <span className="text-sm text-warm-charcoal break-normal">{combo.movement.content}</span>
+                        <span className="text-sm text-warm-charcoal break-normal max-w-[240px]">{combo.movement.content}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         {isGenerated && combo.resultUrl && (
