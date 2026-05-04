@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
@@ -57,10 +57,12 @@ interface GeneratedImage {
 
 interface StyleImage extends GeneratedImage {
   modelImageId: string
+  poseId: string | null
 }
 
 interface FirstFrameImage extends GeneratedImage {
   styleImageId: string | null
+  sceneId: string | null
 }
 
 // Step configuration - PRD 4.2
@@ -97,6 +99,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [ips, setIps] = useState<VirtualIP[]>([])
   const [selectedIp, setSelectedIp] = useState<VirtualIP | null>(null)
   const [ipLoading, setIpLoading] = useState(true)
+  const nextButtonRef = useRef<HTMLButtonElement>(null)
 
   // Step 2: Model Image
   const [modelImageMode, setModelImageMode] = useState<'select' | 'generate'>('generate')
@@ -116,6 +119,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [selectedAccessory, setSelectedAccessory] = useState<Material | null>(null)
   const [styledImageUrl, setStyledImageUrl] = useState<string | null>(null)
   const [styledImageId, setStyledImageId] = useState<string | null>(null)
+  const [styledImagePoseId, setStyledImagePoseId] = useState<string | null>(null)
   const [styledImageMode, setStyledImageMode] = useState<'select' | 'generate'>('generate')
   const [existingStyleImages, setExistingStyleImages] = useState<StyleImage[]>([])
   const [styleImageLoading, setStyleImageLoading] = useState(false)
@@ -129,6 +133,8 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [composition, setComposition] = useState('')
   const [firstFrameUrl, setFirstFrameUrl] = useState<string | null>(null)
   const [firstFrameId, setFirstFrameId] = useState<string | null>(null)
+  const [firstFrameStyleImageId, setFirstFrameStyleImageId] = useState<string | null>(null)
+  const [firstFrameSceneId, setFirstFrameSceneId] = useState<string | null>(null)
   const [existingFirstFrames, setExistingFirstFrames] = useState<FirstFrameImage[]>([])
   const [firstFrameLoading, setFirstFrameLoading] = useState(false)
   const [savedFirstFrameUrl, setSavedFirstFrameUrl] = useState<string | null>(null)
@@ -218,6 +224,42 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
     }
   }, [filteredMovements, selectedMovement])
 
+  // Clear styled image when pose changes and doesn't match the current style image's pose
+  useEffect(() => {
+    if (selectedPose && styledImagePoseId && selectedPose.id !== styledImagePoseId) {
+      // Pose changed to a different one, clear the styled image
+      setStyledImageUrl(null)
+      setStyledImageId(null)
+      setStyledImagePoseId(null)
+      setFirstFrameUrl(null)
+      setFirstFrameId(null)
+      setFirstFrameStyleImageId(null)
+      setStyledImageMode('generate')
+    }
+  }, [selectedPose, styledImagePoseId])
+
+  // Clear first frame when styled image changes
+  useEffect(() => {
+    if (styledImageId && firstFrameStyleImageId && styledImageId !== firstFrameStyleImageId) {
+      // Styled image changed, clear the first frame
+      setFirstFrameUrl(null)
+      setFirstFrameId(null)
+      setFirstFrameStyleImageId(null)
+      setFirstFrameSceneId(null)
+    }
+  }, [styledImageId, firstFrameStyleImageId])
+
+  // Clear first frame when scene changes
+  useEffect(() => {
+    if (selectedScene && firstFrameSceneId && selectedScene.id !== firstFrameSceneId) {
+      // Scene changed, clear the first frame
+      setFirstFrameUrl(null)
+      setFirstFrameId(null)
+      setFirstFrameStyleImageId(null)
+      setFirstFrameSceneId(null)
+    }
+  }, [selectedScene, firstFrameSceneId])
+
   // Fetch IP fullBodyUrl when selected
   useEffect(() => {
     if (selectedIp && !selectedIp.fullBodyUrl) {
@@ -255,6 +297,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
               id: image.id,
               url: image.url,
               modelImageId: image.modelImageId,
+              poseId: image.poseId || null,
             }))
           setExistingStyleImages(images)
         })
@@ -275,6 +318,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
               id: image.id,
               url: image.url,
               styleImageId: image.styleImageId,
+              sceneId: image.sceneId || null,
             }))
           setExistingFirstFrames(images)
         })
@@ -384,8 +428,15 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
     }
   }
 
+  // Scroll to next button when canProceed becomes true
+  useEffect(() => {
+    if (canProceed() && nextButtonRef.current) {
+      nextButtonRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [selectedIp, modelImageUrl, styledImageUrl, firstFrameUrl, selectedMovement])
+
   return (
-    <div className="min-h-screen overflow-y-auto bg-gradient-to-br from-matcha-50 via-background to-oat-light">
+    <div className="min-h-screen bg-gradient-to-br from-matcha-50 via-background to-oat-light">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-oat">
         <div className="max-w-6xl mx-auto px-6 py-4">
@@ -418,7 +469,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-8 pb-28">
+      <main className="max-w-6xl mx-auto px-6 py-8 pb-36">
         <AnimatePresence mode="wait">
           <motion.div key={currentStep} variants={pageVariants} initial="initial" animate="animate" exit="exit">
             {error && (
@@ -451,6 +502,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                   setModelImageId(image.id)
                   setStyledImageUrl(null)
                   setStyledImageId(null)
+                  setStyledImagePoseId(null)
                   setFirstFrameUrl(null)
                   setFirstFrameId(null)
                 }}
@@ -476,6 +528,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                       setModelImageId(data.modelImageId)
                       setStyledImageUrl(null)
                       setStyledImageId(null)
+                      setStyledImagePoseId(null)
                       setFirstFrameUrl(null)
                       setFirstFrameId(null)
                     } else {
@@ -510,6 +563,14 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 onSelectExisting={(image) => {
                   setStyledImageUrl(image.url)
                   setStyledImageId(image.id)
+                  setStyledImagePoseId(image.poseId)
+                  // Also set pose to match the style image's pose
+                  if (image.poseId) {
+                    const matchedPose = poses.find(p => p.id === image.poseId)
+                    if (matchedPose) {
+                      setSelectedPose(matchedPose)
+                    }
+                  }
                   setFirstFrameUrl(null)
                   setFirstFrameId(null)
                 }}
@@ -536,6 +597,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                       const data = await res.json()
                       setStyledImageUrl(data.styledImageUrl)
                       setStyledImageId(data.styleImageId)
+                      setStyledImagePoseId(selectedPose?.id || null)
                       setFirstFrameUrl(null)
                       setFirstFrameId(null)
                     } else {
@@ -563,7 +625,18 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 styledImageUrl={styledImageUrl}
                 styledImageId={styledImageId}
                 existingImages={existingFirstFrames}
-                onSelectExisting={setFirstFrameUrl}
+                onSelectExisting={(url, styleImageId, sceneId) => {
+                  setFirstFrameUrl(url)
+                  setFirstFrameStyleImageId(styleImageId)
+                  setFirstFrameSceneId(sceneId)
+                  // Also set scene to match the first frame's scene
+                  if (sceneId) {
+                    const matchedScene = filteredScenes.find(s => s.id === sceneId)
+                    if (matchedScene) {
+                      setSelectedScene(matchedScene)
+                    }
+                  }
+                }}
                 onSelectFirstFrameId={setFirstFrameId}
                 loading={firstFrameLoading}
                 onGenerate={async () => {
@@ -596,6 +669,8 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                     const data = await res.json()
                     setFirstFrameUrl(data.firstFrameUrl)
                     setFirstFrameId(data.firstFrameId)
+                    setFirstFrameStyleImageId(styledImageId)
+                    setFirstFrameSceneId(selectedScene?.id || null)
                   } catch {
                     setError('生成首帧图失败')
                   } finally {
@@ -740,6 +815,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
             上一步
           </button>
           <button
+            ref={nextButtonRef}
             onClick={goNext}
             disabled={!canProceed()}
             className="px-6 py-2 rounded-xl bg-matcha-600 text-white hover:bg-matcha-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1074,9 +1150,9 @@ function StyleImageStep({
   onAccessorySelect: (m: Material | null) => void
   styledImageUrl: string | null
   styledImageMode: 'select' | 'generate'
-  existingImages: GeneratedImage[]
+  existingImages: StyleImage[]
   onModeChange: (mode: 'select' | 'generate') => void
-  onSelectExisting: (image: GeneratedImage) => void
+  onSelectExisting: (image: StyleImage) => void
   onSelectStyleImageId: (id: string) => void
   modelImageUrl: string | null
   modelImageId: string | null
@@ -1250,11 +1326,11 @@ function StyleImageStep({
                     })
                     if (saveRes.ok) {
                       const saveData = await saveRes.json()
-                      onSelectExisting({ id: saveData.styleImageId, url: data.url })
+                      onSelectExisting({ id: saveData.styleImageId, url: data.url, modelImageId: modelImageId || '', poseId: null })
                       onSelectStyleImageId(saveData.styleImageId)
                     }
                   } else {
-                    onSelectExisting({ id: data.url, url: data.url })
+                    onSelectExisting({ id: data.url, url: data.url, modelImageId: modelImageId || '', poseId: null })
                   }
                   onModeChange('select')
                 }
@@ -1334,8 +1410,8 @@ function FirstFrameStep({
   firstFrameUrl: string | null
   styledImageUrl: string | null
   styledImageId: string | null
-  existingImages: GeneratedImage[]
-  onSelectExisting: (url: string) => void
+  existingImages: FirstFrameImage[]
+  onSelectExisting: (url: string, styleImageId: string | null, sceneId: string | null) => void
   onSelectFirstFrameId: (id: string) => void
   loading: boolean
   onGenerate: () => void
@@ -1376,7 +1452,7 @@ function FirstFrameStep({
               <button
                 key={image.id}
                 onClick={() => {
-                  onSelectExisting(image.url)
+                  onSelectExisting(image.url, image.styleImageId, image.sceneId)
                   onSelectFirstFrameId(image.id)
                 }}
                 className={`
@@ -1475,11 +1551,11 @@ function FirstFrameStep({
                     })
                     if (saveRes.ok) {
                       const saveData = await saveRes.json()
-                      onSelectExisting(data.url)
+                      onSelectExisting(data.url, styledImageId, selectedScene?.id || null)
                       onSelectFirstFrameId(saveData.firstFrameId)
                     }
                   } else {
-                    onSelectExisting(data.url)
+                    onSelectExisting(data.url, styledImageId, selectedScene?.id || null)
                   }
                 }
               }
