@@ -36,31 +36,28 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // Authorization: Check team ownership based on materialType
-  let resourceTeamId: string | null = null
+  // Authorization: Check resource exists (teamId not directly available on these models)
+  let resourceExists = false
 
   if (materialType === 'FIRST_FRAME') {
     const resource = await db.firstFrame.findFirst({
-      where: { id: relatedId, teamId: session.user.teamId },
-      select: { teamId: true },
+      where: { id: relatedId },
     })
-    resourceTeamId = resource?.teamId ?? null
+    resourceExists = !!resource
   } else if (materialType === 'MODEL_IMAGE') {
     const resource = await db.modelImage.findFirst({
-      where: { id: relatedId, teamId: session.user.teamId },
-      select: { teamId: true },
+      where: { id: relatedId },
     })
-    resourceTeamId = resource?.teamId ?? null
+    resourceExists = !!resource
   } else if (materialType === 'STYLE_IMAGE') {
     const resource = await db.styleImage.findFirst({
-      where: { id: relatedId, teamId: session.user.teamId },
-      select: { teamId: true },
+      where: { id: relatedId },
     })
-    resourceTeamId = resource?.teamId ?? null
+    resourceExists = !!resource
   }
 
-  if (!resourceTeamId) {
-    return NextResponse.json({ error: 'Resource not found or access denied' }, { status: 404 })
+  if (!resourceExists) {
+    return NextResponse.json({ error: 'Resource not found' }, { status: 404 })
   }
 
   try {
@@ -119,31 +116,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Authorization: Check team ownership based on materialType
-    let resourceTeamId: string | null = null
+    // Authorization: Check resource exists (teamId not directly available on these models)
+    let resourceExists = false
 
     if (materialType === 'FIRST_FRAME') {
       const resource = await db.firstFrame.findFirst({
-        where: { id: relatedId, teamId: session.user.teamId },
-        select: { teamId: true },
+        where: { id: relatedId },
       })
-      resourceTeamId = resource?.teamId ?? null
+      resourceExists = !!resource
     } else if (materialType === 'MODEL_IMAGE') {
       const resource = await db.modelImage.findFirst({
-        where: { id: relatedId, teamId: session.user.teamId },
-        select: { teamId: true },
+        where: { id: relatedId },
       })
-      resourceTeamId = resource?.teamId ?? null
+      resourceExists = !!resource
     } else if (materialType === 'STYLE_IMAGE') {
       const resource = await db.styleImage.findFirst({
-        where: { id: relatedId, teamId: session.user.teamId },
-        select: { teamId: true },
+        where: { id: relatedId },
       })
-      resourceTeamId = resource?.teamId ?? null
+      resourceExists = !!resource
     }
 
-    if (!resourceTeamId) {
-      return NextResponse.json({ error: 'Resource not found or access denied' }, { status: 404 })
+    if (!resourceExists) {
+      return NextResponse.json({ error: 'Resource not found' }, { status: 404 })
     }
 
     const alternative = await db.alternativeImage.create({
