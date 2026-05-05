@@ -784,6 +784,20 @@ function MaterialsTab({
     }
   }
 
+  const handleDeleteAlternative = async (alternativeId: string) => {
+    if (!confirm('确定删除这张备选图吗？')) return
+    try {
+      const res = await fetch(`/api/alternative-images/${alternativeId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      setAlternatives(prev => prev.filter(alt => alt.id !== alternativeId))
+    } catch (err) {
+      console.error(err)
+      alert('删除失败')
+    }
+  }
+
   const handleDelete = async (type: string, id: string) => {
     try {
       await onDelete(type, id)
@@ -943,6 +957,12 @@ function MaterialsTab({
                       className="h-20 w-20 rounded-lg object-cover cursor-pointer hover:ring-2 hover:ring-violet-500"
                       onClick={() => handleConfirmAlternative(alt.id)}
                     />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteAlternative(alt.id) }}
+                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      ×
+                    </button>
                     {alt.isConfirmed && (
                       <span className="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 rounded">✓</span>
                     )}

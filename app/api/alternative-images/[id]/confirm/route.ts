@@ -31,26 +31,34 @@ export async function POST(
     }
 
     // Check ownership through related resource's teamId
+    // All resources have productId -> Product -> teamId
+    // Helper to get teamId from any resource that has productId
+    const getProductTeamId = async (productId: string | null | undefined): Promise<string | null> => {
+      if (!productId) return null
+      const product = await db.product.findUnique({ where: { id: productId } })
+      return product?.teamId ?? null
+    }
+
     let teamId: string | null = null
     switch (alternative.materialType) {
       case 'FIRST_FRAME': {
         const ff = await db.firstFrame.findUnique({ where: { id: alternative.relatedId } })
-        teamId = ff?.teamId ?? null
+        if (ff) teamId = await getProductTeamId(ff.productId)
         break
       }
       case 'MODEL_IMAGE': {
         const mi = await db.modelImage.findUnique({ where: { id: alternative.relatedId } })
-        teamId = mi?.teamId ?? null
+        if (mi) teamId = await getProductTeamId(mi.productId)
         break
       }
       case 'STYLE_IMAGE': {
         const si = await db.styleImage.findUnique({ where: { id: alternative.relatedId } })
-        teamId = si?.teamId ?? null
+        if (si) teamId = await getProductTeamId(si.productId)
         break
       }
       case 'VIDEO': {
         const v = await db.video.findUnique({ where: { id: alternative.relatedId } })
-        teamId = v?.teamId ?? null
+        if (v) teamId = await getProductTeamId(v.productId)
         break
       }
     }
