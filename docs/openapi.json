@@ -2818,6 +2818,9 @@
                   },
                   "generationPath": {
                     "type": "string"
+                  },
+                  "subDir": {
+                    "type": "string"
                   }
                 }
               }
