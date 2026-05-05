@@ -2715,6 +2715,117 @@
         }
       }
     },
+    "/api/products/{id}/first-frame-upload": {
+      "post": {
+        "tags": [
+          "products"
+        ],
+        "summary": "POST products id first frame upload",
+        "operationId": "postProductsIdFirstFrameUpload",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirstFrameUploadResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirstFrameUploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "string"
+                  },
+                  "styleImageId": {
+                    "type": "string"
+                  },
+                  "sceneId": {
+                    "type": "string"
+                  },
+                  "composition": {
+                    "type": "string"
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "generationPath": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/products/{id}/first-frame": {
       "get": {
         "tags": [
@@ -11586,6 +11697,57 @@
             "allMovements"
           ]
         }
+      },
+      "FirstFrameUploadResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "count": {
+            "type": "number"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "number"
+                },
+                "firstFrameId": {
+                  "type": "string"
+                },
+                "firstFrameUrl": {
+                  "type": "string"
+                },
+                "alternativeId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "created",
+                    "existing"
+                  ]
+                }
+              },
+              "required": [
+                "index",
+                "firstFrameId",
+                "firstFrameUrl",
+                "alternativeId",
+                "status"
+              ]
+            }
+          }
+        },
+        "required": [
+          "success",
+          "count",
+          "results"
+        ],
+        "description": "First frame upload with alternative images response."
       }
     },
     "parameters": {}

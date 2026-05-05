@@ -46,6 +46,7 @@ import {
   firstFrameResponseSchema,
   pendingVideoCombinationResponseSchema,
   poseMovementMapResponseSchema,
+  firstFrameUploadResponseSchema,
 } from '../domains/api/response-validators'
 
 extendZodWithOpenApi(z)
@@ -127,6 +128,7 @@ const schemas = {
   VideoDetail: registry.register('VideoDetail', videoDetailResponseSchema),
   PendingVideoCombinationList: registry.register('PendingVideoCombinationList', z.array(pendingVideoCombinationResponseSchema)),
   PoseMovementMapList: registry.register('PoseMovementMapList', z.array(poseMovementMapResponseSchema)),
+  FirstFrameUploadResponse: registry.register('FirstFrameUploadResponse', firstFrameUploadResponseSchema),
 }
 
 const schemaRefBySchema = new Map<ZodTypeAny, string>([
@@ -181,6 +183,7 @@ const schemaRefBySchema = new Map<ZodTypeAny, string>([
   [schemas.VideoDetail, 'VideoDetail'],
   [schemas.PendingVideoCombinationList, 'PendingVideoCombinationList'],
   [schemas.PoseMovementMapList, 'PoseMovementMapList'],
+  [schemas.FirstFrameUploadResponse, 'FirstFrameUploadResponse'],
 ])
 
 const requestBodySchemas: Record<string, MethodSchemaMap> = {
@@ -216,6 +219,7 @@ const responseSchemas: Record<string, MethodSchemaMap> = {
   '/api/products': { GET: schemas.ProductList, POST: schemas.Product },
   '/api/products/{id}': { GET: schemas.Product, PATCH: schemas.Product, DELETE: schemas.SuccessResponse },
   '/api/products/{id}/first-frame': { GET: schemas.FirstFrameList, POST: schemas.FirstFrameSaveResponse },
+  '/api/products/{id}/first-frame-upload': { POST: schemas.FirstFrameUploadResponse },
   '/api/products/{id}/first-frames': { GET: schemas.FirstFrameList },
   '/api/products/{id}/generate-video': { POST: schemas.VideoGenerationResponse },
   '/api/products/{id}/generated-materials': { GET: schemas.GeneratedMaterialsResponse },
@@ -311,7 +315,8 @@ function findFormDataFields(source: string) {
     return []
   }
 
-  return unique([...source.matchAll(/formData\.get\(['"`]([^'"`]+)['"`]\)/g)].map((match) => match[1]))
+  // Match both formData.get() and formData.getAll()
+  return unique([...source.matchAll(/formData\.(?:get|getAll)\(['"`]([^'"`]+)['"`]\)/g)].map((match) => match[1]))
 }
 
 function usesJsonBody(source: string) {

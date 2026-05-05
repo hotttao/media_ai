@@ -189,6 +189,18 @@ export const firstFrameSaveResponseSchema = z.object({
   firstFrameId: z.string(),
 }).describe('Saved first frame response.')
 
+export const firstFrameUploadResponseSchema = z.object({
+  success: z.boolean(),
+  count: z.number(),
+  results: z.array(z.object({
+    index: z.number(),
+    firstFrameId: z.string(),
+    firstFrameUrl: z.string(),
+    alternativeId: z.string(),
+    status: z.enum(['created', 'existing']),
+  })),
+}).describe('First frame upload with alternative images response.')
+
 export const videoGenerationResponseSchema = z.object({
   videoId: z.string(),
   videoUrl: z.string(),

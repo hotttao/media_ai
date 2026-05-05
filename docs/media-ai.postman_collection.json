@@ -1811,6 +1811,68 @@
       "name": "products",
       "item": [
         {
+          "name": "POST products id first frame upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/first-frame-upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}",
+                "first-frame-upload"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "styleImageId",
+                  "type": "text",
+                  "value": "{{styleImageId}}"
+                },
+                {
+                  "key": "sceneId",
+                  "type": "text",
+                  "value": "sample-sceneId"
+                },
+                {
+                  "key": "composition",
+                  "type": "text",
+                  "value": "sample-composition"
+                },
+                {
+                  "key": "prompt",
+                  "type": "text",
+                  "value": "sample-prompt"
+                },
+                {
+                  "key": "generationPath",
+                  "type": "text",
+                  "value": "sample-generationPath"
+                }
+              ]
+            },
+            "description": "operationId: postProductsIdFirstFrameUpload"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is below 500\", function () { pm.expect(pm.response.code).to.be.below(500); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "GET products id first frame",
           "request": {
             "method": "GET",
