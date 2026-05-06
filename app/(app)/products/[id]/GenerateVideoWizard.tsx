@@ -63,6 +63,7 @@ interface StyleImage extends GeneratedImage {
 interface FirstFrameImage extends GeneratedImage {
   styleImageId: string | null
   sceneId: string | null
+  poseId: string | null
 }
 
 // Step configuration - PRD 4.2
@@ -138,6 +139,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
   const [existingFirstFrames, setExistingFirstFrames] = useState<FirstFrameImage[]>([])
   const [firstFrameLoading, setFirstFrameLoading] = useState(false)
   const [savedFirstFrameUrl, setSavedFirstFrameUrl] = useState<string | null>(null)
+  const [firstFramePlatform, setFirstFramePlatform] = useState<'gpt' | 'jimeng'>('gpt')
 
   // Step 5: Video
   const [movements, setMovements] = useState<Movement[]>([])
@@ -319,6 +321,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
               url: image.url,
               styleImageId: image.styleImageId,
               sceneId: image.sceneId || null,
+              poseId: image.styleImage?.poseId || null,
             }))
           setExistingFirstFrames(images)
         })
@@ -401,6 +404,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
               composition: composition,
               imageUrl: firstFrameUrl,
               prompt: buildGeneratedImagePrompt(selectedScene?.prompt, composition),
+              generationPath: firstFramePlatform,
             }),
           })
           if (res.ok) {
@@ -625,20 +629,29 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                 styledImageUrl={styledImageUrl}
                 styledImageId={styledImageId}
                 existingImages={existingFirstFrames}
-                onSelectExisting={(url, styleImageId, sceneId) => {
+                onSelectExisting={(url, styleImageId, sceneId, poseId) => {
                   setFirstFrameUrl(url)
                   setFirstFrameStyleImageId(styleImageId)
                   setFirstFrameSceneId(sceneId)
-                  // Also set scene to match the first frame's scene
+                  // Auto-select scene if sceneId matches
                   if (sceneId) {
                     const matchedScene = filteredScenes.find(s => s.id === sceneId)
                     if (matchedScene) {
                       setSelectedScene(matchedScene)
                     }
                   }
+                  // Auto-select pose if poseId matches (for movement filtering)
+                  if (poseId) {
+                    const matchedPose = poses.find(p => p.id === poseId)
+                    if (matchedPose) {
+                      setSelectedPose(matchedPose)
+                    }
+                  }
                 }}
                 onSelectFirstFrameId={setFirstFrameId}
                 loading={firstFrameLoading}
+                platform={firstFramePlatform}
+                onPlatformChange={setFirstFramePlatform}
                 onGenerate={async () => {
                   if (!selectedIp?.id || !selectedScene?.id || !composition || !styledImageUrl) {
                     return
@@ -657,6 +670,7 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                         sceneId: selectedScene.id,
                         composition,
                         imageUrl: styledImageUrl,
+                        generationPath: firstFramePlatform,
                       }),
                     })
 
@@ -702,6 +716,36 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                   setError(null)
 
                   try {
+                    // Use jimeng if firstFramePlatform is 'jimeng'
+                    if (firstFramePlatform === 'jimeng' && firstFrameId) {
+                      const res = await fetch('/api/tools/combination/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          type: 'jimeng-video',
+                          firstFrameId,
+                          movementId: selectedMovement.id,
+                        }),
+                      })
+
+                      setVideoProgress(80)
+
+                      if (!res.ok) {
+                        const data = await res.json().catch(() => null)
+                        setError(data?.error || '生成视频失败')
+                        return
+                      }
+
+                      const data = await res.json()
+                      // Jimeng returns { firstFrameId, status: 'submitted' } - video URL comes via callback
+                      setVideoUrl('') // Will be updated via callback
+                      setVideoId(null)
+                      setVideoProgress(100)
+                      alert('视频生成任务已提交，请在视频列表查看进度')
+                      return
+                    }
+
+                    // Default: use runninghub
                     const res = await fetch(`/api/products/${product.id}/generate-video`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -1400,6 +1444,8 @@ function FirstFrameStep({
   loading,
   onGenerate,
   canGenerate,
+  platform,
+  onPlatformChange,
 }: {
   productId: string
   scenes: Material[]
@@ -1411,11 +1457,13 @@ function FirstFrameStep({
   styledImageUrl: string | null
   styledImageId: string | null
   existingImages: FirstFrameImage[]
-  onSelectExisting: (url: string, styleImageId: string | null, sceneId: string | null) => void
+  onSelectExisting: (url: string, styleImageId: string | null, sceneId: string | null, poseId: string | null) => void
   onSelectFirstFrameId: (id: string) => void
   loading: boolean
   onGenerate: () => void
   canGenerate: boolean
+  platform: 'gpt' | 'jimeng'
+  onPlatformChange: (p: 'gpt' | 'jimeng') => void
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
@@ -1452,7 +1500,7 @@ function FirstFrameStep({
               <button
                 key={image.id}
                 onClick={() => {
-                  onSelectExisting(image.url, image.styleImageId, image.sceneId)
+                  onSelectExisting(image.url, image.styleImageId, image.sceneId, image.poseId)
                   onSelectFirstFrameId(image.id)
                 }}
                 className={`
@@ -1470,6 +1518,33 @@ function FirstFrameStep({
               </button>
             ))
           )}
+        </div>
+      </div>
+
+      {/* Platform Selection */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-warm-silver w-20">生成平台</span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onPlatformChange('gpt')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              platform === 'gpt'
+                ? 'bg-matcha-600 text-white'
+                : 'bg-oat-light text-warm-charcoal hover:bg-oat'
+            }`}
+          >
+            GPT
+          </button>
+          <button
+            onClick={() => onPlatformChange('jimeng')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              platform === 'jimeng'
+                ? 'bg-matcha-600 text-white'
+                : 'bg-oat-light text-warm-charcoal hover:bg-oat'
+            }`}
+          >
+             即梦
+          </button>
         </div>
       </div>
 
@@ -1547,15 +1622,16 @@ function FirstFrameStep({
                         composition: composition,
                         imageUrl: data.url,
                         prompt: buildGeneratedImagePrompt(selectedScene?.prompt, composition),
+                        generationPath: platform,
                       }),
                     })
                     if (saveRes.ok) {
                       const saveData = await saveRes.json()
-                      onSelectExisting(data.url, styledImageId, selectedScene?.id || null)
+                      onSelectExisting(data.url, styledImageId, selectedScene?.id || null, null)
                       onSelectFirstFrameId(saveData.firstFrameId)
                     }
                   } else {
-                    onSelectExisting(data.url, styledImageId, selectedScene?.id || null)
+                    onSelectExisting(data.url, styledImageId, selectedScene?.id || null, null)
                   }
                 }
               }

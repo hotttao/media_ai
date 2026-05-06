@@ -31,6 +31,7 @@ export async function POST(
     const composition = formData.get('composition') as string || ''
     const prompt = formData.get('prompt') as string || ''
     const generationPath = formData.get('generationPath') as string
+    const subDir = formData.get('subDir') as string || 'first-frames'
 
     if (files.length === 0) {
       return NextResponse.json({ error: 'No files provided' }, { status: 400 })
@@ -133,7 +134,7 @@ export async function POST(
       const file = files[i]
 
       // 1. 上传图片
-      const imageUrl = await uploadToImageService(file, teamId, userId, 'first-frames')
+      const imageUrl = await uploadToImageService(file, teamId, userId, subDir)
 
       // 2. 如果是新创建的首帧图，更新其 url 为第一张图的地址
       if (isNew && i === 0) {

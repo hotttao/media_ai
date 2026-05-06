@@ -18,10 +18,10 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { styleImageId, sceneId, composition, imageUrl, prompt } = body
+    const { styleImageId, sceneId, composition, imageUrl, prompt, generationPath } = body
 
-    if (!styleImageId || !imageUrl) {
-      return NextResponse.json({ error: 'Missing required fields: styleImageId, imageUrl' }, { status: 400 })
+    if (!styleImageId || !imageUrl || !generationPath) {
+      return NextResponse.json({ error: 'Missing required fields: styleImageId, imageUrl, generationPath' }, { status: 400 })
     }
 
     // 获取 styleImage 以获取 productId 和 ipId
@@ -69,6 +69,7 @@ export async function POST(
           styleImageId,
           sceneId: sceneForHash,
           composition: compositionForHash,
+          generationPath,
         }
       }
     })
@@ -91,6 +92,7 @@ export async function POST(
         sceneId: sceneForHash,
         composition: compositionForHash,
         inputHash,
+        generationPath,
       }
     })
 

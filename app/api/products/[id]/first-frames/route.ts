@@ -25,6 +25,11 @@ export async function GET(
     const firstFrames = await db.firstFrame.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      include: {
+        styleImage: {
+          select: { poseId: true },
+        },
+      },
     })
 
     return NextResponse.json(firstFrames)

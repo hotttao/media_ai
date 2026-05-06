@@ -44,13 +44,14 @@ function createMockFile(name: string): File {
   return new File([blob], name, { type: 'image/jpeg' })
 }
 
-function createFormData(files: File[], styleImageId: string, sceneId?: string, composition?: string, prompt?: string) {
+function createFormData(files: File[], styleImageId: string, sceneId?: string, composition?: string, prompt?: string, subDir?: string) {
   const formData = new FormData()
   files.forEach(file => formData.append('files', file))
   formData.append('styleImageId', styleImageId)
   if (sceneId) formData.append('sceneId', sceneId)
   if (composition) formData.append('composition', composition)
   if (prompt) formData.append('prompt', prompt)
+  if (subDir) formData.append('subDir', subDir)
   return formData
 }
 

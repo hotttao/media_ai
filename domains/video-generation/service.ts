@@ -188,7 +188,8 @@ export async function generateFirstFrame(
   styleImageId: string = '',
   sceneId: string = '',
   composition: string = '',
-  imageUrl: string
+  imageUrl: string,
+  generationPath: string = 'gpt'
 ): Promise<FirstFrameGenerationResult> {
   // 1. 检查场景是否允许
   const allowed = await isSceneAllowedForProductAndIp(productId, ipId, sceneId)
@@ -196,10 +197,10 @@ export async function generateFirstFrame(
     throw new Error(`Scene ${sceneId} is not allowed for product ${productId} and ip ${ipId}`)
   }
 
-  // 2. 检查是否已存在相同输入的生成结果（根据 styleImageId + sceneId + composition 去重）
+  // 2. 检查是否已存在相同输入的生成结果（根据 styleImageId + sceneId + composition + generationPath 去重）
   const existing = await db.firstFrame.findUnique({
     where: {
-      uniq_first_frames_dedup: { styleImageId, sceneId, composition }
+      uniq_first_frames_dedup: { styleImageId, sceneId, composition, generationPath }
     }
   })
   if (existing) {
@@ -241,6 +242,7 @@ export async function generateFirstFrame(
       sceneId,
       composition,
       inputHash,
+      generationPath,
     }
   })
 

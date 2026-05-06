@@ -31,6 +31,7 @@ export async function POST(
       firstFrameId?: string
       modelImageId?: string
       videoUrl?: string
+      generationPath?: string
     }
     try {
       body = await request.json()
@@ -62,7 +63,8 @@ export async function POST(
         styleImageId || null,
         sceneId,
         composition,
-        imageUrl
+        imageUrl,
+        body.generationPath
       )
       return NextResponse.json(result)
     }
