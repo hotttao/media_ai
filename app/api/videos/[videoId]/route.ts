@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
-import { getVideoDetail } from '@/domains/video/service'
+import { getVideoDetail, deleteVideo } from '@/domains/video/service'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +28,36 @@ export async function GET(
     return NextResponse.json(video)
   } catch (error) {
     console.error('Get video detail error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// DELETE /api/videos/[videoId]
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { videoId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!session.user.teamId) {
+      return NextResponse.json({ error: 'No team found' }, { status: 400 })
+    }
+
+    try {
+      await deleteVideo(params.videoId, session.user.teamId)
+      return NextResponse.json({ success: true })
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Video not found') {
+        return NextResponse.json({ error: 'Video not found' }, { status: 404 })
+      }
+      throw error
+    }
+  } catch (error) {
+    console.error('Delete video error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

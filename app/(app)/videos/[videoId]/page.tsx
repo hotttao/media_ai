@@ -7,6 +7,7 @@ import { VideoGrid } from '@/components/video/VideoGrid'
 import { VideoPlayerPanel } from '@/components/video/VideoPlayerPanel'
 import { VideoTaskPanel } from '@/components/video/VideoTaskPanel'
 import { VideoTraceTimeline } from '@/components/video/VideoTraceTimeline'
+import { DeleteVideoButton } from '@/components/video/DeleteVideoButton'
 
 export default async function VideoDetailPage({
   params,
@@ -29,13 +30,16 @@ export default async function VideoDetailPage({
 
   return (
     <div className="space-y-8 p-6">
-      <Link
-        href="/videos"
-        className="inline-flex items-center gap-2 text-sm text-white/55 transition-colors hover:text-white"
-      >
-        <span>←</span>
-        <span>返回视频库</span>
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/videos"
+          className="inline-flex items-center gap-2 text-sm text-white/55 transition-colors hover:text-white"
+        >
+          <span>←</span>
+          <span>返回视频库</span>
+        </Link>
+        <DeleteVideoButton videoId={params.videoId} />
+      </div>
 
       <VideoPlayerPanel video={video} />
       <VideoTraceTimeline video={video} />

@@ -274,6 +274,7 @@ model Video {
   @@index([sceneId], map: "videos_scene_id_idx")
   @@index([poseId], map: "videos_pose_id_idx")
   @@index([movementId], map: "videos_movement_id_idx")
+  @@unique([firstFrameId, movementId], map: "videos_first_frame_movement_unique")
   @@index([firstFrameId], map: "videos_first_frame_id_idx")
   @@index([styleImageId], map: "videos_style_image_id_idx")
   @@index([modelImageId], map: "videos_model_image_id_idx")

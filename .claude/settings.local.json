@@ -8,7 +8,8 @@
       "mcp__context7__query-docs",
       "WebFetch(domain:minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com)",
       "mcp__ide__getDiagnostics",
-      "WebFetch(domain:bytedance.larkoffice.com)"
+      "WebFetch(domain:bytedance.larkoffice.com)",
+      "mcp__plugin_claude-mem_mcp-search__smart_outline"
     ],
     "deny": [
       "Bash(rm -rf *)",

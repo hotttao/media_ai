@@ -18,6 +18,18 @@ vi.mock('@/domains/product/service', () => ({
   isSceneAllowedForProductAndIp: mockIsSceneAllowedForProductAndIp,
 }))
 
+vi.mock('@/foundation/lib/db', () => ({
+  db: {
+    firstFrame: {
+      findUnique: vi.fn(),
+    },
+  },
+}))
+
+vi.mock('@/foundation/lib/file-upload', () => ({
+  uploadToImageService: vi.fn().mockResolvedValue('https://cdn.example.com/video.mp4'),
+}))
+
 describe('video api routes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -25,10 +37,23 @@ describe('video api routes', () => {
 
   async function loadProductVideosRoute(serviceMocks?: {
     getVideosByProduct?: ReturnType<typeof vi.fn>
+    saveUploadedVideo?: ReturnType<typeof vi.fn>
+    deleteVideo?: ReturnType<typeof vi.fn>
   }) {
     vi.resetModules()
     vi.doMock('@/domains/video/service', () => ({
       getVideosByProduct: serviceMocks?.getVideosByProduct ?? vi.fn(),
+      saveUploadedVideo: serviceMocks?.saveUploadedVideo ?? vi.fn(),
+      deleteVideo: serviceMocks?.deleteVideo ?? vi.fn(),
+    }))
+
+    // Reset db mock so tests can set up their own
+    vi.doMock('@/foundation/lib/db', () => ({
+      db: {
+        firstFrame: {
+          findUnique: vi.fn(),
+        },
+      },
     }))
 
     return import('@/app/api/products/[id]/videos/route')
@@ -119,6 +144,240 @@ describe('video api routes', () => {
     expect(getVideosByProduct).toHaveBeenCalledWith('product-1', 'team-1')
   })
 
+  describe('POST /api/products/[id]/videos', () => {
+    it('returns 401 for video upload requests without a session', async () => {
+      const saveUploadedVideo = vi.fn()
+      const { POST } = await loadProductVideosRoute({ saveUploadedVideo })
+      mockGetServerSession.mockResolvedValue(null)
+
+      const formData = new FormData()
+      formData.append('file', new Blob(['video content']), 'video.mp4')
+      formData.append('firstFrameId', 'frame-1')
+      formData.append('movementId', 'movement-1')
+
+      const response = await POST(new NextRequest('http://localhost/api/products/product-1/videos', {
+        method: 'POST',
+        body: formData,
+      }), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(401)
+      expect(saveUploadedVideo).not.toHaveBeenCalled()
+    })
+
+    it('returns 400 for video upload requests when the session has no team', async () => {
+      const saveUploadedVideo = vi.fn()
+      const { POST } = await loadProductVideosRoute({ saveUploadedVideo })
+      mockGetServerSession.mockResolvedValue({ user: { id: 'user-1' } })
+
+      const formData = new FormData()
+      formData.append('file', new Blob(['video content']), 'video.mp4')
+      formData.append('firstFrameId', 'frame-1')
+      formData.append('movementId', 'movement-1')
+
+      const response = await POST(new NextRequest('http://localhost/api/products/product-1/videos', {
+        method: 'POST',
+        body: formData,
+      }), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(400)
+      expect(response.json()).resolves.toEqual({ error: 'No team found' })
+      expect(saveUploadedVideo).not.toHaveBeenCalled()
+    })
+
+    it('returns 400 when file is missing', async () => {
+      const saveUploadedVideo = vi.fn()
+      const { POST } = await loadProductVideosRoute({ saveUploadedVideo })
+      mockGetServerSession.mockResolvedValue({ user: { id: 'user-1', teamId: 'team-1' } })
+
+      const formData = new FormData()
+      formData.append('firstFrameId', 'frame-1')
+      formData.append('movementId', 'movement-1')
+
+      const response = await POST(new NextRequest('http://localhost/api/products/product-1/videos', {
+        method: 'POST',
+        body: formData,
+      }), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(400)
+      expect(response.json()).resolves.toEqual({ error: 'No file provided' })
+      expect(saveUploadedVideo).not.toHaveBeenCalled()
+    })
+
+    it('returns 400 when firstFrameId or movementId is missing', async () => {
+      const saveUploadedVideo = vi.fn()
+      const { POST } = await loadProductVideosRoute({ saveUploadedVideo })
+      mockGetServerSession.mockResolvedValue({ user: { id: 'user-1', teamId: 'team-1' } })
+
+      const formData = new FormData()
+      formData.append('file', new Blob(['video content']), 'video.mp4')
+      formData.append('firstFrameId', 'frame-1')
+      // missing movementId
+
+      const response = await POST(new NextRequest('http://localhost/api/products/product-1/videos', {
+        method: 'POST',
+        body: formData,
+      }), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(400)
+      expect(response.json()).resolves.toEqual({
+        error: 'Missing required fields: firstFrameId, movementId',
+      })
+      expect(saveUploadedVideo).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 when firstFrame is not found', async () => {
+      const saveUploadedVideo = vi.fn()
+      const { POST } = await loadProductVideosRoute({ saveUploadedVideo })
+      mockGetServerSession.mockResolvedValue({ user: { id: 'user-1', teamId: 'team-1' } })
+
+      const { db } = await import('@/foundation/lib/db')
+      ;(db.firstFrame.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+
+      const formData = new FormData()
+      formData.append('file', new Blob(['video content']), 'video.mp4')
+      formData.append('firstFrameId', 'nonexistent-frame')
+      formData.append('movementId', 'movement-1')
+
+      const response = await POST(new NextRequest('http://localhost/api/products/product-1/videos', {
+        method: 'POST',
+        body: formData,
+      }), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(404)
+      expect(response.json()).resolves.toEqual({ error: 'FirstFrame not found' })
+      expect(saveUploadedVideo).not.toHaveBeenCalled()
+    })
+
+    it('saves an uploaded video successfully', async () => {
+      const saveUploadedVideo = vi.fn().mockResolvedValue({
+        videoId: 'video-1',
+        videoUrl: 'https://cdn.example.com/videos/video.mp4',
+      })
+      const { POST } = await loadProductVideosRoute({ saveUploadedVideo })
+      mockGetServerSession.mockResolvedValue({ user: { id: 'user-1', teamId: 'team-1' } })
+
+      const { db } = await import('@/foundation/lib/db')
+      ;(db.firstFrame.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
+        id: 'frame-1',
+        ipId: 'ip-1',
+        sceneId: 'scene-1',
+        styleImageId: 'style-1',
+        styleImage: { modelImageId: 'model-1' },
+      })
+
+      const formData = new FormData()
+      formData.append('file', new Blob(['video content']), 'video.mp4')
+      formData.append('firstFrameId', 'frame-1')
+      formData.append('movementId', 'movement-1')
+
+      const response = await POST(new NextRequest('http://localhost/api/products/product-1/videos', {
+        method: 'POST',
+        body: formData,
+      }), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(200)
+      expect(response.json()).resolves.toEqual({
+        videoId: 'video-1',
+        videoUrl: 'https://cdn.example.com/videos/video.mp4',
+      })
+      expect(saveUploadedVideo).toHaveBeenCalledWith({
+        productId: 'product-1',
+        userId: 'user-1',
+        teamId: 'team-1',
+        ipId: 'ip-1',
+        movementId: 'movement-1',
+        url: 'https://cdn.example.com/video.mp4',
+        sceneId: 'scene-1',
+        poseId: undefined,
+        firstFrameId: 'frame-1',
+        styleImageId: 'style-1',
+        modelImageId: 'model-1',
+      })
+    })
+  })
+
+  describe('DELETE /api/products/[id]/videos', () => {
+    it('returns 401 for video delete requests without a session', async () => {
+      const deleteVideo = vi.fn()
+      const { DELETE } = await loadProductVideosRoute({ deleteVideo })
+      mockGetServerSession.mockResolvedValue(null)
+
+      const response = await DELETE(new NextRequest('http://localhost/api/products/product-1/videos?videoId=video-1'), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(401)
+      expect(deleteVideo).not.toHaveBeenCalled()
+    })
+
+    it('returns 400 for video delete requests when the session has no team', async () => {
+      const deleteVideo = vi.fn()
+      const { DELETE } = await loadProductVideosRoute({ deleteVideo })
+      mockGetServerSession.mockResolvedValue({ user: { id: 'user-1' } })
+
+      const response = await DELETE(new NextRequest('http://localhost/api/products/product-1/videos?videoId=video-1'), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(400)
+      expect(response.json()).resolves.toEqual({ error: 'No team found' })
+      expect(deleteVideo).not.toHaveBeenCalled()
+    })
+
+    it('returns 400 when videoId parameter is missing', async () => {
+      const deleteVideo = vi.fn()
+      const { DELETE } = await loadProductVideosRoute({ deleteVideo })
+      mockGetServerSession.mockResolvedValue({ user: { id: 'user-1', teamId: 'team-1' } })
+
+      const response = await DELETE(new NextRequest('http://localhost/api/products/product-1/videos'), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(400)
+      expect(response.json()).resolves.toEqual({ error: 'Missing required parameter: videoId' })
+      expect(deleteVideo).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 when video is not found', async () => {
+      const deleteVideo = vi.fn().mockRejectedValue(new Error('Video not found'))
+      const { DELETE } = await loadProductVideosRoute({ deleteVideo })
+      mockGetServerSession.mockResolvedValue({ user: { id: 'user-1', teamId: 'team-1' } })
+
+      const response = await DELETE(new NextRequest('http://localhost/api/products/product-1/videos?videoId=nonexistent'), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(404)
+      expect(response.json()).resolves.toEqual({ error: 'Video not found' })
+    })
+
+    it('deletes a video successfully', async () => {
+      const deleteVideo = vi.fn().mockResolvedValue({ success: true })
+      const { DELETE } = await loadProductVideosRoute({ deleteVideo })
+      mockGetServerSession.mockResolvedValue({ user: { id: 'user-1', teamId: 'team-1' } })
+
+      const response = await DELETE(new NextRequest('http://localhost/api/products/product-1/videos?videoId=video-1'), {
+        params: { id: 'product-1' },
+      })
+
+      expect(response.status).toBe(200)
+      expect(response.json()).resolves.toEqual({ success: true })
+      expect(deleteVideo).toHaveBeenCalledWith('video-1', 'team-1')
+    })
+  })
+
   it('returns 400 for team video list requests when the session has no team', async () => {
     const getVideosByTeam = vi.fn()
     const { GET } = await loadVideosRoute({ getVideosByTeam })
@@ -161,165 +420,6 @@ describe('video api routes', () => {
     expect(response.status).toBe(404)
     await expect(response.json()).resolves.toEqual({ error: 'Video not found' })
     expect(getVideoDetail).toHaveBeenCalledWith('video-1', 'team-1')
-  })
-
-  it('returns 401 for upload-video requests without a session', async () => {
-    const saveUploadedVideo = vi.fn()
-    const { POST } = await loadGenerateVideoRoute({ saveUploadedVideo })
-    mockGetServerSession.mockResolvedValue(null)
-
-    const response = await POST(new NextRequest('http://localhost/api/products/product-1/generate-video', {
-      method: 'POST',
-      body: JSON.stringify({
-        step: 'upload-video',
-        ipId: 'ip-1',
-        movementId: 'movement-1',
-        videoUrl: 'https://example.com/video.mp4',
-      }),
-      headers: {
-        'content-type': 'application/json',
-      },
-    }), {
-      params: { id: 'product-1' },
-    })
-
-    expect(response.status).toBe(401)
-    await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' })
-    expect(saveUploadedVideo).not.toHaveBeenCalled()
-  })
-
-  it('returns 400 for upload-video requests when the session has no team', async () => {
-    const saveUploadedVideo = vi.fn()
-    const { POST } = await loadGenerateVideoRoute({ saveUploadedVideo })
-    mockGetServerSession.mockResolvedValue({
-      user: { id: 'user-1' },
-    })
-
-    const response = await POST(new NextRequest('http://localhost/api/products/product-1/generate-video', {
-      method: 'POST',
-      body: JSON.stringify({
-        step: 'upload-video',
-        ipId: 'ip-1',
-        movementId: 'movement-1',
-        videoUrl: 'https://example.com/video.mp4',
-      }),
-      headers: {
-        'content-type': 'application/json',
-      },
-    }), {
-      params: { id: 'product-1' },
-    })
-
-    expect(response.status).toBe(400)
-    await expect(response.json()).resolves.toEqual({ error: 'No team found' })
-    expect(saveUploadedVideo).not.toHaveBeenCalled()
-  })
-
-  it('returns 400 for upload-video requests with missing required fields', async () => {
-    const saveUploadedVideo = vi.fn()
-    const { POST } = await loadGenerateVideoRoute({ saveUploadedVideo })
-    mockGetServerSession.mockResolvedValue({
-      user: { id: 'user-1', teamId: 'team-1' },
-    })
-
-    const response = await POST(new NextRequest('http://localhost/api/products/product-1/generate-video', {
-      method: 'POST',
-      body: JSON.stringify({
-        step: 'upload-video',
-        ipId: 'ip-1',
-        movementId: 'movement-1',
-      }),
-      headers: {
-        'content-type': 'application/json',
-      },
-    }), {
-      params: { id: 'product-1' },
-    })
-
-    expect(response.status).toBe(400)
-    await expect(response.json()).resolves.toEqual({
-      error: 'Missing required fields: ipId, movementId, videoUrl',
-    })
-    expect(saveUploadedVideo).not.toHaveBeenCalled()
-  })
-
-  it('returns 404 when upload-video ownership validation fails', async () => {
-    const saveUploadedVideo = vi.fn().mockRejectedValue(new Error('Product not found'))
-    const { POST } = await loadGenerateVideoRoute({ saveUploadedVideo })
-    mockGetServerSession.mockResolvedValue({
-      user: { id: 'user-1', teamId: 'team-1' },
-    })
-
-    const response = await POST(new NextRequest('http://localhost/api/products/product-1/generate-video', {
-      method: 'POST',
-      body: JSON.stringify({
-        step: 'upload-video',
-        ipId: 'ip-1',
-        movementId: 'movement-1',
-        videoUrl: 'https://example.com/video.mp4',
-      }),
-      headers: {
-        'content-type': 'application/json',
-      },
-    }), {
-      params: { id: 'product-1' },
-    })
-
-    expect(response.status).toBe(404)
-    await expect(response.json()).resolves.toEqual({ error: 'Product not found' })
-  })
-
-  it('saves an uploaded video when generate-video step is upload-video', async () => {
-    const saveUploadedVideo = vi.fn().mockResolvedValue({
-      videoId: 'video-1',
-      videoUrl: 'https://example.com/video.mp4',
-    })
-    const { POST } = await loadGenerateVideoRoute({ saveUploadedVideo })
-    mockGetServerSession.mockResolvedValue({
-      user: { id: 'user-1', teamId: 'team-1' },
-    })
-
-    const response = await POST(new NextRequest('http://localhost/api/products/product-1/generate-video', {
-      method: 'POST',
-      body: JSON.stringify({
-        step: 'upload-video',
-        ipId: 'ip-1',
-        movementId: 'movement-1',
-        videoUrl: 'https://example.com/video.mp4',
-        prompt: 'hero shot',
-        sceneId: 'scene-1',
-        poseId: 'pose-1',
-        firstFrameId: 'frame-1',
-        styleImageId: 'style-1',
-        modelImageId: 'model-1',
-      }),
-      headers: {
-        'content-type': 'application/json',
-      },
-    }), {
-      params: { id: 'product-1' },
-    })
-
-    expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({
-      videoId: 'video-1',
-      videoUrl: 'https://example.com/video.mp4',
-    })
-    expect(saveUploadedVideo).toHaveBeenCalledWith({
-      productId: 'product-1',
-      userId: 'user-1',
-      teamId: 'team-1',
-      ipId: 'ip-1',
-      movementId: 'movement-1',
-      url: 'https://example.com/video.mp4',
-      prompt: 'hero shot',
-      sceneId: 'scene-1',
-      poseId: 'pose-1',
-      firstFrameId: 'frame-1',
-      styleImageId: 'style-1',
-      modelImageId: 'model-1',
-    })
-    expect(mockGenerateVideo).not.toHaveBeenCalled()
   })
 
   it('GET /api/videos/pending-combinations returns 401 without session', async () => {

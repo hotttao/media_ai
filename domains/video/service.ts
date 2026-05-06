@@ -453,6 +453,24 @@ export async function saveUploadedVideo(input: SaveUploadedVideoInput) {
       modelImageId: input.modelImageId,
     }
 
+    // Check if video with same firstFrameId + movementId already exists
+    const existingVideo = await tx.video.findFirst({
+      where: {
+        firstFrameId: input.firstFrameId,
+        movementId: input.movementId,
+        teamId: input.teamId,
+      },
+      select: { id: true, url: true },
+    })
+
+    if (existingVideo) {
+      return {
+        videoId: existingVideo.id,
+        videoUrl: existingVideo.url,
+        skipped: true,
+      }
+    }
+
     await tx.videoTask.create({
       data: {
         id: taskId,
@@ -486,11 +504,28 @@ export async function saveUploadedVideo(input: SaveUploadedVideoInput) {
       },
     })
 
-return {
+    return {
       videoId,
       videoUrl: input.url,
     }
   })
+}
+
+export async function deleteVideo(videoId: string, teamId: string) {
+  const video = await db.video.findFirst({
+    where: { id: videoId, teamId },
+    select: { id: true },
+  })
+
+  if (!video) {
+    throw new Error('Video not found')
+  }
+
+  await db.video.delete({
+    where: { id: videoId },
+  })
+
+  return { success: true }
 }
 
 export async function getPendingVideoCombinations(teamId: string) {

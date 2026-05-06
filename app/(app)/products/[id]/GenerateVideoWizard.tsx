@@ -793,40 +793,19 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                     const formData = new FormData()
                     formData.append('file', file)
                     formData.append('subDir', 'videos')
+                    if (firstFrameId != null) {
+                      formData.append('firstFrameId', firstFrameId)
+                    }
+                    formData.append('movementId', selectedMovement.id)
 
-                    const uploadRes = await fetch('/api/upload', {
+                    const saveRes = await fetch(`/api/products/${product.id}/videos`, {
                       method: 'POST',
                       body: formData,
                     })
 
-                    if (!uploadRes.ok) {
-                      setError('上传视频失败')
-                      return
-                    }
-
-                    const uploadData = await uploadRes.json()
-                    setVideoProgress(65)
-
-                    const saveRes = await fetch(`/api/products/${product.id}/generate-video`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        step: 'upload-video',
-                        ipId: selectedIp.id,
-                        movementId: selectedMovement.id,
-                        videoUrl: uploadData.url,
-                        prompt: videoPrompt,
-                        sceneId: selectedScene?.id,
-                        poseId: selectedPose?.id,
-                        firstFrameId,
-                        styleImageId: styledImageId,
-                        modelImageId,
-                      }),
-                    })
-
                     if (!saveRes.ok) {
                       const data = await saveRes.json().catch(() => null)
-                      setError(data?.error || '保存上传视频失败')
+                      setError(data?.error || '上传视频失败')
                       return
                     }
 

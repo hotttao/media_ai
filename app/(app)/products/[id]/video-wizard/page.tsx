@@ -38,6 +38,7 @@ export default function VideoWizardPage() {
   const [selectedMovementIds, setSelectedMovementIds] = useState<Set<string>>(new Set())
   const [generating, setGenerating] = useState(false)
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [copiedComboId, setCopiedComboId] = useState<string | null>(null)
 
   // Fetch combinations
   useEffect(() => {
@@ -410,15 +411,35 @@ export default function VideoWizardPage() {
                         <span className="text-sm text-warm-charcoal break-normal max-w-[240px]">{combo.movement.content}</span>
                       </div>
                       <div className="flex items-center gap-3">
-                        {isGenerated && combo.resultUrl && (
+                        {isGenerated && combo.existingVideoId && (
                           <>
                             <span className="text-warm-silver">→</span>
-                            <img src={getImageUrl(combo.resultUrl)} alt="" className="w-16 aspect-video rounded-lg object-cover" />
+                            <a
+                              href={`/videos/${combo.existingVideoId}`}
+                              className="text-sm text-matcha-600 hover:text-matcha-500 underline"
+                            >
+                              查看视频
+                            </a>
                           </>
                         )}
                         <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
                           {isGenerated ? '已生成' : '待生成'}
                         </Badge>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(JSON.stringify({
+                              type: 'jimeng-video',
+                              firstFrameId: combo.firstFrame.id,
+                              movementId: combo.movement.id,
+                            }, null, 2))
+                            setCopiedComboId(combo.id)
+                            setTimeout(() => setCopiedComboId(null), 2000)
+                          }}
+                          className={`ml-2 text-xs underline transition-colors ${copiedComboId === combo.id ? 'text-matcha-600' : 'text-gray-400 hover:text-gray-600'}`}
+                          title="复制生成参数"
+                        >
+                          {copiedComboId === combo.id ? '复制成功' : '复制参数'}
+                        </button>
                       </div>
                     </div>
                   )
