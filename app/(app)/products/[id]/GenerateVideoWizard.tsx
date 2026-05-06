@@ -755,7 +755,6 @@ export function GenerateVideoWizard({ product }: { product: Product }) {
                         movementId: selectedMovement.id,
                         sceneId: selectedScene?.id,
                         poseId: selectedPose?.id,
-                        prompt: videoPrompt,
                         firstFrameId,
                         styleImageId: styledImageId,
                         modelImageId,

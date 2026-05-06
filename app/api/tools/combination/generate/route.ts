@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
-import { generateModelImage, generateStyleImage, generateFirstFrame } from '@/domains/video-generation/service'
-import { db, PrismaClient } from '@/foundation/lib/db'
+import { db } from '@/foundation/lib/db'
+import type { PrismaClient } from '@prisma/client'
 
 // Helper function to create alternative image after successful AI generation
 // Note: For async operations (jimeng-image, jimeng-video), URL is empty because
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
 
         console.log('\n========== JIMENG-IMAGE REQUEST ==========')
         console.log('URL: http://127.0.0.1:8765/v1/single/jimeng-image')
-        console.log('BODY:', JSON.stringify({ styleImageId, sceneId, poseId, force: false }, null, 2))
+        console.log('BODY:', JSON.stringify({ sceneId, poseId, force: false }, null, 2))
         console.log('==========================================\n')
 
         // 1. 查找 pose 的文字描述（从 Material 表）
@@ -310,8 +310,6 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Movement not found' }, { status: 404 })
         }
 
-        const prompt = movement.content
-
         console.log('\n========== JIMENG-VIDEO REQUEST ==========')
         console.log('URL: http://127.0.0.1:8765/v1/single/jimeng-video')
         console.log('BODY:', JSON.stringify({
@@ -319,7 +317,6 @@ export async function POST(request: NextRequest) {
           ipId: firstFrame.ipId,
           firstFrameId,
           movementId,
-          prompt,
           force: false,
         }, null, 2))
         console.log('==========================================\n')
@@ -338,7 +335,6 @@ export async function POST(request: NextRequest) {
               ipId: firstFrame.ipId,
               firstFrameId,
               movementId,
-              prompt,
               force: false,
             }),
             signal: controller.signal,
