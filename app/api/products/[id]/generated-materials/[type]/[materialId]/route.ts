@@ -86,14 +86,35 @@ export async function DELETE(
     }
 
     if (params.type === 'firstFrame') {
-      await db.firstFrame.deleteMany({
+      // Count alternative images before deleting
+      const altCount = await db.alternativeImage.count({
         where: {
-          id: params.materialId,
-          productId: params.id,
+          materialType: 'FIRST_FRAME',
+          relatedId: params.materialId,
         },
       })
 
-      return NextResponse.json({ success: true })
+      await db.$transaction(async (tx) => {
+        // Delete alternative images first
+        if (altCount > 0) {
+          await tx.alternativeImage.deleteMany({
+            where: {
+              materialType: 'FIRST_FRAME',
+              relatedId: params.materialId,
+            },
+          })
+        }
+
+        // Delete the firstFrame
+        await tx.firstFrame.deleteMany({
+          where: {
+            id: params.materialId,
+            productId: params.id,
+          },
+        })
+      })
+
+      return NextResponse.json({ success: true, deletedAlternatives: altCount })
     }
 
     return NextResponse.json({ error: 'Invalid generated material type' }, { status: 400 })

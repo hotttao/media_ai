@@ -279,6 +279,18 @@ export function ProductDetail({ product }: { product: any }) {
             materials={generatedMaterials}
             loading={materialsLoading}
             onDelete={async (type, id) => {
+              // For firstFrame, check and warn about associated alternative images
+              if (type === 'firstFrame') {
+                const countRes = await fetch(`/api/products/${product.id}/generated-materials/firstFrame/${id}/alternatives-count`)
+                if (countRes.ok) {
+                  const { count } = await countRes.json()
+                  if (count > 0) {
+                    if (!confirm(`删除首帧图将同时删除${count}张关联备选图，是否继续？`)) {
+                      return
+                    }
+                  }
+                }
+              }
               const res = await fetch(`/api/products/${product.id}/generated-materials/${type}/${id}`, {
                 method: 'DELETE',
               })
