@@ -68,16 +68,20 @@ export default function VideoWizardPage() {
     return Array.from(ffMap.values())
   }, [combinations])
 
-  // Available movements (for top filter)
+  // Available movements (for top filter) - filtered by selected first frames
   const availableMovements = useMemo(() => {
     const mvMap = new Map<string, JimengVideoCombination['movement']>()
     for (const c of combinations) {
+      // If first frames are selected, only show movements for those first frames
+      if (selectedFirstFrameIds.size > 0 && !selectedFirstFrameIds.has(c.firstFrame.id)) {
+        continue
+      }
       if (!mvMap.has(c.movement.id)) {
         mvMap.set(c.movement.id, c.movement)
       }
     }
     return Array.from(mvMap.values())
-  }, [combinations])
+  }, [combinations, selectedFirstFrameIds])
 
   // Group combinations by firstFrame
   const groupedByFirstFrame = useMemo(() => {
@@ -100,9 +104,14 @@ export default function VideoWizardPage() {
     return Array.from(groupMap.values())
   }, [combinations])
 
-  // Filter groups based on filter type AND movement selection
+  // Filter groups based on filter type AND firstFrame selection AND movement selection
   const filteredGroups = useMemo(() => {
     return groupedByFirstFrame.map(group => {
+      // Filter by firstFrame selection
+      if (selectedFirstFrameIds.size > 0 && !selectedFirstFrameIds.has(group.firstFrame.id)) {
+        return { ...group, movements: [] }
+      }
+
       let movements = group.movements
 
       // Filter by movement selection
@@ -118,7 +127,7 @@ export default function VideoWizardPage() {
 
       return { ...group, movements }
     }).filter(group => group.movements.length > 0)
-  }, [groupedByFirstFrame, filter, selectedMovementIds])
+  }, [groupedByFirstFrame, filter, selectedFirstFrameIds, selectedMovementIds])
 
   // Count statistics
   const stats = useMemo(() => {
