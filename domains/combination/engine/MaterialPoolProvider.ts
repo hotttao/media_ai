@@ -162,7 +162,7 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
     const videos = await db.video.findMany({
       where: { productId, ipId },
       include: {
-        videoPush: { select: { isQualified: true, isPublished: true } }
+        videoPushes: { select: { isQualified: true, isPublished: true } }
       }
     })
 
@@ -174,8 +174,8 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
         movementId: v.movementId || undefined,
         videoId: v.id
       },
-      status: v.videoPush?.isPublished ? 'published' as const
-        : v.videoPush?.isQualified ? 'qualified' as const
+      status: v.videoPushes?.[0]?.isPublished ? 'published' as const
+        : v.videoPushes?.[0]?.isQualified ? 'qualified' as const
         : 'generated' as const,
       existingRecordId: v.id
     }))
