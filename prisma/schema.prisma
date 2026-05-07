@@ -470,7 +470,7 @@ model VideoPush {
   videoId         String   @map("video_id") @db.VarChar(500)  // "vid-1,vid-2,vid-3" 逗号分隔
   videoIdHash     String   @map("video_id_hash")             // 排序后逗号拼接的MD5
   productId       String   @map("product_id") @db.VarChar(36)
-  ipId            String   @map("ip_id") @db.VarChar(36)
+  ipId            String?  @map("ip_id") @db.VarChar(36)  // 可选，支持多IP发布
   sceneId         String   @map("scene_id") @db.VarChar(36)
   templateName    String?  @map("template_name")
   musicId         String?  @map("music_id")
