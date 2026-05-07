@@ -331,7 +331,11 @@ export default function IpDetailPage() {
                         {new Date(video.createdAt).toLocaleDateString('zh-CN')}
                       </div>
                     </div>
-                    <div className="text-xs text-warm-silver">待发布</div>
+                    {isSelected ? (
+                        <span className="text-xs text-violet-600 font-medium">待发布</span>
+                      ) : (
+                        <span className="text-xs text-warm-silver">未发布</span>
+                      )}
                   </div>
                 )
               })
