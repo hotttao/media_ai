@@ -1,7 +1,7 @@
 ---
 name: video-clip-async-callback-design
 description: 日发布计划-剪辑功能异步回调设计
-status: complete
+status: in-review
 created: 2026-05-07T15:25:20Z
 updated: 2026-05-07T15:25:20Z
 ---
@@ -159,6 +159,13 @@ POST /api/video-push/callback?videoPushId=xxx-xxx
 
 ## CLI 接口要求
 
+### 必要能力
+
+1. **支持异步执行**：CLI 接收任务后立即返回 PID/任务ID，后台执行，不阻塞调用方
+2. **支持回调通知**：CLI 执行完成后 HTTP POST 到指定 URL
+3. **幂等性保证**：相同输入（相同视频集合 + 模板）生成相同输出（相同文件名），不会重复生成
+4. **输出路径包含输入特征**：生成的文件名包含输入的哈希值，便于匹配 VideoPush 记录
+
 ### CLI 新增参数
 
 ```bash
@@ -169,31 +176,94 @@ cap_cut clip \
   --callback http://localhost:3000/api/video-push/callback?videoPushId=xxx-xxx
 ```
 
-| 参数 | 说明 |
-|------|------|
-| `--videos` | 视频文件路径列表，逗号分隔 |
-| `--template` | 模板名称 |
-| `--output` | 输出目录（使用 media_ai 的存储路径） |
-| `--callback` | 完成后回调的 URL，包含 videoPushId 参数 |
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `--videos` | string | 是 | 视频文件路径列表，逗号分隔 |
+| `--template` | string | 是 | 模板名称（detail-focus, luxury 等） |
+| `--output` | string | 是 | 输出目录，必须是 media_ai 的存储路径 `/uploads/teams/{teamId}/clips/{date}/` |
+| `--callback` | string | 是 | 完成后回调的 URL，URL 中包含 `videoPushId` 参数 |
 
-### CLI 输出格式
+### CLI 执行流程
 
+```
+1. 接收参数，解析视频路径列表
+2. 验证视频文件是否存在
+3. 计算输入的哈希值（用于生成确定性文件名）
+4. 检查 output 目录下是否已存在对应文件（幂等检查）
+   - 若存在：跳过执行，直接回调通知（status=skipped）
+5. 执行 FFmpeg 剪辑
+6. 生成输出文件（文件名包含哈希特征）
+7. 执行完成后，HTTP POST 到 --callback URL
+   - POST body 包含执行结果
+8. 退出（CLI 自身不等待回调结果返回）
+```
+
+### CLI 回调格式
+
+**执行成功：**
 ```json
 {
   "status": "success",
+  "videoPushId": "xxx-xxx",
   "output": "/uploads/teams/team1/clips/2026-05-07/clip-abc123.mp4",
   "thumbnail": "/uploads/teams/team1/clips/2026-05-07/clip-abc123.jpg",
-  "duration": 15
+  "duration": 15,
+  "error": null
 }
 ```
 
-或失败：
+**执行失败：**
 ```json
 {
   "status": "failed",
-  "error": { "code": "TEMPLATE_NOT_FOUND", "message": "模板不存在" }
+  "videoPushId": "xxx-xxx",
+  "output": null,
+  "thumbnail": null,
+  "duration": null,
+  "error": {
+    "code": "TEMPLATE_NOT_FOUND",
+    "message": "模板不存在",
+    "availableTemplates": ["cascade-flow", "detail-focus", "luxury", ...]
+  }
 }
 ```
+
+**幂等跳过（文件已存在）：**
+```json
+{
+  "status": "skipped",
+  "videoPushId": "xxx-xxx",
+  "output": "/uploads/teams/team1/clips/2026-05-07/clip-abc123.mp4",
+  "reason": "output_exists"
+}
+```
+
+### CLI 错误码
+
+| 错误码 | 说明 |
+|--------|------|
+| `TEMPLATE_NOT_FOUND` | 模板不存在 |
+| `TEMPLATE_DISABLED` | 模板已被禁用 |
+| `INSUFFICIENT_VIDEOS` | 视频数量不足（至少需要模板要求的数量） |
+| `MISSING_ARGUMENT` | 缺少必要参数（videos, template, output, callback） |
+| `OUTPUT_DIR_NOT_FOUND` | 输出目录不存在 |
+| `VIDEO_FILE_NOT_FOUND` | 视频文件不存在 |
+| `EXECUTION_FAILED` | FFmpeg 执行失败 |
+
+### 幂等性实现要求
+
+CLI 必须在执行前检查 output 目录下是否已存在以 `clip-{hash}` 开头的文件：
+
+```
+output/
+  clip-{hash1}_detail-focus.mp4    ← 已存在，跳过
+  clip-{hash2}_detail-focus.mp4    ← 待执行
+  clip-{hash3}_luxury.mp4          ← 待执行
+```
+
+文件名格式：`clip-{inputHash}_{templateName}.mp4`
+
+其中 `inputHash = MD5(sort(videoPaths).join(","))`
 
 ## API 路由
 
