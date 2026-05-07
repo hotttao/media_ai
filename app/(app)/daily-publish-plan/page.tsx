@@ -1,56 +1,30 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { cn, getImageUrl } from '@/foundation/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
+interface IpInfo {
+  ipId: string
+  selected: boolean
+  videoCount: number
+}
 
 interface ProductStats {
   productId: string
   productName: string
   productImage: string
-  ipId: string
-  aiVideoCount: number
-  pushableCount: number
-  publishedCount: number
-  clippableCount: number
-  newGeneratableCount: number
-}
-
-interface VideoPushItem {
-  id: string
-  url: string
-  thumbnail: string | null
-  title: string | null
-  isQualified: boolean
-  isPublished: boolean
-  createdAt: string
-  video: {
-    id: string
-    url: string
-    thumbnail: string | null
-  } | null
+  ips: IpInfo[]
 }
 
 export default function DailyPublishPlanPage() {
-  const { data: session } = useSession()
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0]
   })
   const [products, setProducts] = useState<ProductStats[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [clippingProductId, setClippingProductId] = useState<string | null>(null)
   const [selectedIpId, setSelectedIpId] = useState<string | null>(null)
-
-  const [publishDialogOpen, setPublishDialogOpen] = useState(false)
-  const [publishingProduct, setPublishingProduct] = useState<ProductStats | null>(null)
-  const [publishableVideos, setPublishableVideos] = useState<VideoPushItem[]>([])
-  const [selectedVideoIds, setSelectedVideoIds] = useState<Set<string>>(new Set())
-  const [loadingPublishable, setLoadingPublishable] = useState(false)
-  const [publishing, setPublishing] = useState(false)
 
   const fetchProducts = async () => {
     if (!selectedDate) return
@@ -78,100 +52,46 @@ export default function DailyPublishPlanPage() {
   const availableIps = useMemo(() => {
     const ipMap = new Map<string, { id: string }>()
     products.forEach(p => {
-      if (p.ipId && !ipMap.has(p.ipId)) {
-        ipMap.set(p.ipId, { id: p.ipId })
-      }
+      p.ips.forEach(ip => {
+        if (ip.ipId && !ipMap.has(ip.ipId)) {
+          ipMap.set(ip.ipId, { id: ip.ipId })
+        }
+      })
     })
     return Array.from(ipMap.values())
   }, [products])
 
   const filteredProducts = useMemo(() => {
     if (!selectedIpId) return products
-    return products.filter(p => p.ipId === selectedIpId)
+    return products.filter(p => p.ips.some(ip => ip.ipId === selectedIpId))
   }, [products, selectedIpId])
 
   const aggregateStats = useMemo(() => {
-    return filteredProducts.reduce((acc, p) => ({
-      totalAi: acc.totalAi + p.aiVideoCount,
-      totalPushable: acc.totalPushable + p.pushableCount,
-      totalPublished: acc.totalPublished + p.publishedCount,
-      totalClippable: acc.totalClippable + p.clippableCount,
-      totalNewGeneratable: acc.totalNewGeneratable + p.newGeneratableCount,
+    return filteredProducts.reduce((acc, p) => {
+      const totalAi = p.ips.reduce((sum, ip) => sum + ip.videoCount, 0)
+      return {
+        totalAi: acc.totalAi + totalAi,
+        totalPushable: acc.totalPushable,
+        totalPublished: acc.totalPublished,
+        totalClippable: acc.totalClippable,
+        totalNewGeneratable: acc.totalNewGeneratable,
+      }
     }), { totalAi: 0, totalPushable: 0, totalPublished: 0, totalClippable: 0, totalNewGeneratable: 0 })
   }, [filteredProducts])
 
-  const handleClip = async (productId: string, productName: string) => {
-    if (!confirm(`确定对 ${productName} 执行剪辑？将使用随机背景音乐。`)) return
-    setClippingProductId(productId)
+  const handleToggleIpSelection = async (productId: string, ipId: string) => {
     try {
-      const res = await fetch('/api/video-push/clip', {
+      const res = await fetch('/api/daily-publish-plan/assign-ip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId }),
+        body: JSON.stringify({ productId, ipId, date: selectedDate }),
       })
       if (res.ok) {
-        const data = await res.json()
-        alert(`剪辑任务已提交，创建了 ${data.videos?.length || 0} 个视频`)
         fetchProducts()
-      } else {
-        const err = await res.json()
-        alert(`剪辑失败: ${err.error}`)
       }
     } catch (err) {
       console.error(err)
-      alert('剪辑失败')
-    } finally {
-      setClippingProductId(null)
     }
-  }
-
-  const openPublishDialog = async (product: ProductStats) => {
-    setPublishingProduct(product)
-    setPublishDialogOpen(true)
-    setLoadingPublishable(true)
-    setSelectedVideoIds(new Set())
-    try {
-      const res = await fetch(`/api/video-push?productId=${product.productId}&ipId=${product.ipId}&qualified=true`)
-      if (res.ok) {
-        const data = await res.json()
-        const unpublished = (data.videos || []).filter((v: VideoPushItem) => v.isQualified && !v.isPublished)
-        setPublishableVideos(unpublished)
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoadingPublishable(false)
-    }
-  }
-
-  const handlePublish = async () => {
-    if (!publishingProduct || selectedVideoIds.size === 0) return
-    setPublishing(true)
-    try {
-      const promises = Array.from(selectedVideoIds).map(videoId =>
-        fetch(`/api/video-push/${videoId}/publish`, { method: 'POST' })
-      )
-      const results = await Promise.all(promises)
-      const successCount = results.filter(r => r.ok).length
-      alert(`成功发布 ${successCount} 个视频`)
-      if (successCount > 0) {
-        fetchProducts()
-        setPublishDialogOpen(false)
-      }
-    } catch (err) {
-      console.error(err)
-      alert('发布失败')
-    } finally {
-      setPublishing(false)
-    }
-  }
-
-  const toggleVideoSelection = (videoId: string) => {
-    setSelectedVideoIds(prev => {
-      const next = new Set(prev)
-      next.has(videoId) ? next.delete(videoId) : next.add(videoId)
-      return next
-    })
   }
 
   const formatDate = (dateStr: string) => {
@@ -296,7 +216,7 @@ export default function DailyPublishPlanPage() {
                   全部 · {products.length}
                 </button>
                 {availableIps.map(ip => {
-                  const count = products.filter(p => p.ipId === ip.id).length
+                  const count = products.filter(p => p.ips.some(i => i.ipId === ip.id)).length
                   return (
                     <button
                       key={ip.id}
@@ -316,12 +236,10 @@ export default function DailyPublishPlanPage() {
             )}
 
             {/* Aggregate Stats */}
-            <div className="grid grid-cols-5 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-4 mb-6">
               <StatCard label="AI视频" value={aggregateStats.totalAi} color="from-blue-50 to-blue-100/50" borderColor="border-blue-200" textColor="text-blue-600" />
               <StatCard label="已发布" value={aggregateStats.totalPublished} color="from-emerald-50 to-emerald-100/50" borderColor="border-emerald-200" textColor="text-emerald-600" />
               <StatCard label="待发布" value={aggregateStats.totalPushable} color="from-amber-50 to-amber-100/50" borderColor="border-amber-200" textColor="text-amber-600" />
-              <StatCard label="可剪辑" value={aggregateStats.totalClippable} color="from-purple-50 to-purple-100/50" borderColor="border-purple-200" textColor="text-purple-600" />
-              <StatCard label="可新增" value={aggregateStats.totalNewGeneratable} color="from-orange-50 to-orange-100/50" borderColor="border-orange-200" textColor="text-orange-600" />
             </div>
 
             {/* Product List */}
@@ -331,78 +249,13 @@ export default function DailyPublishPlanPage() {
                   key={product.productId}
                   product={product}
                   index={index}
-                  onClip={handleClip}
-                  onPublish={openPublishDialog}
-                  clippingProductId={clippingProductId}
+                  onToggleIp={handleToggleIpSelection}
                 />
               ))}
             </div>
           </>
         )}
       </div>
-
-      {/* Publish Dialog */}
-      <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-white rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-warm-charcoal font-bold">
-              发布视频 - {publishingProduct?.productName}
-            </DialogTitle>
-          </DialogHeader>
-
-          {loadingPublishable ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : publishableVideos.length === 0 ? (
-            <div className="text-center py-12 text-warm-silver">
-              暂无可发布的视频
-            </div>
-          ) : (
-            <>
-              <div className="flex-1 overflow-y-auto">
-                <div className="grid grid-cols-3 gap-4">
-                  {publishableVideos.map(video => (
-                    <div
-                      key={video.id}
-                      onClick={() => toggleVideoSelection(video.id)}
-                      className={cn(
-                        'relative rounded-xl border-2 cursor-pointer transition-all overflow-hidden',
-                        selectedVideoIds.has(video.id)
-                          ? 'border-matcha-600 bg-matcha-50'
-                          : 'border-transparent hover:border-oat'
-                      )}
-                    >
-                      {video.thumbnail || video.video?.thumbnail ? (
-                        <img src={getImageUrl(video.thumbnail || video.video?.thumbnail || '')} alt="" className="w-full aspect-video object-cover rounded-lg" />
-                      ) : (
-                        <div className="w-full aspect-video bg-oat flex items-center justify-center text-warm-silver text-sm rounded-lg">无封面</div>
-                      )}
-                      {selectedVideoIds.has(video.id) && (
-                        <div className="absolute top-2 right-2 w-6 h-6 bg-matcha-600 rounded-full flex items-center justify-center shadow-lg">
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-oat">
-                <span className="text-sm text-warm-silver">已选择 {selectedVideoIds.size} 个视频</span>
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setPublishDialogOpen(false)} className="border-oat text-warm-silver hover:bg-oat">取消</Button>
-                  <Button onClick={handlePublish} disabled={selectedVideoIds.size === 0 || publishing} className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-lg">
-                    {publishing ? '发布中...' : `确认发布 (${selectedVideoIds.size})`}
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
@@ -419,15 +272,11 @@ function StatCard({ label, value, color, borderColor, textColor }: { label: stri
 function ProductCard({
   product,
   index,
-  onClip,
-  onPublish,
-  clippingProductId
+  onToggleIp,
 }: {
   product: ProductStats
   index: number
-  onClip: (productId: string, productName: string) => void
-  onPublish: (product: ProductStats) => void
-  clippingProductId: string | null
+  onToggleIp: (productId: string, ipId: string) => void
 }) {
   return (
     <div
@@ -453,85 +302,42 @@ function ProductCard({
 
           {/* Product Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-warm-charcoal mb-0.5 truncate">{product.productName}</h3>
-            <p className="text-xs text-warm-silver font-mono">IP: {product.ipId.slice(0, 12)}...</p>
+            <h3 className="text-base font-semibold text-warm-charcoal mb-2 truncate">{product.productName}</h3>
 
-            {/* Progress bars */}
-            <div className="mt-3 space-y-1.5">
-              <ProgressBar
-                label="生成进度"
-                current={product.aiVideoCount}
-                total={product.aiVideoCount + product.newGeneratableCount}
-                barColor="bg-gradient-to-r from-blue-500 to-blue-600"
-              />
-              <ProgressBar
-                label="发布进度"
-                current={product.publishedCount}
-                total={product.aiVideoCount}
-                barColor="bg-gradient-to-r from-emerald-500 to-emerald-600"
-              />
+            {/* IP List */}
+            <div className="space-y-2">
+              {product.ips.map(ip => (
+                <div key={ip.ipId} className="flex items-center gap-3">
+                  <button
+                    onClick={() => onToggleIp(product.productId, ip.ipId)}
+                    className="w-5 h-5 rounded border-2 flex items-center justify-center transition-all"
+                    style={{
+                      backgroundColor: ip.selected ? '#8b5cf6' : 'transparent',
+                      borderColor: ip.selected ? '#8b5cf6' : '#d4c5b0',
+                    }}
+                  >
+                    {ip.selected && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                  <span className="text-xs text-warm-silver font-mono">{ip.ipId.slice(0, 12)}...</span>
+                  <span className="text-xs text-warm-silver">{ip.videoCount}个视频</span>
+                  <Link
+                    href={`/daily-publish-plan/ip/${ip.ipId}/${product.productId}`}
+                    className="ml-auto w-6 h-6 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 flex items-center justify-center text-white hover:scale-110 transition-all shadow-md"
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </Link>
+                </div>
+              ))}
             </div>
-          </div>
-
-          {/* Stats */}
-          <div className="flex items-center gap-5 px-4">
-            <div className="text-center">
-              <div className="text-xl font-bold text-amber-600">{product.pushableCount}</div>
-              <div className="text-[11px] text-warm-silver mt-0.5">待发布</div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-emerald-600">{product.publishedCount}</div>
-              <div className="text-[11px] text-warm-silver mt-0.5">已发布</div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-purple-600">{product.clippableCount}</div>
-              <div className="text-[11px] text-warm-silver mt-0.5">可剪辑</div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {product.pushableCount > 0 && (
-              <button
-                onClick={() => onPublish(product)}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
-              >
-                发布
-              </button>
-            )}
-            <button
-              onClick={() => onClip(product.productId, product.productName)}
-              disabled={clippingProductId === product.productId || product.clippableCount === 0}
-              className="px-4 py-2 rounded-lg bg-oat text-warm-charcoal text-sm font-medium hover:bg-violet-100 hover:text-violet-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-oat disabled:hover:text-warm-charcoal"
-            >
-              {clippingProductId === product.productId ? '剪辑中...' : '剪辑'}
-            </button>
-            <Link
-              href={`/products/${product.productId}?tab=generate`}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-sm font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
-            >
-              新增
-            </Link>
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-function ProgressBar({ label, current, total, barColor }: { label: string; current: number; total: number; barColor: string }) {
-  const percentage = total > 0 ? (current / total) * 100 : 0
-
-  return (
-    <div className="flex items-center gap-2.5">
-      <span className="text-[11px] text-warm-silver w-16">{label}</span>
-      <div className="flex-1 h-1.5 bg-oat rounded-full overflow-hidden">
-        <div
-          className={cn('h-full rounded-full transition-all duration-500', barColor)}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-      <span className="text-[11px] text-warm-silver w-14 text-right">{current}/{total}</span>
     </div>
   )
 }
