@@ -14,8 +14,8 @@ function computeVideoIdHash(videoIds: string[]): string {
   return crypto.createHash('md5').update(joined).digest('hex')
 }
 
-// POST /api/video-push/clip
-// 异步执行剪辑，CLI 完成后回调更新状态
+// POST /api/video-push/prepare-clips
+// 预创建 pending 记录，避免重复调用 CLI dry-run
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { productId, ipId, sceneId, videoIds, musicId } = body
+    const { productId, ipId, sceneId, videoIds, templateName, musicId } = body
 
-    if (!productId || !ipId || !sceneId || !videoIds || !Array.isArray(videoIds)) {
+    if (!productId || !ipId || !sceneId || !videoIds || !Array.isArray(videoIds) || videoIds.length === 0) {
       return NextResponse.json({ error: 'productId, ipId, sceneId, videoIds[] are required' }, { status: 400 })
     }
 
@@ -34,26 +34,28 @@ export async function POST(request: NextRequest) {
     const videoIdHash = computeVideoIdHash(videoIds)
     const videoIdStr = videoIds.join(',')
 
-    // 查找 pending 记录
-    const pendingRecords = await db.videoPush.findMany({
+    // 检查是否已存在相同来源的 pending/completed 记录
+    const existing = await db.videoPush.findFirst({
       where: {
         productId,
         ipId,
         sceneId,
         videoIdHash,
-        status: 'pending',
+        status: { in: ['pending', 'completed'] },
       },
-      take: 1, // 每次执行一个
     })
 
-    if (pendingRecords.length === 0) {
+    if (existing) {
       return NextResponse.json({
-        message: 'No pending clips to process',
-        pendingCount: 0,
+        message: 'Clips already prepared',
+        videoIdHash,
+        existingCount: 1,
+        pendingCount: existing.status === 'pending' ? 1 : 0,
       })
     }
 
-    const record = pendingRecords[0]
+    // 调用 CLI dry-run 获取 potential clips 数量
+    const capcut = getCapcutProvider()
 
     // 获取视频 URL
     const videos = await db.video.findMany({
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No videos found' }, { status: 400 })
     }
 
-    // 获取音乐 URL
+    // 获取音乐 URL（如果有）
     let musicUrl: string | undefined
     if (musicId) {
       const music = await db.material.findUnique({
@@ -78,32 +80,41 @@ export async function POST(request: NextRequest) {
       musicUrl = music?.url
     }
 
-    // 获取 base URL 用于回调
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3000}`
-    const callbackUrl = `${baseUrl}/api/video-push/callback?videoPushId=${record.id}`
+    // dry-run 获取数量
+    const dryRunResult = await capcut.clipDryRun({
+      videoUrls: videos.map(v => v.url),
+      musicUrl,
+    })
 
-    // 获取 output 目录
-    const teamId = session.user.teamId
-    const today = new Date().toISOString().split('T')[0]
-    const outputDir = `/uploads/teams/${teamId}/clips/${today}`
+    if (dryRunResult.error) {
+      return NextResponse.json({ error: dryRunResult.error }, { status: 500 })
+    }
 
-    // 调用 CLI 执行（异步，不等待结果）
-    // 注意：当前 CapcutCliProvider.clip() 是同步的，需要改造为异步触发
-    // 这里先用同步方式调用，实际使用时 CLI 应该在后台执行
-    const capcut = getCapcutProvider()
+    const potentialCount = dryRunResult.count
 
-    // 执行剪辑（这个在未来需要改造为异步触发 CLI）
-    // 目前先记录 pending，等待后续改造
-    console.log(`[clip] Starting clip for VideoPush ${record.id}`)
-    console.log(`[clip] CLI should execute with callback: ${callbackUrl}`)
+    // 批量创建 pending 记录
+    const created = await db.videoPush.createMany({
+      data: Array.from({ length: potentialCount }, () => ({
+        videoId: videoIdStr,
+        videoIdHash,
+        productId,
+        ipId,
+        sceneId,
+        templateName: templateName || null,
+        musicId: musicId || null,
+        status: 'pending',
+        url: '',
+      })),
+    })
 
     return NextResponse.json({
-      message: `Clip job triggered for VideoPush ${record.id}`,
-      videoPushId: record.id,
-      pendingCount: pendingRecords.length,
+      message: `Created ${created.count} pending clips`,
+      videoIdHash,
+      createdCount: created.count,
+      potentialCount,
     })
   } catch (error) {
-    console.error('[clip] Error:', error)
+    console.error('[prepare-clips] Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
