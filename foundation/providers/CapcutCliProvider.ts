@@ -1,5 +1,6 @@
 // foundation/providers/CapcutCliProvider.ts
-import { exec } from 'child_process'
+import crypto from 'crypto'
+import { exec, spawn } from 'child_process'
 import { promisify } from 'util'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -15,6 +16,14 @@ export interface CapcutCliConfig {
 export interface CapcutClipInput {
   videoUrls: string[]   // AI video URL list
   musicUrl?: string     // Background music URL (optional)
+}
+
+export interface CapcutClipInputAsync {
+  videoUrls: string[]   // AI video URL list
+  musicUrl?: string     // Background music URL (optional)
+  outputDir: string     // Output directory for clips
+  callbackUrl: string   // Callback URL when clip is done
+  templateName?: string // Template name
 }
 
 export interface CapcutClipResult {
@@ -166,6 +175,106 @@ export class CapcutCliProvider {
     } finally {
       this.cleanupFiles(tempFiles)
     }
+  }
+
+  /**
+   * Execute cap_cut clip command asynchronously
+   * CLI runs in background and calls callback when done
+   */
+  clipAsync(input: CapcutClipInputAsync): void {
+    // First check if output already exists (idempotency)
+    const inputHash = this.computeInputHash(input.videoUrls)
+    const outputDir = input.outputDir
+
+    // Check if files already exist for this input
+    if (fs.existsSync(outputDir)) {
+      const existingFiles = fs.readdirSync(outputDir).filter(f => f.startsWith(`clip-${inputHash}`))
+      if (existingFiles.length > 0) {
+        console.log(`[CapcutCli] Output already exists for hash ${inputHash}, skipping`)
+        // Already exists, no need to run CLI
+        return
+      }
+    }
+
+    const tempFiles: string[] = []
+    let videoPaths: string[] = []
+
+    // Download videos synchronously before spawning
+    // Note: In production, you'd want to pre-download these or pass local paths
+    console.log(`[CapcutCli] Starting async clip job`)
+    console.log(`[CapcutCli] Output dir: ${outputDir}`)
+    console.log(`[CapcutCli] Callback: ${input.callbackUrl}`)
+    console.log(`[CapcutCli] Input hash: ${inputHash}`)
+
+    // For async execution, we spawn the process without waiting
+    // The CLI itself handles the callback to our server
+    this.spawnClipProcess(input, tempFiles).catch(err => {
+      console.error('[CapcutCli] Clip process error:', err)
+    })
+  }
+
+  private async spawnClipProcess(input: CapcutClipInputAsync, tempFiles: string[]): Promise<void> {
+    try {
+      // Download videos to temp files
+      videoPaths = await Promise.all(
+        input.videoUrls.map(async (url) => {
+          const localPath = await this.downloadVideo(url)
+          tempFiles.push(localPath)
+          return localPath
+        })
+      )
+
+      // Download music if provided
+      let musicPath: string | undefined
+      if (input.musicUrl) {
+        musicPath = await this.downloadMusic(input.musicUrl)
+        tempFiles.push(musicPath)
+      }
+
+      // Build command with --callback
+      const args = [
+        'clip',
+        '--videos', videoPaths.join(','),
+        '--template', input.templateName || 'detail-focus',
+        '--output', input.outputDir,
+        '--callback', input.callbackUrl,
+      ]
+
+      if (musicPath) {
+        args.push('--music', musicPath)
+      }
+
+      // Spawn process (non-blocking)
+      const command = `${this.config.capcutPath} ${args.join(' ')}`
+      console.log('[CapcutCli] Spawning:', command)
+
+      const child = spawn(this.config.capcutPath, args, {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        detached: true,
+      })
+
+      child.unref() // Let parent process exit independently
+
+      // Cleanup temp files after spawn
+      // Keep them around for the CLI to read
+      setTimeout(() => {
+        this.cleanupFiles(tempFiles)
+      }, 60000) // Cleanup after 1 minute
+
+    } catch (error) {
+      console.error('[CapcutCli] Spawn error:', error)
+      // Cleanup temp files on error
+      this.cleanupFiles(tempFiles)
+    }
+  }
+
+  /**
+   * Compute hash for input videos (for idempotency check)
+   */
+  private computeInputHash(videoUrls: string[]): string {
+    const sorted = [...videoUrls].sort()
+    const joined = sorted.join(',')
+    return crypto.createHash('md5').update(joined).digest('hex').slice(0, 12)
   }
 
   /**
