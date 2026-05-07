@@ -44,13 +44,20 @@ export async function GET(request: NextRequest) {
     })
 
     // Get VideoPush records for this product+ip to determine selected videos
+    // selectedVideos: isQualified=true && isPublished=false
     const videoPushes = await db.videoPush.findMany({
       where: { productId, ipId, isQualified: true, isPublished: false },
       select: { videoId: true }
     })
 
-    // selectedVideos are those with isQualified=true && isPublished=false
-    const selectedVideoIds = videoPushes.map(vp => vp.videoId)
+    // videoId is comma-separated string like "vid-1,vid-2,vid-3"
+    // Extract all individual video IDs from selected VideoPushes
+    const selectedVideoIdsSet = new Set<string>()
+    for (const vp of videoPushes) {
+      const ids = vp.videoId.split(',').map(id => id.trim()).filter(Boolean)
+      ids.forEach(id => selectedVideoIdsSet.add(id))
+    }
+    const selectedVideoIds = Array.from(selectedVideoIdsSet)
 
     // videos array - all videos for this product+ip
     const videosList = videos.map(v => ({
