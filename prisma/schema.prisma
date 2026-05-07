@@ -477,6 +477,8 @@ model VideoPush {
   url             String   @default("") @db.VarChar(500)
   thumbnail       String?  @db.VarChar(500)
   status          String   @default("pending")  // pending | completed | failed
+  isQualified     Boolean  @default(false) @map("is_qualified")  // 是否达标可发布
+  isPublished     Boolean  @default(false) @map("is_published")  // 是否已发布
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
