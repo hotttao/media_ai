@@ -136,7 +136,7 @@ export default function IpDetailPage() {
     }
     setConfirming(true)
     try {
-      const res = await fetch('/api/daily-publish-plan/batch', {
+      const res = await fetch('/api/daily-publish-plan/confirm-publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
