@@ -268,7 +268,6 @@ model Video {
   task      VideoTask  @relation("TaskToVideos", fields: [taskId], references: [id])
   team      Team       @relation("TeamToVideos", fields: [teamId], references: [id])
   user      User       @relation("UserToVideos", fields: [userId], references: [id])
-  videoPushes VideoPush[] @relation("VideoToVideoPushes")
 
   @@index([productId], map: "fk_videos_product")
   @@index([ipId], map: "videos_ip_id_fkey")
@@ -468,27 +467,21 @@ model AlternativeImage {
 
 model VideoPush {
   id              String   @id @default(uuid()) @db.VarChar(36)
-  videoId         String   @map("video_id") @db.VarChar(36)
+  videoId         String   @map("video_id") @db.VarChar(500)  // "vid-1,vid-2,vid-3" 逗号分隔
+  videoIdHash     String   @map("video_id_hash")             // 排序后逗号拼接的MD5
   productId       String   @map("product_id") @db.VarChar(36)
   ipId            String   @map("ip_id") @db.VarChar(36)
-  templateId      String?  @map("template_id")
+  sceneId         String   @map("scene_id") @db.VarChar(36)
   templateName    String?  @map("template_name")
   musicId         String?  @map("music_id")
-  url             String   @db.VarChar(500)
+  url             String   @default("") @db.VarChar(500)
   thumbnail       String?  @db.VarChar(500)
-  title           String?  @db.VarChar(200)
-  description     String?  @db.Text
-  clipParams      String?  @db.Text
-  isQualified     Boolean  @default(false) @map("is_qualified")
-  isPublished     Boolean  @default(false) @map("is_published")
+  status          String   @default("pending")  // pending | completed | failed
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   product         Product  @relation("ProductToVideoPushes", fields: [productId], references: [id])
-  video           Video    @relation("VideoToVideoPushes", fields: [videoId], references: [id])
-  @@index([productId], map: "idx_video_push_product")
-  @@index([ipId], map: "idx_video_push_ip")
-  @@index([isQualified], map: "idx_video_push_qualified")
+  @@index([productId, ipId, sceneId, videoIdHash], map: "idx_video_push_source")
   @@index([videoId], map: "idx_video_push_video")
   @@map("video_pushes")
 }
