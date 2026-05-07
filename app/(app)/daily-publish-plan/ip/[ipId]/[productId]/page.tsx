@@ -49,6 +49,7 @@ export default function IpDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [adding, setAdding] = useState(false)
 
   // Add product dialog state
   const [addProductDialogOpen, setAddProductDialogOpen] = useState(false)
@@ -163,9 +164,30 @@ export default function IpDetailPage() {
       alert('请选择一个商品')
       return
     }
-    // TODO: Call API to add product to plan
-    console.log('Adding product:', selectedProductId)
-    setAddProductDialogOpen(false)
+    setAdding(true)
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const res = await fetch('/api/daily-publish-plan/assign-ip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: selectedProductId,
+          ipId,
+          date: today
+        })
+      })
+      if (res.ok) {
+        setAddProductDialogOpen(false)
+        router.refresh()
+      } else {
+        throw new Error('Failed to add product')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('添加失败，请重试')
+    } finally {
+      setAdding(false)
+    }
   }
 
   if (loading) {
@@ -458,9 +480,10 @@ export default function IpDetailPage() {
               </button>
               <button
                 onClick={handleConfirmAddProduct}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-sm text-white font-medium hover:shadow-lg transition-all"
+                disabled={adding}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-sm text-white font-medium hover:shadow-lg transition-all disabled:opacity-50"
               >
-                确认添加
+                {adding ? '添加中...' : '确认添加'}
               </button>
             </DialogFooter>
           </DialogContent>
