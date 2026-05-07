@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import path from 'path'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
@@ -85,20 +86,22 @@ export async function POST(request: NextRequest) {
     // 获取 output 目录
     const teamId = session.user.teamId
     const today = new Date().toISOString().split('T')[0]
-    const outputDir = `/uploads/teams/${teamId}/clips/${today}`
+    const outputDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'clips', today)
 
-    // 调用 CLI 执行（异步，不等待结果）
-    // 注意：当前 CapcutCliProvider.clip() 是同步的，需要改造为异步触发
-    // 这里先用同步方式调用，实际使用时 CLI 应该在后台执行
+    // 调用 CLI 异步执行
     const capcut = getCapcutProvider()
+    capcut.clipAsync({
+      videoUrls: videos.map(v => v.url),
+      musicUrl,
+      outputDir,
+      callbackUrl,
+      templateName: record.templateName || 'detail-focus',
+    })
 
-    // 执行剪辑（这个在未来需要改造为异步触发 CLI）
-    // 目前先记录 pending，等待后续改造
-    console.log(`[clip] Starting clip for VideoPush ${record.id}`)
-    console.log(`[clip] CLI should execute with callback: ${callbackUrl}`)
+    console.log(`[clip] Started async clip for VideoPush ${record.id}`)
 
     return NextResponse.json({
-      message: `Clip job triggered for VideoPush ${record.id}`,
+      message: `Clip job started for VideoPush ${record.id}`,
       videoPushId: record.id,
       pendingCount: pendingRecords.length,
     })
