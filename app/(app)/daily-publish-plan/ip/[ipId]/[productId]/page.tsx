@@ -1,9 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { cn, getImageUrl } from '@/foundation/lib/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 interface Video {
   id: string
@@ -20,6 +27,17 @@ interface IpDetailData {
   videos: Video[]
 }
 
+interface ProductSearchResult {
+  id: string
+  name: string
+  publishCount: number
+  isGood: boolean
+  inCurrentPlan: boolean
+  source: 'published' | 'library'
+}
+
+type FilterTab = 'all' | 'published' | 'library'
+
 export default function IpDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -31,6 +49,14 @@ export default function IpDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+
+  // Add product dialog state
+  const [addProductDialogOpen, setAddProductDialogOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
+  const [searchResults, setSearchResults] = useState<ProductSearchResult[]>([])
+  const [searching, setSearching] = useState(false)
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,6 +80,42 @@ export default function IpDetailPage() {
     }
     fetchData()
   }, [ipId, productId])
+
+  // Search products for IP
+  const searchProducts = useCallback(async (query: string, filter: FilterTab) => {
+    setSearching(true)
+    try {
+      const res = await fetch(
+        `/api/products/search-for-ip?ipId=${ipId}&filter=${filter}&search=${encodeURIComponent(query)}`
+      )
+      if (res.ok) {
+        const results = await res.json()
+        setSearchResults(results)
+      } else {
+        console.error('Failed to search products')
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSearching(false)
+    }
+  }, [ipId])
+
+  // Open dialog and search initially
+  const handleOpenAddProductDialog = () => {
+    setAddProductDialogOpen(true)
+    setSearchQuery('')
+    setActiveFilter('all')
+    setSelectedProductId(null)
+    searchProducts('', 'all')
+  }
+
+  // Search when filter or query changes
+  useEffect(() => {
+    if (addProductDialogOpen) {
+      searchProducts(searchQuery, activeFilter)
+    }
+  }, [addProductDialogOpen, searchQuery, activeFilter, searchProducts])
 
   const toggleVideoSelection = (videoId: string) => {
     setSelectedVideoIds(prev => {
@@ -94,6 +156,16 @@ export default function IpDetailPage() {
     } finally {
       setConfirming(false)
     }
+  }
+
+  const handleConfirmAddProduct = async () => {
+    if (!selectedProductId) {
+      alert('请选择一个商品')
+      return
+    }
+    // TODO: Call API to add product to plan
+    console.log('Adding product:', selectedProductId)
+    setAddProductDialogOpen(false)
   }
 
   if (loading) {
@@ -174,7 +246,10 @@ export default function IpDetailPage() {
             <button className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm">
               选择发布视频
             </button>
-            <button className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm">
+            <button
+              onClick={handleOpenAddProductDialog}
+              className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
+            >
               添加商品
             </button>
           </div>
@@ -255,6 +330,141 @@ export default function IpDetailPage() {
         >
           {confirming ? '确认中...' : '确认发布计划'}
         </button>
+
+        {/* Add Product Dialog */}
+        <Dialog open={addProductDialogOpen} onOpenChange={setAddProductDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>为 {data.ipId.slice(0, 8)}... 添加商品</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              {/* Search Input */}
+              <div className="relative">
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-silver"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="搜索商品名称..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-oat bg-white text-sm text-warm-charcoal placeholder:text-warm-silver/60 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-warm-silver">筛选：</span>
+                <div className="flex items-center gap-1">
+                  {(['all', 'published', 'library'] as FilterTab[]).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveFilter(tab)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-sm transition-all',
+                        activeFilter === tab
+                          ? 'bg-violet-500 text-white'
+                          : 'bg-white text-warm-silver hover:bg-violet-50 border border-oat'
+                      )}
+                    >
+                      {tab === 'all' ? '全部' : tab === 'published' ? '已发布' : '商品库'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Product List */}
+              <div className="max-h-64 overflow-y-auto border border-oat rounded-lg">
+                {searching ? (
+                  <div className="py-8 text-center text-warm-silver text-sm">搜索中...</div>
+                ) : searchResults.length === 0 ? (
+                  <div className="py-8 text-center text-warm-silver text-sm">暂无商品</div>
+                ) : (
+                  searchResults.map((product) => (
+                    <div
+                      key={product.id}
+                      onClick={() => setSelectedProductId(product.id)}
+                      className={cn(
+                        'px-4 py-3 cursor-pointer border-b border-oat/50 last:border-b-0 transition-colors',
+                        selectedProductId === product.id
+                          ? 'bg-violet-50'
+                          : 'hover:bg-gray-50'
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                            selectedProductId === product.id
+                              ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
+                              : 'bg-white border-oat'
+                          )}
+                        >
+                          {selectedProductId === product.id && (
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={3}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-warm-charcoal">{product.name}</div>
+                          <div className="text-xs text-warm-silver mt-0.5">
+                            {product.inCurrentPlan ? (
+                              <span className="text-matcha-600">已加入当日计划</span>
+                            ) : product.source === 'library' ? (
+                              '商品库 - 未发布过'
+                            ) : (
+                              <span>
+                                该IP历史发布 {product.publishCount} 次
+                                {product.isGood && <span className="text-orange-500 ml-1">数据好 ⭐</span>}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <button
+                onClick={() => setAddProductDialogOpen(false)}
+                className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-gray-50 transition-all"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmAddProduct}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-sm text-white font-medium hover:shadow-lg transition-all"
+              >
+                确认添加
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
