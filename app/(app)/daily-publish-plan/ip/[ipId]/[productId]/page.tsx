@@ -22,6 +22,7 @@ interface Video {
 interface IpDetailData {
   productId: string
   ipId: string
+  ipNickname: string
   productName: string
   selectedVideos: string[]
   videos: Video[]
@@ -278,7 +279,7 @@ export default function IpDetailPage() {
             </Link>
             <div>
               <h1 className="text-xl font-bold text-warm-charcoal tracking-tight">
-                {data.ipId.slice(0, 8)}... 发布计划
+                {data.ipNickname || data.ipId.slice(0, 8)} 发布计划
               </h1>
             </div>
           </div>
@@ -420,7 +421,7 @@ export default function IpDetailPage() {
         <Dialog open={addProductDialogOpen} onOpenChange={setAddProductDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>为 {data.ipId.slice(0, 8)}... 添加商品</DialogTitle>
+              <DialogTitle>为 {data.ipNickname || data.ipId.slice(0, 8)} 添加商品</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4 py-4">

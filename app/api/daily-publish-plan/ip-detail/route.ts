@@ -81,9 +81,16 @@ export async function GET(request: NextRequest) {
         createdAt: v.createdAt.toISOString()
       }))
 
+    // Get IP nickname
+    const ip = await db.virtualIp.findUnique({
+      where: { id: ipId },
+      select: { nickname: true }
+    })
+
     return NextResponse.json({
       productId,
       ipId,
+      ipNickname: ip?.nickname || '',
       productName: product.name,
       selectedVideos: selectedVideoIds,
       videos: videosList
