@@ -33,6 +33,7 @@ interface ProductDetailData {
   selectedVideos: string[]
   videos: { id: string; url: string; thumbnail: string | null; createdAt: string; sceneId: string | null }[]
   clips: Clip[]
+  scenes: { id: string; name: string; thumbnail: string | null }[]
 }
 
 interface IpProductsData {
@@ -94,21 +95,14 @@ export default function IpProductsPage() {
   const [selectedProductToAdd, setSelectedProductToAdd] = useState<string | null>(null)
   const [addingProduct, setAddingProduct] = useState(false)
 
-  // Derive unique scenes from source videos (must be before early returns to preserve hook order)
+  // Derive unique scenes with counts from API data (must be before early returns to preserve hook order)
   const availableScenes = useMemo(() => {
-    if (!detailData?.videos) return []
-    const sceneMap = new Map<string, { sceneId: string; count: number }>()
-    for (const v of detailData.videos) {
-      const sid = v.sceneId || 'unknown'
-      const existing = sceneMap.get(sid)
-      if (existing) {
-        existing.count++
-      } else {
-        sceneMap.set(sid, { sceneId: sid, count: 1 })
-      }
-    }
-    return Array.from(sceneMap.values())
-  }, [detailData?.videos])
+    if (!detailData?.scenes) return []
+    return detailData.scenes.map(s => ({
+      ...s,
+      count: detailData.videos.filter(v => v.sceneId === s.id).length,
+    }))
+  }, [detailData?.scenes, detailData?.videos])
 
   // Fetch products list for this IP
   useEffect(() => {
@@ -227,12 +221,12 @@ export default function IpProductsPage() {
 
     // Validate: all selected videos must belong to the same scene
     const selectedVideos = detailData?.videos.filter(v => selectedSourceIds.has(v.id)) || []
-    const sceneIds = [...new Set(selectedVideos.map(v => v.sceneId || 'unknown'))]
+    const sceneIds = [...new Set(selectedVideos.map(v => v.sceneId).filter(Boolean))] as string[]
     if (sceneIds.length > 1) {
       alert('只能选择同一场景的视频进行剪辑')
       return
     }
-    const clipSceneId = sceneIds[0] === 'unknown' ? '' : sceneIds[0]
+    const clipSceneId = sceneIds[0] || ''
 
     setClipping(true)
     try {
@@ -492,16 +486,20 @@ export default function IpProductsPage() {
               </button>
               {availableScenes.map(s => (
                 <button
-                  key={s.sceneId}
-                  onClick={() => setSelectedSceneId(s.sceneId)}
+                  key={s.id}
+                  onClick={() => setSelectedSceneId(s.id)}
                   className={cn(
-                    'px-3 py-1 rounded-lg text-xs whitespace-nowrap transition-all',
-                    selectedSceneId === s.sceneId
+                    'px-3 py-1 rounded-lg text-xs whitespace-nowrap transition-all flex items-center gap-1.5',
+                    selectedSceneId === s.id
                       ? 'bg-violet-500 text-white'
                       : 'bg-white text-warm-silver border border-oat hover:bg-violet-50'
                   )}
                 >
-                  {s.sceneId === 'unknown' ? '未分类' : s.sceneId} ({s.count})
+                  {s.thumbnail && (
+                    <img src={getImageUrl(s.thumbnail)} alt="" className="w-4 h-4 rounded object-cover" />
+                  )}
+                  <span className="truncate max-w-[80px]">{s.name || s.id}</span>
+                  <span className="opacity-60">({s.count})</span>
                 </button>
               ))}
             </div>
@@ -513,7 +511,7 @@ export default function IpProductsPage() {
               </div>
             ) : (
               detailData.videos
-                .filter(v => selectedSceneId === null || (v.sceneId || 'unknown') === selectedSceneId)
+                .filter(v => selectedSceneId === null || v.sceneId === selectedSceneId)
                 .map(video => (
                 <div
                   key={video.id}

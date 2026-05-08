@@ -125,6 +125,14 @@ export async function GET(request: NextRequest) {
         sceneId: v.sceneId || null,
       }))
 
+    // Resolve scene IDs to scene info (name, thumbnail)
+    const uniqueSceneIds = [...new Set(sourceVideos.map(v => v.sceneId).filter(Boolean))] as string[]
+    const scenes = uniqueSceneIds.length > 0 ? await db.material.findMany({
+      where: { id: { in: uniqueSceneIds } },
+      select: { id: true, name: true, url: true },
+    }) : []
+    const sceneMap = new Map(scenes.map(s => [s.id, { id: s.id, name: s.name, thumbnail: s.url }]))
+
     return NextResponse.json({
       productId,
       ipId,
@@ -133,6 +141,7 @@ export async function GET(request: NextRequest) {
       selectedVideos: selectedVideoIds,
       videos: videosList,
       clips,
+      scenes: scenes.map(s => ({ id: s.id, name: s.name, thumbnail: s.url })),
     })
   } catch (error) {
     console.error('Failed to fetch IP detail:', error)
