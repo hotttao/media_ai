@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // videos: source videos filtered by unqualified
+    // videos: source videos filtered by unqualified, with sceneId
     const videosList = sourceVideos
       .filter(v => !unqualifiedSourceIds.has(v.id))
       .map(v => ({
@@ -122,6 +122,7 @@ export async function GET(request: NextRequest) {
         url: v.url,
         thumbnail: v.thumbnail,
         createdAt: v.createdAt.toISOString(),
+        sceneId: (v as any).sceneId || null,
       }))
 
     return NextResponse.json({

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { cn, getImageUrl } from '@/foundation/lib/utils'
@@ -31,7 +31,7 @@ interface ProductDetailData {
   ipNickname: string
   productName: string
   selectedVideos: string[]
-  videos: { id: string; url: string; thumbnail: string | null; createdAt: string }[]
+  videos: { id: string; url: string; thumbnail: string | null; createdAt: string; sceneId: string | null }[]
   clips: Clip[]
 }
 
@@ -81,6 +81,9 @@ export default function IpProductsPage() {
   // Select clips mode
   const [selectMode, setSelectMode] = useState(false)
   const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set())
+
+  // Scene filter for source videos
+  const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null)
 
   // Add product dialog
   const [addProductDialogOpen, setAddProductDialogOpen] = useState(false)
@@ -206,6 +209,15 @@ export default function IpProductsPage() {
     }
     if (!selectedProductId) return
 
+    // Validate: all selected videos must belong to the same scene
+    const selectedVideos = detailData?.videos.filter(v => selectedSourceIds.has(v.id)) || []
+    const sceneIds = [...new Set(selectedVideos.map(v => v.sceneId || 'unknown'))]
+    if (sceneIds.length > 1) {
+      alert('只能选择同一场景的视频进行剪辑')
+      return
+    }
+    const clipSceneId = sceneIds[0] === 'unknown' ? '' : sceneIds[0]
+
     setClipping(true)
     try {
       const prepareRes = await fetch('/api/video-push/prepare-clips', {
@@ -214,7 +226,7 @@ export default function IpProductsPage() {
         body: JSON.stringify({
           productId: selectedProductId,
           ipId,
-          sceneId: '',
+          sceneId: clipSceneId,
           videoIds: Array.from(selectedSourceIds),
         }),
       })
@@ -232,7 +244,7 @@ export default function IpProductsPage() {
           body: JSON.stringify({
             productId: selectedProductId,
             ipId,
-            sceneId: '',
+            sceneId: clipSceneId,
             videoIds: Array.from(selectedSourceIds),
           }),
         })
@@ -332,6 +344,22 @@ export default function IpProductsPage() {
   const totalClips = detailData?.clips?.length || 0
   const readyClips = detailData?.clips?.filter(c => c.status === 'ready').length || 0
   const publishedClips = detailData?.clips?.filter(c => c.status === 'published').length || 0
+
+  // Derive unique scenes from source videos
+  const availableScenes = useMemo(() => {
+    if (!detailData?.videos) return []
+    const sceneMap = new Map<string, { sceneId: string; count: number }>()
+    for (const v of detailData.videos) {
+      const sid = v.sceneId || 'unknown'
+      const existing = sceneMap.get(sid)
+      if (existing) {
+        existing.count++
+      } else {
+        sceneMap.set(sid, { sceneId: sid, count: 1 })
+      }
+    }
+    return Array.from(sceneMap.values())
+  }, [detailData?.videos])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
@@ -447,13 +475,46 @@ export default function IpProductsPage() {
             <h2 className="text-sm font-semibold text-warm-charcoal">AI 生成视频</h2>
             <span className="text-xs text-warm-silver">选择后点击剪辑</span>
           </div>
+          {/* Scene filter */}
+          {availableScenes.length > 0 && (
+            <div className="px-5 py-3 border-b border-oat/50 flex items-center gap-2 overflow-x-auto">
+              <span className="text-xs text-warm-silver whitespace-nowrap">场景：</span>
+              <button
+                onClick={() => setSelectedSceneId(null)}
+                className={cn(
+                  'px-3 py-1 rounded-lg text-xs whitespace-nowrap transition-all',
+                  selectedSceneId === null
+                    ? 'bg-violet-500 text-white'
+                    : 'bg-white text-warm-silver border border-oat hover:bg-violet-50'
+                )}
+              >
+                全部
+              </button>
+              {availableScenes.map(s => (
+                <button
+                  key={s.sceneId}
+                  onClick={() => setSelectedSceneId(s.sceneId)}
+                  className={cn(
+                    'px-3 py-1 rounded-lg text-xs whitespace-nowrap transition-all',
+                    selectedSceneId === s.sceneId
+                      ? 'bg-violet-500 text-white'
+                      : 'bg-white text-warm-silver border border-oat hover:bg-violet-50'
+                  )}
+                >
+                  {s.sceneId === 'unknown' ? '未分类' : s.sceneId} ({s.count})
+                </button>
+              ))}
+            </div>
+          )}
           <div className="divide-y divide-oat/50">
             {!detailData || detailData.videos.length === 0 ? (
               <div className="px-5 py-12 text-center">
                 <p className="text-warm-silver text-sm">暂无 AI 视频</p>
               </div>
             ) : (
-              detailData.videos.map(video => (
+              detailData.videos
+                .filter(v => selectedSceneId === null || (v.sceneId || 'unknown') === selectedSceneId)
+                .map(video => (
                 <div
                   key={video.id}
                   onClick={() => toggleSourceSelection(video.id)}
