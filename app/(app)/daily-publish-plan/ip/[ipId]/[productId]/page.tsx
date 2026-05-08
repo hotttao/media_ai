@@ -125,6 +125,109 @@ export default function IpDetailPage() {
     }
   }, [addProductDialogOpen, searchQuery, activeFilter, searchProducts])
 
+  // Clipping state
+  const [clipping, setClipping] = useState(false)
+
+  // Clipping: call prepare-clips then clip
+  const handleClip = async () => {
+    if (selectedVideoIds.size === 0) {
+      alert('请先选择要剪辑的视频')
+      return
+    }
+    setClipping(true)
+    try {
+      // Step 1: prepare-clips creates pending VideoPush records
+      const prepareRes = await fetch('/api/video-push/prepare-clips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          ipId,
+          sceneId: '', // Will be set when needed
+          videoIds: Array.from(selectedVideoIds),
+        }),
+      })
+      if (!prepareRes.ok) throw new Error('prepare-clips failed')
+      const { videoIdHash } = await prepareRes.json()
+
+      // Step 2: trigger clip async
+      const clipRes = await fetch('/api/video-push/clip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          ipId,
+          sceneId: '', // Will be set when needed
+          videoIds: Array.from(selectedVideoIds),
+        }),
+      })
+      if (!clipRes.ok) throw new Error('clip failed')
+
+      setSuccessMessage('剪辑任务已启动')
+      setTimeout(() => setSuccessMessage(null), 3000)
+      // Refresh data
+      const refreshRes = await fetch(`/api/daily-publish-plan/ip-detail?productId=${productId}&ipId=${ipId}`)
+      if (refreshRes.ok) {
+        const result = await refreshRes.json()
+        setData(result)
+      }
+    } catch (err) {
+      console.error(err)
+      alert('剪辑启动失败，请重试')
+    } finally {
+      setClipping(false)
+    }
+  }
+
+  // New: go to video wizard with IP pre-selected
+  const handleNew = () => {
+    router.push(`/products/${productId}/video-wizard?ipId=${ipId}`)
+  }
+
+  // Select publish videos: toggle video list mode
+  const [selectMode, setSelectMode] = useState(false)
+
+  const handleToggleSelectMode = () => {
+    if (!selectMode) {
+      // Enter select mode - show video selection
+      setSelectMode(true)
+    }
+    // Already in select mode - just toggle off or keep
+  }
+
+  // Add product: after selecting, jump to video wizard with that product pre-selected
+  const handleConfirmAddProductAndJump = async () => {
+    if (!selectedProductId) {
+      alert('请选择一个商品')
+      return
+    }
+    setAdding(true)
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const res = await fetch('/api/daily-publish-plan/assign-ip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: selectedProductId,
+          ipId,
+          date: today,
+        }),
+      })
+      if (res.ok) {
+        setAddProductDialogOpen(false)
+        // Jump to video wizard for the selected product, with this IP pre-selected
+        router.push(`/products/${selectedProductId}/video-wizard?ipId=${ipId}`)
+      } else {
+        throw new Error('Failed to add product')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('添加失败，请重试')
+    } finally {
+      setAdding(false)
+    }
+  }
+
   const toggleVideoSelection = (videoId: string) => {
     setSelectedVideoIds(prev => {
       const next = new Set(prev)
@@ -309,14 +412,29 @@ export default function IpDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <button className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm">
-              剪辑
+            <button
+              onClick={handleClip}
+              disabled={clipping || selectedVideoIds.size === 0}
+              className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm disabled:opacity-50"
+            >
+              {clipping ? '剪辑中...' : '剪辑'}
             </button>
-            <button className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm">
+            <button
+              onClick={handleNew}
+              className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
+            >
               新增
             </button>
-            <button className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm">
-              选择发布视频
+            <button
+              onClick={handleToggleSelectMode}
+              className={cn(
+                'px-4 py-2 rounded-lg border text-sm transition-all shadow-sm',
+                selectMode
+                  ? 'border-violet-400 bg-violet-50 text-violet-600'
+                  : 'border-oat bg-white text-warm-silver hover:bg-matcha-50 hover:border-matcha-600'
+              )}
+            >
+              {selectMode ? '取消选择' : '选择发布视频'}
             </button>
             <button
               onClick={handleOpenAddProductDialog}
@@ -543,11 +661,11 @@ export default function IpDetailPage() {
                 取消
               </button>
               <button
-                onClick={handleConfirmAddProduct}
+                onClick={handleConfirmAddProductAndJump}
                 disabled={adding}
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-sm text-white font-medium hover:shadow-lg transition-all disabled:opacity-50"
               >
-                {adding ? '添加中...' : '确认添加'}
+                {adding ? '添加中...' : '确认添加并跳转生图'}
               </button>
             </DialogFooter>
           </DialogContent>

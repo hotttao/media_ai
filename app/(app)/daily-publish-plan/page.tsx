@@ -223,6 +223,12 @@ export default function DailyPublishPlanPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
+            <button
+              onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+              className="px-3 py-2 rounded-lg border border-oat bg-white text-sm text-matcha-600 font-medium hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
+            >
+              今日
+            </button>
             <input
               type="date"
               value={selectedDate}

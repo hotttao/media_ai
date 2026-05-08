@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,7 @@ import { getImageUrl } from '@/foundation/lib/utils'
 
 interface JimengVideoCombination {
   id: string
-  firstFrame: { id: string; url: string; poseId: string | null; productId: string }
+  firstFrame: { id: string; url: string; poseId: string | null; productId: string; ipId: string | null }
   movement: { id: string; content: string }
   existingVideoId: string | null
   resultUrl: string | null
@@ -28,7 +28,9 @@ type FilterType = 'all' | 'generated' | 'pending'
 export default function VideoWizardPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const productId = params.id as string
+  const preSelectedIpId = searchParams.get('ipId')
 
   const [loading, setLoading] = useState(true)
   const [combinations, setCombinations] = useState<JimengVideoCombination[]>([])
@@ -57,6 +59,17 @@ export default function VideoWizardPage() {
         setLoading(false)
       })
   }, [productId])
+
+  // Auto-select first frames belonging to pre-selected IP
+  useEffect(() => {
+    if (preSelectedIpId && combinations.length > 0) {
+      const ipFirstFrameIds = combinations
+        .filter(c => c.firstFrame.ipId === preSelectedIpId)
+        .map(c => c.firstFrame.id)
+      const uniqueIds = [...new Set(ipFirstFrameIds)]
+      setSelectedFirstFrameIds(new Set(uniqueIds))
+    }
+  }, [preSelectedIpId, combinations])
 
   // Available first frames for filter
   const availableFirstFrames = useMemo(() => {
@@ -422,7 +435,7 @@ export default function VideoWizardPage() {
                             </a>
                           </>
                         )}
-                        <Badge variant={isGenerated ? 'success' : 'warning'} className="text-xs">
+                        <Badge variant={isGenerated ? 'success' : 'secondary'} className="text-xs">
                           {isGenerated ? '已生成' : '待生成'}
                         </Badge>
                         <button

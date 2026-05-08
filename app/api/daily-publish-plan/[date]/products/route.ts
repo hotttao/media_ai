@@ -40,7 +40,7 @@ export async function GET(
       plans.map(async plan => {
         // Get all VirtualIps for this user/team (not just those with videos)
         const virtualIps = await db.virtualIp.findMany({
-          where: { teamId: session.user.teamId },
+          where: { teamId: session.user.teamId as string | undefined },
           select: { id: true, nickname: true },
         })
 
