@@ -204,7 +204,10 @@ export default function IpProductsPage() {
                       )}
 
                       <div className="flex items-center gap-2 mt-4">
-                        <button className="flex-1 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all">
+                        <button
+                          onClick={() => router.push(`/daily-publish-plan/ip/${ipId}/${product.productId}`)}
+                          className="flex-1 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all"
+                        >
                           选择视频
                         </button>
                         <button className="flex-1 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all">
