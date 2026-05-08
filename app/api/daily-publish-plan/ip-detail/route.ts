@@ -65,8 +65,17 @@ export async function GET(request: NextRequest) {
     // Get source video details
     const sourceVideos = await db.video.findMany({
       where: { id: { in: sourceVideoIds } },
-      select: { id: true, url: true, thumbnail: true, createdAt: true, sceneId: true },
+      select: { id: true, url: true, thumbnail: true, createdAt: true, sceneId: true, firstFrameId: true },
     })
+
+    // Get FirstFrame URLs for thumbnail fallback
+    const firstFrameIds = [...new Set(sourceVideos.map(v => v.firstFrameId).filter(Boolean))] as string[]
+    const firstFrames = firstFrameIds.length > 0 ? await db.firstFrame.findMany({
+      where: { id: { in: firstFrameIds } },
+      select: { id: true, url: true },
+    }) : []
+    const firstFrameMap = new Map(firstFrames.map(ff => [ff.id, ff.url]))
+
     const videoMap = new Map(sourceVideos.map(v => [v.id, v]))
 
     // Build clips from VideoPush records
@@ -88,7 +97,7 @@ export async function GET(request: NextRequest) {
         // For pending clips without output, show source video
         // For completed clips, show clip output
         url: clipUrl || primarySource?.url || '',
-        thumbnail: clipThumbnail || primarySource?.thumbnail || null,
+        thumbnail: clipThumbnail || primarySource?.thumbnail || (primarySource?.firstFrameId ? firstFrameMap.get(primarySource.firstFrameId) || null : null),
         createdAt: vp.createdAt.toISOString(),
         status: vp.isPublished ? 'published' : (vp.status === 'completed' ? 'ready' : 'pending'),
         isQualified: vp.isQualified,
@@ -120,7 +129,7 @@ export async function GET(request: NextRequest) {
       .map(v => ({
         id: v.id,
         url: v.url,
-        thumbnail: v.thumbnail,
+        thumbnail: v.thumbnail || (v.firstFrameId ? firstFrameMap.get(v.firstFrameId) || null : null),
         createdAt: v.createdAt.toISOString(),
         sceneId: v.sceneId || null,
       }))
