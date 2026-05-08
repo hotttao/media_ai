@@ -326,7 +326,7 @@ function ProductCard({
                   <span className="text-xs text-warm-silver font-medium">{ip.nickname || ip.ipId.slice(0, 8)}</span>
                   <span className="text-xs text-warm-silver">{ip.videoCount}个视频</span>
                   <Link
-                    href={`/daily-publish-plan/ip/${ip.ipId}`}
+                    href={`/daily-publish-plan/ip/${ip.ipId}?productId=${product.productId}`}
                     className="ml-auto w-6 h-6 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 flex items-center justify-center text-white hover:scale-110 transition-all shadow-md"
                   >
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">

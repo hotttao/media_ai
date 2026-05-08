@@ -38,27 +38,33 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Build products array with selected video info
-    const products = videoPushes.map(vp => {
-      // Parse selected video IDs from videoId field
-      const selectedVideoIds = vp.videoId
-        ? vp.videoId.split(',').map(id => id.trim()).filter(Boolean)
-        : []
-
-      // Get video count for this product+ip
-      const videoCount = selectedVideoIds.length
-
-      return {
-        productId: vp.productId,
-        productName: vp.product.name,
-        productImage: vp.product.images[0]?.url || '',
-        selectedVideoIds,
-        videoCount,
-        status: vp.status,
-        isPublished: vp.isPublished,
-        isQualified: vp.isQualified,
-      }
+    // Get all videos for this IP to count total available per product
+    const videos = await db.video.findMany({
+      where: { ipId },
+      select: { productId: true },
     })
+    const videoCountByProduct = new Map<string, number>()
+    for (const v of videos) {
+      if (v.productId) {
+        videoCountByProduct.set(v.productId, (videoCountByProduct.get(v.productId) || 0) + 1)
+      }
+    }
+
+    // Check which products have published videos
+    const publishedProducts = await db.videoPush.findMany({
+      where: { ipId, isPublished: true },
+      select: { productId: true },
+    })
+    const publishedProductIds = new Set(publishedProducts.map(vp => vp.productId).filter(Boolean))
+
+    // Build products array
+    const products = videoPushes.map(vp => ({
+      productId: vp.productId,
+      productName: vp.product.name,
+      productImage: vp.product.images[0]?.url || '',
+      videoCount: videoCountByProduct.get(vp.productId) || 0,
+      hasPublishedVideos: publishedProductIds.has(vp.productId),
+    }))
 
     return NextResponse.json({
       ipId,
