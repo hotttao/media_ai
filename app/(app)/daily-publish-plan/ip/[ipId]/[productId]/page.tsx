@@ -51,6 +51,12 @@ export default function IpDetailPage() {
   const [confirming, setConfirming] = useState(false)
   const [adding, setAdding] = useState(false)
 
+  // Mark unqualified dialog state
+  const [unqualifiedDialogOpen, setUnqualifiedDialogOpen] = useState(false)
+  const [selectedVideoForUnqualified, setSelectedVideoForUnqualified] = useState<Video | null>(null)
+  const [markingUnqualified, setMarkingUnqualified] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
   // Add product dialog state
   const [addProductDialogOpen, setAddProductDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -187,6 +193,49 @@ export default function IpDetailPage() {
       alert('添加失败，请重试')
     } finally {
       setAdding(false)
+    }
+  }
+
+  // Open mark unqualified dialog
+  const handleOpenUnqualifiedDialog = (video: Video) => {
+    setSelectedVideoForUnqualified(video)
+    setUnqualifiedDialogOpen(true)
+  }
+
+  // Mark video as unqualified
+  const markVideoAsUnqualified = async () => {
+    if (!selectedVideoForUnqualified) return
+    setMarkingUnqualified(true)
+    try {
+      const res = await fetch('/api/video-push/mark-unqualified', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          ipId,
+          videoIds: [selectedVideoForUnqualified.id],
+          qualified: false
+        })
+      })
+      if (res.ok) {
+        setUnqualifiedDialogOpen(false)
+        setSuccessMessage('已标记为不合格')
+        setTimeout(() => setSuccessMessage(null), 2000)
+        // Refresh data
+        const refreshRes = await fetch(`/api/daily-publish-plan/ip-detail?productId=${productId}&ipId=${ipId}`)
+        if (refreshRes.ok) {
+          const result = await refreshRes.json()
+          setData(result)
+          setSelectedVideoIds(new Set(result.selectedVideos || []))
+        }
+      } else {
+        throw new Error('Failed to mark unqualified')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('标记失败，请重试')
+    } finally {
+      setMarkingUnqualified(false)
     }
   }
 
@@ -336,6 +385,16 @@ export default function IpDetailPage() {
                       ) : (
                         <span className="text-xs text-warm-silver">未发布</span>
                       )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleOpenUnqualifiedDialog(video)
+                      }}
+                      className="ml-2 px-2 py-1 rounded border border-red-200 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                      title="标记不合格"
+                    >
+                      不合格
+                    </button>
                   </div>
                 )
               })
@@ -492,6 +551,43 @@ export default function IpDetailPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Mark Unqualified Confirmation Dialog */}
+        <Dialog open={unqualifiedDialogOpen} onOpenChange={setUnqualifiedDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>确认标记</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-warm-charcoal">
+                确定将视频 <span className="font-mono font-medium">{selectedVideoForUnqualified?.id.slice(0, 8)}...</span> 标记为不合格？
+              </p>
+            </div>
+            <DialogFooter>
+              <button
+                onClick={() => setUnqualifiedDialogOpen(false)}
+                className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-gray-50 transition-all"
+                disabled={markingUnqualified}
+              >
+                取消
+              </button>
+              <button
+                onClick={markVideoAsUnqualified}
+                disabled={markingUnqualified}
+                className="px-4 py-2 rounded-lg bg-red-500 text-sm text-white font-medium hover:bg-red-600 transition-all disabled:opacity-50"
+              >
+                {markingUnqualified ? '标记中...' : '确认不合格'}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Success Toast */}
+        {successMessage && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-matcha-600 text-white text-sm font-medium rounded-lg shadow-lg animate-fade-in">
+            {successMessage}
+          </div>
+        )}
       </div>
     </div>
   )
