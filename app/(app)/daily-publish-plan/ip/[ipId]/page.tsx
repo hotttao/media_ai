@@ -319,7 +319,13 @@ export default function IpProductsPage() {
           >
             {clipping ? '剪辑中...' : '剪辑'}
           </button>
-          <button className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm">
+          <button
+            onClick={() => {
+              if (!selectedProductId) return
+              router.push(`/products/${selectedProductId}/video-wizard?ipId=${ipId}`)
+            }}
+            className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
+          >
             新增
           </button>
         </div>
