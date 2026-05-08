@@ -94,6 +94,22 @@ export default function IpProductsPage() {
   const [selectedProductToAdd, setSelectedProductToAdd] = useState<string | null>(null)
   const [addingProduct, setAddingProduct] = useState(false)
 
+  // Derive unique scenes from source videos (must be before early returns to preserve hook order)
+  const availableScenes = useMemo(() => {
+    if (!detailData?.videos) return []
+    const sceneMap = new Map<string, { sceneId: string; count: number }>()
+    for (const v of detailData.videos) {
+      const sid = v.sceneId || 'unknown'
+      const existing = sceneMap.get(sid)
+      if (existing) {
+        existing.count++
+      } else {
+        sceneMap.set(sid, { sceneId: sid, count: 1 })
+      }
+    }
+    return Array.from(sceneMap.values())
+  }, [detailData?.videos])
+
   // Fetch products list for this IP
   useEffect(() => {
     const fetchProducts = async () => {
@@ -344,22 +360,6 @@ export default function IpProductsPage() {
   const totalClips = detailData?.clips?.length || 0
   const readyClips = detailData?.clips?.filter(c => c.status === 'ready').length || 0
   const publishedClips = detailData?.clips?.filter(c => c.status === 'published').length || 0
-
-  // Derive unique scenes from source videos
-  const availableScenes = useMemo(() => {
-    if (!detailData?.videos) return []
-    const sceneMap = new Map<string, { sceneId: string; count: number }>()
-    for (const v of detailData.videos) {
-      const sid = v.sceneId || 'unknown'
-      const existing = sceneMap.get(sid)
-      if (existing) {
-        existing.count++
-      } else {
-        sceneMap.set(sid, { sceneId: sid, count: 1 })
-      }
-    }
-    return Array.from(sceneMap.values())
-  }, [detailData?.videos])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
