@@ -308,15 +308,17 @@ export class CapcutCliProvider {
    * Dry run clip command - returns the number of clips that would be generated
    */
   async clipDryRun(input: CapcutClipInput): Promise<{ count: number; error?: string }> {
+    // videoUrls may be local paths or remote URLs
+    // Local paths (no http scheme) are passed through directly
+    // Remote URLs are downloaded to temp first
     const tempFiles: string[] = []
     try {
-      // Download all videos to temp files
       const videoPaths = await Promise.all(
         input.videoUrls.map(url => this.downloadVideo(url))
       )
       tempFiles.push(...videoPaths)
 
-      // Download music if provided
+      // Download music if provided (only if remote URL)
       let musicPath: string | undefined
       if (input.musicUrl) {
         musicPath = await this.downloadMusic(input.musicUrl)
@@ -336,7 +338,7 @@ export class CapcutCliProvider {
 
       const cliBase = this.config.capcutPath || path.join(process.cwd(), '..', 'cap-cut-auto')
       const cliScript = path.join(cliBase, 'src', 'cli.js')
-      const command = `node "${cliScript}" ${args.join(' ')}`
+      const command = `cd "${cliBase}" && node "${cliScript}" ${args.join(' ')}`
       console.log('[CapcutCli] Dry run (estimating):', command)
 
       // cap_cut may take a long time, set long timeout
