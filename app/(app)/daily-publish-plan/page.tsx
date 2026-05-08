@@ -1,8 +1,15 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { cn, getImageUrl } from '@/foundation/lib/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 interface IpInfo {
   ipId: string
@@ -18,6 +25,11 @@ interface ProductStats {
   ips: IpInfo[]
 }
 
+interface AvailableIp {
+  id: string
+  nickname: string
+}
+
 export default function DailyPublishPlanPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0]
@@ -26,6 +38,14 @@ export default function DailyPublishPlanPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedIpId, setSelectedIpId] = useState<string | null>(null)
+
+  // Add IP dialog state
+  const [addIpDialogOpen, setAddIpDialogOpen] = useState(false)
+  const [targetProductId, setTargetProductId] = useState<string | null>(null)
+  const [availableIps, setAvailableIps] = useState<AvailableIp[]>([])
+  const [selectedIpToAdd, setSelectedIpToAdd] = useState<string | null>(null)
+  const [loadingIps, setLoadingIps] = useState(false)
+  const [addingIp, setAddingIp] = useState(false)
 
   const fetchProducts = async () => {
     if (!selectedDate) return
@@ -50,12 +70,12 @@ export default function DailyPublishPlanPage() {
     fetchProducts()
   }, [selectedDate])
 
-  const availableIps = useMemo(() => {
-    const ipMap = new Map<string, { id: string }>()
+  const availableIpsForFilter = useMemo(() => {
+    const ipMap = new Map<string, { id: string; nickname: string }>()
     products.forEach(p => {
       p.ips.forEach(ip => {
         if (ip.ipId && !ipMap.has(ip.ipId)) {
-          ipMap.set(ip.ipId, { id: ip.ipId })
+          ipMap.set(ip.ipId, { id: ip.ipId, nickname: ip.nickname })
         }
       })
     })
@@ -92,6 +112,54 @@ export default function DailyPublishPlanPage() {
       }
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  // Open add IP dialog - fetch available IPs for this product
+  const handleOpenAddIpDialog = async (productId: string) => {
+    setTargetProductId(productId)
+    setSelectedIpToAdd(null)
+    setAddIpDialogOpen(true)
+    setLoadingIps(true)
+    try {
+      // Fetch all IPs and filter out already assigned ones
+      const res = await fetch(`/api/virtual-ips`)
+      if (res.ok) {
+        const allIps: AvailableIp[] = await res.json()
+        const product = products.find(p => p.productId === productId)
+        const assignedIpIds = new Set(product?.ips.map(ip => ip.ipId) || [])
+        const unassigned = allIps.filter(ip => !assignedIpIds.has(ip.id))
+        setAvailableIps(unassigned)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingIps(false)
+    }
+  }
+
+  // Confirm add IP
+  const handleConfirmAddIp = async () => {
+    if (!targetProductId || !selectedIpToAdd) return
+    setAddingIp(true)
+    try {
+      const res = await fetch('/api/daily-publish-plan/assign-ip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: targetProductId,
+          ipId: selectedIpToAdd,
+          date: selectedDate,
+        }),
+      })
+      if (res.ok) {
+        setAddIpDialogOpen(false)
+        fetchProducts()
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setAddingIp(false)
     }
   }
 
@@ -203,7 +271,7 @@ export default function DailyPublishPlanPage() {
         ) : (
           <>
             {/* IP Filter Tabs */}
-            {availableIps.length > 1 && (
+            {availableIpsForFilter.length > 1 && (
               <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
                 <button
                   onClick={() => setSelectedIpId(null)}
@@ -216,7 +284,7 @@ export default function DailyPublishPlanPage() {
                 >
                   全部 · {products.length}
                 </button>
-                {availableIps.map(ip => {
+                {availableIpsForFilter.map(ip => {
                   const count = products.filter(p => p.ips.some(i => i.ipId === ip.id)).length
                   return (
                     <button
@@ -229,7 +297,7 @@ export default function DailyPublishPlanPage() {
                           : 'bg-white text-warm-silver hover:bg-violet-50 border border-oat'
                       )}
                     >
-                      {ip.id.slice(0, 8)}... · {count}
+                      {ip.nickname || ip.id.slice(0, 8)} · {count}
                     </button>
                   )
                 })}
@@ -251,12 +319,77 @@ export default function DailyPublishPlanPage() {
                   product={product}
                   index={index}
                   onToggleIp={handleToggleIpSelection}
+                  onAddIp={() => handleOpenAddIpDialog(product.productId)}
                 />
               ))}
             </div>
           </>
         )}
       </div>
+
+      {/* Add IP Dialog */}
+      <Dialog open={addIpDialogOpen} onOpenChange={setAddIpDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>添加 IP 发布计划</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {loadingIps ? (
+              <div className="py-8 text-center text-warm-silver text-sm">加载中...</div>
+            ) : availableIps.length === 0 ? (
+              <div className="py-8 text-center text-warm-silver text-sm">暂无可添加的 IP</div>
+            ) : (
+              <div className="space-y-2">
+                {availableIps.map(ip => (
+                  <div
+                    key={ip.id}
+                    onClick={() => setSelectedIpToAdd(ip.id)}
+                    className={cn(
+                      'flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all',
+                      selectedIpToAdd === ip.id
+                        ? 'border-violet-400 bg-violet-50'
+                        : 'border-oat bg-white hover:border-violet-300'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                        selectedIpToAdd === ip.id
+                          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
+                          : 'bg-white border-oat'
+                      )}
+                    >
+                      {selectedIpToAdd === ip.id && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm text-warm-charcoal font-medium">
+                      {ip.nickname || ip.id.slice(0, 8)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setAddIpDialogOpen(false)}
+              className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-gray-50 transition-all"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleConfirmAddIp}
+              disabled={!selectedIpToAdd || addingIp}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-sm text-white font-medium hover:shadow-lg transition-all disabled:opacity-50"
+            >
+              {addingIp ? '添加中...' : '确认添加'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -274,10 +407,12 @@ function ProductCard({
   product,
   index,
   onToggleIp,
+  onAddIp,
 }: {
   product: ProductStats
   index: number
   onToggleIp: (productId: string, ipId: string) => void
+  onAddIp: () => void
 }) {
   return (
     <div
@@ -335,6 +470,16 @@ function ProductCard({
                   </Link>
                 </div>
               ))}
+              {/* Add IP button */}
+              <button
+                onClick={onAddIp}
+                className="flex items-center gap-2 text-xs text-violet-600 hover:text-violet-700 mt-1"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                添加 IP 发布计划
+              </button>
             </div>
           </div>
         </div>
