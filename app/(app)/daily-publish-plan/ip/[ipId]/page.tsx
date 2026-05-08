@@ -391,7 +391,7 @@ export default function IpProductsPage() {
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="rounded-xl border border-oat bg-white p-4 shadow-sm">
               <div className="text-xs text-warm-silver uppercase tracking-wider mb-1">AI视频</div>
-              <div className="text-2xl font-bold text-warm-charcoal">{detailData?.clips?.length || 0}</div>
+              <div className="text-2xl font-bold text-warm-charcoal">{detailData?.videos?.length || 0}</div>
             </div>
             <div className="rounded-xl border border-oat bg-white p-4 shadow-sm">
               <div className="text-xs text-warm-silver uppercase tracking-wider mb-1">待发布</div>
