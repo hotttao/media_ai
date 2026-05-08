@@ -80,7 +80,14 @@ export async function GET(request: NextRequest) {
 
     // Build clips from VideoPush records
     // Each VideoPush = one clip that may be ready to publish
-    const clips = videoPushes.map(vp => {
+    // Only include VideoPush records that have actual source videos (not empty placeholder records from assign-ip)
+    const clips = videoPushes
+      .filter(vp => {
+        // Skip VideoPush records with no source video IDs - these are placeholder records from assign-ip
+        const sourceIds = vp.videoId ? vp.videoId.split(',').map(id => id.trim()).filter(Boolean) : []
+        return sourceIds.length > 0
+      })
+      .map(vp => {
       // Determine the display video (prefer clip output URL, fallback to source)
       const clipUrl = vp.url || ''
       const clipThumbnail = vp.thumbnail || ''
