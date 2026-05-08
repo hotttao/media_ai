@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     // Get source video details
     const sourceVideos = await db.video.findMany({
       where: { id: { in: sourceVideoIds } },
-      select: { id: true, url: true, thumbnail: true, createdAt: true },
+      select: { id: true, url: true, thumbnail: true, createdAt: true, sceneId: true },
     })
     const videoMap = new Map(sourceVideos.map(v => [v.id, v]))
 
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
         url: v.url,
         thumbnail: v.thumbnail,
         createdAt: v.createdAt.toISOString(),
-        sceneId: (v as any).sceneId || null,
+        sceneId: v.sceneId || null,
       }))
 
     return NextResponse.json({
