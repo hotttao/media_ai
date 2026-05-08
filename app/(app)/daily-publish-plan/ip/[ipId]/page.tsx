@@ -267,7 +267,8 @@ export default function IpProductsPage() {
       })
       if (res.ok) {
         setAddProductDialogOpen(false)
-        router.refresh()
+        // Navigate to video wizard for the added product with IP pre-selected
+        router.push(`/products/${selectedProductToAdd}/video-wizard?ipId=${ipId}`)
       }
     } catch (err) {
       console.error(err)
