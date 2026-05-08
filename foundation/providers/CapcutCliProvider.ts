@@ -54,6 +54,7 @@ export class CapcutCliProvider {
 
   constructor(config: CapcutCliConfig = {}) {
     this.config = {
+      // Default: assume cap_cut is in PATH or use 'node src/cli.js' from cap-cut-auto dir
       capcutPath: 'cap_cut',
       outputBaseUrl: 'http://localhost:3000/videos',
       ...config,
@@ -67,6 +68,21 @@ export class CapcutCliProvider {
   // Expose config for API routes to read CLI path
   get capcutPath(): string {
     return this.config.capcutPath || 'cap_cut'
+  }
+
+  // Build correct CLI command: node src/cli.js video-clip [videos...] -t template -o output --callback url
+  private buildClipArgs(videoPaths: string[], templateName: string, outputDir: string, callbackUrl: string, musicPath?: string): string[] {
+    const args = [
+      'video-clip',
+      ...videoPaths,           // positional: video files
+      '-t', templateName,
+      '-o', outputDir,
+      '--callback', callbackUrl,
+    ]
+    if (musicPath) {
+      args.push('--bgm', musicPath)
+    }
+    return args
   }
 
   /**
@@ -242,24 +258,21 @@ export class CapcutCliProvider {
         tempFiles.push(musicPath)
       }
 
-      // Build command with --callback
-      const args = [
-        'clip',
-        '--videos', videoPaths.join(','),
-        '--template', input.templateName || 'detail-focus',
-        '--output', input.outputDir,
-        '--callback', input.callbackUrl,
-      ]
-
-      if (musicPath) {
-        args.push('--music', musicPath)
-      }
+      // Build correct CLI command: node src/cli.js video-clip [videos...] -t template -o output --callback url
+      const args = this.buildClipArgs(
+        videoPaths,
+        input.templateName || 'detail-focus',
+        input.outputDir,
+        input.callbackUrl,
+        musicPath
+      )
 
       // Spawn process (non-blocking)
-      const command = `${this.config.capcutPath} ${args.join(' ')}`
-      console.log('[CapcutCli] Spawning:', command)
+      // Need to spawn "node" with "src/cli.js" as first arg, so use spawn with full command
+      const cliCmd = this.config.capcutPath || 'cap_cut'
+      console.log('[CapcutCli] Spawning:', `${cliCmd} ${args.join(' ')}`)
 
-      const child = spawn(this.config.capcutPath, args, {
+      const child = spawn(cliCmd, args, {
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: true,
       })
@@ -307,20 +320,19 @@ export class CapcutCliProvider {
         tempFiles.push(musicPath)
       }
 
-      // Build command with --dry-run flag
-      const args = [
-        'clip',
-        '--dry-run',
-        '--videos', videoPaths.join(','),
-        '--output', this.tmpDir,
-      ]
-
-      if (musicPath) {
-        args.push('--music', musicPath)
-      }
+      // Build correct CLI command for dry-run (same format as video-clip)
+      // Note: CLI doesn't have dry-run mode, so we run with a short timeout
+      // and check if it would produce output
+      const args = this.buildClipArgs(
+        videoPaths,
+        'detail-focus',  // default template for count estimation
+        this.tmpDir,
+        'http://localhost:3000/api/video-push/callback?test=1',
+        musicPath
+      )
 
       const command = `${this.config.capcutPath} ${args.join(' ')}`
-      console.log('[CapcutCli] Dry run:', command)
+      console.log('[CapcutCli] Dry run (estimating):', command)
 
       // cap_cut may take a long time, set long timeout
       const { stdout, stderr } = await execAsync(command, { timeout: 600000 })
