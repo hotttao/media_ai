@@ -516,28 +516,26 @@ export default function IpProductsPage() {
                 .map(video => (
                 <div
                   key={video.id}
-                  onClick={() => selectMode && toggleSourceSelection(video.id)}
+                  onClick={() => toggleSourceSelection(video.id)}
                   className={cn(
-                    'flex items-center gap-4 px-5 py-4 transition-colors',
-                    selectMode ? 'cursor-pointer hover:bg-violet-50/50' : ''
+                    'flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-violet-50/50 transition-colors',
+                    selectedSourceIds.has(video.id) ? 'bg-violet-50/50' : ''
                   )}
                 >
-                  {selectMode && (
-                    <div
-                      className={cn(
-                        'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                        selectedSourceIds.has(video.id)
-                          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
-                          : 'bg-white border-oat'
-                      )}
-                    >
-                      {selectedSourceIds.has(video.id) && (
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                  )}
+                  <div
+                    className={cn(
+                      'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                      selectedSourceIds.has(video.id)
+                        ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
+                        : 'bg-white border-oat'
+                    )}
+                  >
+                    {selectedSourceIds.has(video.id) && (
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
                   <div className="w-16 h-12 rounded-lg bg-matcha-100 overflow-hidden flex-shrink-0">
                     {video.thumbnail ? (
                       <img src={getImageUrl(video.thumbnail)} alt="thumbnail" className="w-full h-full object-cover" />
