@@ -38,14 +38,11 @@ export async function GET(
 
     const products = await Promise.all(
       plans.map(async plan => {
-        // Get all unique ipIds for this product from video table
-        const videos = await db.video.findMany({
-          where: { productId: plan.productId },
-          select: { ipId: true },
+        // Get all VirtualIps for this user/team (not just those with videos)
+        const virtualIps = await db.virtualIp.findMany({
+          where: { teamId: session.user.teamId },
+          select: { id: true, nickname: true },
         })
-
-        // Get unique ipIds (filter out null/empty)
-        const uniqueIpIds = [...new Set(videos.map(v => v.ipId).filter(Boolean))] as string[]
 
         // Get VideoPush records for this product to determine selected status
         const videoPushes = await db.videoPush.findMany({
@@ -54,11 +51,24 @@ export async function GET(
         })
         const pushedIpIds = new Set(videoPushes.map(vp => vp.ipId).filter(Boolean))
 
+        // Get all videos for this product to count per IP
+        const videos = await db.video.findMany({
+          where: { productId: plan.productId },
+          select: { ipId: true },
+        })
+        const videoCountByIpId = new Map<string, number>()
+        for (const video of videos) {
+          if (video.ipId) {
+            videoCountByIpId.set(video.ipId, (videoCountByIpId.get(video.ipId) || 0) + 1)
+          }
+        }
+
         // Build ips array with video count and selected status
-        const ips = uniqueIpIds.map(ipId => ({
-          ipId,
-          selected: pushedIpIds.has(ipId),
-          videoCount: videos.filter(v => v.ipId === ipId).length,
+        const ips = virtualIps.map(vip => ({
+          ipId: vip.id,
+          nickname: vip.nickname,
+          selected: pushedIpIds.has(vip.id),
+          videoCount: videoCountByIpId.get(vip.id) || 0,
         }))
 
         return {
