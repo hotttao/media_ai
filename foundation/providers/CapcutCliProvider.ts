@@ -140,11 +140,17 @@ export class CapcutCliProvider {
   async clip(input: CapcutClipInput): Promise<CapcutClipResult> {
     const tempFiles: string[] = []
     try {
-      // Download all videos to temp files
+      // Download all videos to temp files (only remote URLs need downloading; local paths are passed through)
       const videoPaths = await Promise.all(
         input.videoUrls.map(url => this.downloadVideo(url))
       )
-      tempFiles.push(...videoPaths)
+      // Only add to tempFiles for cleanup if it was actually downloaded to temp dir
+      // Local paths (persistent storage) should NOT be cleaned up
+      for (const p of videoPaths) {
+        if (p.startsWith(this.tmpDir)) {
+          tempFiles.push(p)
+        }
+      }
 
       // Download music if provided
       let musicPath: string | undefined
@@ -242,11 +248,15 @@ export class CapcutCliProvider {
 
   private async spawnClipProcess(input: CapcutClipInputAsync, tempFiles: string[]): Promise<void> {
     try {
-      // Download videos to temp files
+      // Download videos to temp files (only remote URLs need downloading; local paths are passed through)
       videoPaths = await Promise.all(
         input.videoUrls.map(async (url) => {
           const localPath = await this.downloadVideo(url)
-          tempFiles.push(localPath)
+          // Only add to tempFiles for cleanup if it was actually downloaded to temp dir
+          // Local paths (persistent storage) should NOT be cleaned up
+          if (localPath.startsWith(this.tmpDir)) {
+            tempFiles.push(localPath)
+          }
           return localPath
         })
       )
@@ -313,10 +323,17 @@ export class CapcutCliProvider {
     // Remote URLs are downloaded to temp first
     const tempFiles: string[] = []
     try {
+      // Download videos to temp files (only remote URLs need downloading; local paths are passed through)
       const videoPaths = await Promise.all(
         input.videoUrls.map(url => this.downloadVideo(url))
       )
-      tempFiles.push(...videoPaths)
+      // Only add to tempFiles for cleanup if it was actually downloaded to temp dir
+      // Local paths (persistent storage) should NOT be cleaned up
+      for (const p of videoPaths) {
+        if (p.startsWith(this.tmpDir)) {
+          tempFiles.push(p)
+        }
+      }
 
       // Download music if provided (only if remote URL)
       let musicPath: string | undefined
