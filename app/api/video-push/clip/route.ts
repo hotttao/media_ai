@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
     const outputDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'clips', today)
 
     // 先下载视频到本地，再传递本地路径给 CLI
+    // 不捕获错误，让它直接向上抛出以便调试
     const videoPaths = await Promise.all(
       videos.map((v) => downloadVideoToLocal(v.url, teamId))
     )
@@ -132,6 +133,7 @@ export async function POST(request: NextRequest) {
     })
 
     console.log(`[clip] Started async clip for VideoPush ${record.id}`)
+    console.log(`[clip] CLI command: ${getCapcutProvider().config.capcutPath} clip --videos ${videoPaths.join(',')} --output ${outputDir} --callback ${callbackUrl}`)
 
     return NextResponse.json({
       message: `Clip job started for VideoPush ${record.id}`,

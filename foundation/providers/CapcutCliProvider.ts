@@ -64,6 +64,11 @@ export class CapcutCliProvider {
     }
   }
 
+  // Expose config for API routes to read CLI path
+  get capcutPath(): string {
+    return this.config.capcutPath || 'cap_cut'
+  }
+
   /**
    * Download video to temporary file
    */

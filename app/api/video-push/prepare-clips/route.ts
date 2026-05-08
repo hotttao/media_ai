@@ -113,6 +113,8 @@ export async function POST(request: NextRequest) {
       videos.map((v) => downloadVideoToLocal(v.url, teamId))
     )
 
+    console.log(`[prepare-clips] CLI dry-run command: ${capcut.capcutPath} clip --videos ${videoPaths.join(',')} --dry-run`)
+
     // dry-run 获取数量
     const dryRunResult = await capcut.clipDryRun({
       videoUrls: videoPaths,
