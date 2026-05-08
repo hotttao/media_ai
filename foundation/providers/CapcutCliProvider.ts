@@ -54,8 +54,8 @@ export class CapcutCliProvider {
 
   constructor(config: CapcutCliConfig = {}) {
     this.config = {
-      // Default: assume cap_cut is in PATH or use 'node src/cli.js' from cap-cut-auto dir
-      capcutPath: 'cap_cut',
+      // Path to cap-cut-auto directory (contains src/cli.js)
+      capcutPath: path.join(process.cwd(), '..', 'cap-cut-auto'),
       outputBaseUrl: 'http://localhost:3000/videos',
       ...config,
     }
@@ -268,11 +268,13 @@ export class CapcutCliProvider {
       )
 
       // Spawn process (non-blocking)
-      // Need to spawn "node" with "src/cli.js" as first arg, so use spawn with full command
-      const cliCmd = this.config.capcutPath || 'cap_cut'
-      console.log('[CapcutCli] Spawning:', `${cliCmd} ${args.join(' ')}`)
+      // CLI is: node src/cli.js video-clip [videos...] -t template -o output --callback url
+      const cliBase = this.config.capcutPath || path.join(process.cwd(), '..', 'cap-cut-auto')
+      const cliCmd = 'node'
+      const cliArgs = [path.join(cliBase, 'src', 'cli.js'), ...args]
+      console.log('[CapcutCli] Spawning:', `${cliCmd} ${cliArgs.join(' ')}`)
 
-      const child = spawn(cliCmd, args, {
+      const child = spawn(cliCmd, cliArgs, {
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: true,
       })
@@ -331,7 +333,9 @@ export class CapcutCliProvider {
         musicPath
       )
 
-      const command = `${this.config.capcutPath} ${args.join(' ')}`
+      const cliBase = this.config.capcutPath || path.join(process.cwd(), '..', 'cap-cut-auto')
+      const cliScript = path.join(cliBase, 'src', 'cli.js')
+      const command = `node "${cliScript}" ${args.join(' ')}`
       console.log('[CapcutCli] Dry run (estimating):', command)
 
       // cap_cut may take a long time, set long timeout
