@@ -108,18 +108,31 @@ export async function POST(request: NextRequest) {
 
     // 先下载视频到本地，再传递本地路径给 CLI dry-run
     const teamId = session.user.teamId
-    const capcut = getCapcutProvider()
-    const videoPaths = await Promise.all(
-      videos.map((v) => downloadVideoToLocal(v.url, teamId))
-    )
-
-    console.log(`[prepare-clips] CLI dry-run command: ${capcut.capcutPath} clip --videos ${videoPaths.join(',')} --dry-run`)
+    console.log(`[prepare-clips] Step 1: download videos, teamId=${teamId}`)
+    let videoPaths: string[] = []
+    try {
+      videoPaths = await Promise.all(
+        videos.map((v) => downloadVideoToLocal(v.url, teamId))
+      )
+    } catch (err) {
+      console.error('[prepare-clips] Step 1 failed - downloadVideoToLocal:', err)
+      throw err
+    }
+    console.log(`[prepare-clips] Step 1 success: downloaded ${videoPaths.length} videos`)
 
     // dry-run 获取数量
-    const dryRunResult = await capcut.clipDryRun({
-      videoUrls: videoPaths,
-      musicUrl,
-    })
+    const capcut = getCapcutProvider()
+    console.log(`[prepare-clips] Step 2: CLI dry-run`)
+    let dryRunResult: { count: number; error?: string } = {}
+    try {
+      dryRunResult = await capcut.clipDryRun({
+        videoUrls: videoPaths,
+        musicUrl,
+      })
+    } catch (err) {
+      console.error('[prepare-clips] Step 2 failed - clipDryRun:', err)
+      throw err
+    }
 
     if (dryRunResult.error) {
       return NextResponse.json({ error: dryRunResult.error }, { status: 500 })
