@@ -268,13 +268,14 @@ export class CapcutCliProvider {
       )
 
       // Spawn process (non-blocking)
-      // CLI is: node src/cli.js video-clip [videos...] -t template -o output --callback url
+      // Must cd to cap-cut-auto directory because CLI uses relative paths internally
       const cliBase = this.config.capcutPath || path.join(process.cwd(), '..', 'cap-cut-auto')
-      const cliCmd = 'node'
-      const cliArgs = [path.join(cliBase, 'src', 'cli.js'), ...args]
-      console.log('[CapcutCli] Spawning:', `${cliCmd} ${cliArgs.join(' ')}`)
+      const cliScript = path.join(cliBase, 'src', 'cli.js')
+      const cliArgs = ['video-clip', ...args]
+      console.log('[CapcutCli] Spawning:', `cd "${cliBase}" && node "${cliScript}" ${cliArgs.join(' ')}`)
 
-      const child = spawn(cliCmd, cliArgs, {
+      const child = spawn('node', [cliScript, ...cliArgs], {
+        cwd: cliBase,
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: true,
       })
