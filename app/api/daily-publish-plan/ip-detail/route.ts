@@ -50,6 +50,18 @@ export async function GET(request: NextRequest) {
       select: { videoId: true }
     })
 
+    // Get unqualified video IDs (isQualified=false) to filter out from results
+    const unqualifiedVideoPushes = await db.videoPush.findMany({
+      where: { productId, ipId, isQualified: false },
+      select: { videoId: true }
+    })
+    const unqualifiedVideoIdsSet = new Set<string>()
+    for (const vp of unqualifiedVideoPushes) {
+      const ids = vp.videoId.split(',').map(id => id.trim()).filter(Boolean)
+      ids.forEach(id => unqualifiedVideoIdsSet.add(id))
+    }
+    const unqualifiedVideoIds = Array.from(unqualifiedVideoIdsSet)
+
     // videoId is comma-separated string like "vid-1,vid-2,vid-3"
     // Extract all individual video IDs from selected VideoPushes
     const selectedVideoIdsSet = new Set<string>()
@@ -59,13 +71,15 @@ export async function GET(request: NextRequest) {
     }
     const selectedVideoIds = Array.from(selectedVideoIdsSet)
 
-    // videos array - all videos for this product+ip
-    const videosList = videos.map(v => ({
-      id: v.id,
-      url: v.url,
-      thumbnail: v.thumbnail,
-      createdAt: v.createdAt.toISOString()
-    }))
+    // videos array - all videos for this product+ip, excluding unqualified ones
+    const videosList = videos
+      .filter(v => !unqualifiedVideoIds.includes(v.id))
+      .map(v => ({
+        id: v.id,
+        url: v.url,
+        thumbnail: v.thumbnail,
+        createdAt: v.createdAt.toISOString()
+      }))
 
     return NextResponse.json({
       productId,
