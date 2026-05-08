@@ -322,6 +322,7 @@ export default function IpProductsPage() {
         setSuccessMessage('发布计划已确认')
         setTimeout(() => setSuccessMessage(null), 2000)
         setSelectMode(false)
+        setSelectedClipIds(new Set())
         fetchVideoDetail(selectedProductId)
       } else {
         throw new Error('Failed to confirm')
@@ -559,7 +560,7 @@ export default function IpProductsPage() {
         {detailData && detailData.clips.length > 0 && (
           <div className="rounded-2xl border border-oat bg-white shadow-clay overflow-hidden mb-6">
             <div className="px-5 py-4 border-b border-oat flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-warm-charcoal">剪辑片段</h2>
+              <h2 className="text-sm font-semibold text-warm-charcoal">剪辑成片</h2>
               <span className="text-xs text-warm-silver">
                 {readyClips} 个待发布 / {publishedClips} 个已发布
               </span>
