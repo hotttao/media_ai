@@ -12,11 +12,17 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 
-interface Video {
+interface Clip {
   id: string
+  videoPushId: string
+  sourceVideoId: string
   url: string
   thumbnail: string | null
   createdAt: string
+  status: 'pending' | 'ready' | 'published'
+  isQualified: boolean
+  isPublished: boolean
+  videoIds: string[]
 }
 
 interface IpDetailData {
@@ -25,7 +31,7 @@ interface IpDetailData {
   ipNickname: string
   productName: string
   selectedVideos: string[]
-  videos: Video[]
+  clips: Clip[]
 }
 
 interface ProductSearchResult {
@@ -54,7 +60,7 @@ export default function IpDetailPage() {
 
   // Mark unqualified dialog state
   const [unqualifiedDialogOpen, setUnqualifiedDialogOpen] = useState(false)
-  const [selectedVideoForUnqualified, setSelectedVideoForUnqualified] = useState<Video | null>(null)
+  const [selectedClipForUnqualified, setSelectedClipForUnqualified] = useState<Clip | null>(null)
   const [markingUnqualified, setMarkingUnqualified] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -301,14 +307,14 @@ export default function IpDetailPage() {
   }
 
   // Open mark unqualified dialog
-  const handleOpenUnqualifiedDialog = (video: Video) => {
-    setSelectedVideoForUnqualified(video)
+  const handleOpenUnqualifiedDialog = (clip: Clip) => {
+    setSelectedClipForUnqualified(clip)
     setUnqualifiedDialogOpen(true)
   }
 
-  // Mark video as unqualified
-  const markVideoAsUnqualified = async () => {
-    if (!selectedVideoForUnqualified) return
+  // Mark clip as unqualified
+  const markClipAsUnqualified = async () => {
+    if (!selectedClipForUnqualified) return
     setMarkingUnqualified(true)
     try {
       const res = await fetch('/api/video-push/mark-unqualified', {
@@ -317,7 +323,7 @@ export default function IpDetailPage() {
         body: JSON.stringify({
           productId,
           ipId,
-          videoIds: [selectedVideoForUnqualified.id],
+          videoPushIds: [selectedClipForUnqualified.videoPushId],
           qualified: false
         })
       })
@@ -330,7 +336,6 @@ export default function IpDetailPage() {
         if (refreshRes.ok) {
           const result = await refreshRes.json()
           setData(result)
-          setSelectedVideoIds(new Set(result.selectedVideos || []))
         }
       } else {
         throw new Error('Failed to mark unqualified')
@@ -360,7 +365,7 @@ export default function IpDetailPage() {
   }
 
   const selectedCount = selectedVideoIds.size
-  const totalCount = data.videos.length
+  const totalCount = data.clips.length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
@@ -451,17 +456,17 @@ export default function IpDetailPage() {
             <h2 className="text-sm font-semibold text-warm-charcoal">视频列表</h2>
           </div>
           <div className="divide-y divide-oat/50">
-            {data.videos.length === 0 ? (
+            {data.clips.length === 0 ? (
               <div className="px-5 py-12 text-center">
                 <p className="text-warm-silver text-sm">暂无视频</p>
               </div>
             ) : (
-              data.videos.map(video => {
-                const isSelected = selectedVideoIds.has(video.id)
+              data.clips.map(clip => {
+                const isSelected = selectedVideoIds.has(clip.videoPushId)
                 return (
                   <div
-                    key={video.id}
-                    onClick={() => toggleVideoSelection(video.id)}
+                    key={clip.videoPushId}
+                    onClick={() => toggleVideoSelection(clip.videoPushId)}
                     className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-violet-50/50 transition-colors"
                   >
                     <button
@@ -479,9 +484,9 @@ export default function IpDetailPage() {
                       )}
                     </button>
                     <div className="w-16 h-12 rounded-lg bg-matcha-100 overflow-hidden flex-shrink-0">
-                      {video.thumbnail ? (
+                      {clip.thumbnail ? (
                         <img
-                          src={getImageUrl(video.thumbnail)}
+                          src={getImageUrl(clip.thumbnail)}
                           alt="thumbnail"
                           className="w-full h-full object-cover"
                         />
@@ -494,26 +499,33 @@ export default function IpDetailPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-mono text-warm-charcoal truncate">{video.id}</div>
+                      <div className="text-sm font-mono text-warm-charcoal truncate">{clip.videoPushId}</div>
                       <div className="text-xs text-warm-silver">
-                        {new Date(video.createdAt).toLocaleDateString('zh-CN')}
+                        {new Date(clip.createdAt).toLocaleDateString('zh-CN')}
                       </div>
                     </div>
-                    {isSelected ? (
-                        <span className="text-xs text-violet-600 font-medium">待发布</span>
-                      ) : (
-                        <span className="text-xs text-warm-silver">未发布</span>
-                      )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleOpenUnqualifiedDialog(video)
-                      }}
-                      className="ml-2 px-2 py-1 rounded border border-red-200 text-xs text-red-500 hover:bg-red-50 transition-colors"
-                      title="标记不合格"
-                    >
-                      不合格
-                    </button>
+                    <span className={cn(
+                      'text-xs font-medium',
+                      clip.status === 'published' ? 'text-emerald-600' :
+                      clip.status === 'ready' ? 'text-amber-600' : 'text-warm-silver'
+                    )}>
+                      {clip.status === 'published' ? '已发布' : clip.status === 'ready' ? '待发布' : '剪辑中'}
+                    </span>
+                    {isSelected && (
+                      <span className="text-xs text-violet-600 font-medium">已选</span>
+                    )}
+                    {!clip.isQualified && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleOpenUnqualifiedDialog(clip)
+                        }}
+                        className="ml-2 px-2 py-1 rounded border border-red-200 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                        title="标记不合格"
+                      >
+                        不合格
+                      </button>
+                    )}
                   </div>
                 )
               })
@@ -679,7 +691,7 @@ export default function IpDetailPage() {
             </DialogHeader>
             <div className="py-4">
               <p className="text-sm text-warm-charcoal">
-                确定将视频 <span className="font-mono font-medium">{selectedVideoForUnqualified?.id.slice(0, 8)}...</span> 标记为不合格？
+                确定将视频 <span className="font-mono font-medium">{selectedClipForUnqualified?.videoPushId.slice(0, 8)}...</span> 标记为不合格？
               </p>
             </div>
             <DialogFooter>
@@ -691,7 +703,7 @@ export default function IpDetailPage() {
                 取消
               </button>
               <button
-                onClick={markVideoAsUnqualified}
+                onClick={markClipAsUnqualified}
                 disabled={markingUnqualified}
                 className="px-4 py-2 rounded-lg bg-red-500 text-sm text-white font-medium hover:bg-red-600 transition-all disabled:opacity-50"
               >
