@@ -26,7 +26,21 @@ export async function GET(request: NextRequest) {
       select: { nickname: true }
     })
 
-    // Get all VideoPush records for this IP
+    // Get all product IDs that have videos for this IP (from Video table)
+    const videos = await db.video.findMany({
+      where: { ipId },
+      select: { productId: true },
+    })
+    const videoCountByProduct = new Map<string, number>()
+    const productIdsWithVideos = new Set<string>()
+    for (const v of videos) {
+      if (v.productId) {
+        productIdsWithVideos.add(v.productId)
+        videoCountByProduct.set(v.productId, (videoCountByProduct.get(v.productId) || 0) + 1)
+      }
+    }
+
+    // Get all VideoPush records for this IP (to get product info and published status)
     const videoPushes = await db.videoPush.findMany({
       where: { ipId },
       include: {
@@ -37,18 +51,7 @@ export async function GET(request: NextRequest) {
         },
       },
     })
-
-    // Get all videos for this IP to count total available per product
-    const videos = await db.video.findMany({
-      where: { ipId },
-      select: { productId: true },
-    })
-    const videoCountByProduct = new Map<string, number>()
-    for (const v of videos) {
-      if (v.productId) {
-        videoCountByProduct.set(v.productId, (videoCountByProduct.get(v.productId) || 0) + 1)
-      }
-    }
+    const videoPushProductIds = new Set(videoPushes.map(vp => vp.productId))
 
     // Check which products have published videos
     const publishedProducts = await db.videoPush.findMany({
@@ -57,13 +60,24 @@ export async function GET(request: NextRequest) {
     })
     const publishedProductIds = new Set(publishedProducts.map(vp => vp.productId).filter(Boolean))
 
+    // Build set of all product IDs (both with VideoPush records AND with Video records)
+    const allProductIds = new Set([...videoPushProductIds, ...productIdsWithVideos])
+
+    // Get product details for all relevant products
+    const productsWithVideos = await db.product.findMany({
+      where: { id: { in: Array.from(allProductIds) } },
+      include: {
+        images: { where: { isMain: true }, take: 1 },
+      },
+    })
+
     // Build products array
-    const products = videoPushes.map(vp => ({
-      productId: vp.productId,
-      productName: vp.product.name,
-      productImage: vp.product.images[0]?.url || '',
-      videoCount: videoCountByProduct.get(vp.productId) || 0,
-      hasPublishedVideos: publishedProductIds.has(vp.productId),
+    const products = productsWithVideos.map(product => ({
+      productId: product.id,
+      productName: product.name,
+      productImage: product.images[0]?.url || '',
+      videoCount: videoCountByProduct.get(product.id) || 0,
+      hasPublishedVideos: publishedProductIds.has(product.id),
     }))
 
     return NextResponse.json({
