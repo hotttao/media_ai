@@ -6,6 +6,7 @@ import { cn, getImageUrl } from '@/foundation/lib/utils'
 
 interface IpInfo {
   ipId: string
+  nickname: string
   selected: boolean
   videoCount: number
 }
@@ -322,7 +323,7 @@ function ProductCard({
                       </svg>
                     )}
                   </button>
-                  <span className="text-xs text-warm-silver font-mono">{ip.ipId.slice(0, 12)}...</span>
+                  <span className="text-xs text-warm-silver font-medium">{ip.nickname || ip.ipId.slice(0, 8)}</span>
                   <span className="text-xs text-warm-silver">{ip.videoCount}个视频</span>
                   <Link
                     href={`/daily-publish-plan/ip/${ip.ipId}/${product.productId}`}
