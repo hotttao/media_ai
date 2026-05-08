@@ -76,7 +76,7 @@ export default function DailyPublishPlanPage() {
         totalClippable: acc.totalClippable,
         totalNewGeneratable: acc.totalNewGeneratable,
       }
-    }), { totalAi: 0, totalPushable: 0, totalPublished: 0, totalClippable: 0, totalNewGeneratable: 0 })
+    }, { totalAi: 0, totalPushable: 0, totalPublished: 0, totalClippable: 0, totalNewGeneratable: 0 })
   }, [filteredProducts])
 
   const handleToggleIpSelection = async (productId: string, ipId: string) => {
