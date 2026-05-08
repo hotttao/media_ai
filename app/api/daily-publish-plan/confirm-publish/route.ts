@@ -24,47 +24,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'videoIds array is required' }, { status: 400 })
     }
 
-    // Find all VideoPush records for this product+ip that contain any of the selected videoIds
-    // Note: VideoPush.videoId stores comma-separated video IDs, so we need to search within that string
-    const allVideoPushes = await db.videoPush.findMany({
+    // Determine if videoIds are VideoPush IDs or source video IDs
+    // Try to find VideoPush records directly first
+    let videoPushIds: string[] = []
+
+    // Check if any of the IDs exist as VideoPush IDs directly
+    const directMatches = await db.videoPush.findMany({
       where: {
+        id: { in: videoIds },
         productId,
         ipId,
       },
-      select: {
-        id: true,
-        videoId: true,
-      },
+      select: { id: true },
     })
 
-    // Filter to find records that contain any of the selected videoIds
-    const videoIdsSet = new Set(videoIds)
-    const recordsToUpdate: string[] = []
+    if (directMatches.length > 0) {
+      // These are VideoPush IDs
+      videoPushIds = directMatches.map(vp => vp.id)
+    } else {
+      // These are source video IDs, find matching VideoPush records
+      // by searching within the comma-separated videoId field
+      const allVideoPushes = await db.videoPush.findMany({
+        where: { productId, ipId },
+        select: { id: true, videoId: true },
+      })
 
-    for (const vp of allVideoPushes) {
-      const storedVideoIds = vp.videoId.split(',').map(id => id.trim()).filter(Boolean)
-      const hasMatch = storedVideoIds.some(id => videoIdsSet.has(id))
-      if (hasMatch) {
-        recordsToUpdate.push(vp.id)
+      const videoIdsSet = new Set(videoIds)
+      for (const vp of allVideoPushes) {
+        const storedVideoIds = vp.videoId.split(',').map(id => id.trim()).filter(Boolean)
+        const hasMatch = storedVideoIds.some(id => videoIdsSet.has(id))
+        if (hasMatch) {
+          videoPushIds.push(vp.id)
+        }
       }
     }
 
     // Update all matching records to isPublished=true
-    if (recordsToUpdate.length > 0) {
+    if (videoPushIds.length > 0) {
       await db.videoPush.updateMany({
-        where: {
-          id: { in: recordsToUpdate },
-        },
-        data: {
-          isPublished: true,
-        },
+        where: { id: { in: videoPushIds } },
+        data: { isPublished: true },
       })
     }
 
     return NextResponse.json({
       success: true,
-      message: `Updated ${recordsToUpdate.length} record(s)`,
-      updatedCount: recordsToUpdate.length,
+      message: `Updated ${videoPushIds.length} record(s)`,
+      updatedCount: videoPushIds.length,
     })
   } catch (error) {
     console.error('Failed to confirm publish:', error)
