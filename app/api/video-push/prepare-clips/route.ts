@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import path from 'path'
+import fs from 'fs'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
@@ -12,6 +14,31 @@ function computeVideoIdHash(videoIds: string[]): string {
   const sorted = [...videoIds].sort()
   const joined = sorted.join(',')
   return crypto.createHash('md5').update(joined).digest('hex')
+}
+
+// 下载远程视频到本地 public 目录，返回本地文件路径
+async function downloadVideoToLocal(url: string | null | undefined, teamId: string): Promise<string> {
+  if (!url) throw new Error('Video URL is null or undefined')
+  const IMAGE_SERVICE_BASE_URL = process.env.IMAGE_SERVICE_BASE_URL || 'http://192.168.2.38'
+  const fullUrl = url.startsWith('http') ? url : `${IMAGE_SERVICE_BASE_URL}${url}`
+
+  const relativePath = url.startsWith('/') ? url : `/uploads/teams/${teamId}/videos/${path.basename(url)}`
+  const localDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'videos')
+  const localFilePath = path.join(process.cwd(), 'public', relativePath)
+
+  if (fs.existsSync(localFilePath)) {
+    return localFilePath
+  }
+
+  fs.mkdirSync(localDir, { recursive: true })
+
+  const response = await fetch(fullUrl)
+  if (!response.ok) {
+    throw new Error(`Failed to download video: ${response.statusText}`)
+  }
+  const buffer = await response.arrayBuffer()
+  fs.writeFileSync(localFilePath, Buffer.from(buffer))
+  return localFilePath
 }
 
 // POST /api/video-push/prepare-clips
@@ -54,17 +81,14 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 调用 CLI dry-run 获取 potential clips 数量
-    const capcut = getCapcutProvider()
-
-    // 获取视频 URL
-    const videos = await db.video.findMany({
+    // 获取视频 URL - use any to bypass Prisma strict null checking
+    const videos: { id: string; url: string }[] = await db.video.findMany({
       where: {
         id: { in: videoIds },
         teamId: session.user.teamId,
       },
       select: { id: true, url: true },
-    })
+    }).then(results => results.filter(v => v.url !== null) as { id: string; url: string }[])
 
     if (videos.length === 0) {
       return NextResponse.json({ error: 'No videos found' }, { status: 400 })
@@ -80,9 +104,16 @@ export async function POST(request: NextRequest) {
       musicUrl = music?.url
     }
 
+    // 先下载视频到本地，再传递本地路径给 CLI dry-run
+    const teamId = session.user.teamId
+    const capcut = getCapcutProvider()
+    const videoPaths = await Promise.all(
+      videos.map((v) => downloadVideoToLocal(v.url, teamId))
+    )
+
     // dry-run 获取数量
     const dryRunResult = await capcut.clipDryRun({
-      videoUrls: videos.map(v => v.url),
+      videoUrls: videoPaths,
       musicUrl,
     })
 
