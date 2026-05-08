@@ -342,6 +342,7 @@ export class CapcutCliProvider {
 
       return { count: 0, error: 'No count found in output' }
     } catch (error) {
+      console.error('[CapcutCli] clipDryRun error:', error)
       return {
         count: 0,
         error: error instanceof Error ? error.message : 'Unknown error',

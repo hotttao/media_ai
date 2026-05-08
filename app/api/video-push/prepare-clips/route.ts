@@ -123,6 +123,7 @@ export async function POST(request: NextRequest) {
     // dry-run 获取数量
     const capcut = getCapcutProvider()
     console.log(`[prepare-clips] Step 2: CLI dry-run`)
+    console.log(`[prepare-clips] CLI command: ${capcut.capcutPath} clip --videos ${videoPaths.join(',')} --dry-run`)
     let dryRunResult: { count: number; error?: string } = {}
     try {
       dryRunResult = await capcut.clipDryRun({
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
       console.error('[prepare-clips] Step 2 failed - clipDryRun:', err)
       throw err
     }
+    console.log(`[prepare-clips] Step 2 result:`, dryRunResult)
 
     if (dryRunResult.error) {
       return NextResponse.json({ error: dryRunResult.error }, { status: 500 })
