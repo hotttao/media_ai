@@ -34,6 +34,8 @@ async function downloadVideoToLocal(url: string | null | undefined, teamId: stri
 
   const response = await fetch(fullUrl)
   if (!response.ok) {
+    console.error(`[downloadVideoToLocal] Fetch failed: ${response.status} ${response.statusText}`)
+    console.error(`[downloadVideoToLocal] URL: ${fullUrl}`)
     throw new Error(`Failed to download video: ${response.statusText}`)
   }
   const buffer = await response.arrayBuffer()
