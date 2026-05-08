@@ -71,8 +71,14 @@ export class CapcutCliProvider {
 
   /**
    * Download video to temporary file
+   * If URL is a local path (no scheme), just return the path as-is
    */
   private async downloadVideo(url: string): Promise<string> {
+    // If it looks like a local path (no http/https scheme), return as-is
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return url
+    }
+
     const response = await fetch(url)
     if (!response.ok) {
       throw new Error(`Failed to download video: ${response.statusText}`)
