@@ -26,18 +26,9 @@ export async function GET(request: NextRequest) {
       select: { nickname: true }
     })
 
-    // Get today date range for filtering
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    // Get all VideoPush records for this IP created today (these represent products added to daily plan)
+    // Get all VideoPush records for this IP (product scope = all records for this IP)
     const videoPushes = await db.videoPush.findMany({
-      where: {
-        ipId,
-        createdAt: { gte: today, lt: tomorrow },
-      },
+      where: { ipId },
       include: {
         product: {
           include: {
@@ -54,14 +45,14 @@ export async function GET(request: NextRequest) {
       clipCountByProduct.set(vp.productId, (clipCountByProduct.get(vp.productId) || 0) + 1)
     }
 
-    // Check which products have published videos (from all VideoPush for this IP)
+    // Check which products have published videos
     const publishedProducts = await db.videoPush.findMany({
       where: { ipId, isPublished: true },
       select: { productId: true },
     })
     const publishedProductIds = new Set(publishedProducts.map(vp => vp.productId).filter(Boolean))
 
-    // Get product details for products with VideoPush today
+    // Get product details
     const productsWithClips = await db.product.findMany({
       where: { id: { in: Array.from(videoPushProductIds) } },
       include: {
@@ -69,7 +60,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Build products array - only products that have VideoPush records for today
+    // Build products array
     const products = productsWithClips.map(product => ({
       productId: product.id,
       productName: product.name,

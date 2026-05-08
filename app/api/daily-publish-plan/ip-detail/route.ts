@@ -51,6 +51,15 @@ export async function GET(request: NextRequest) {
         vp.videoId.split(',').map(id => id.trim()).filter(Boolean).forEach(id => sourceVideoIdsSet.add(id))
       }
     }
+
+    // Also get videos directly from Video table for this product+ip (AI generated videos)
+    const aiVideos = await db.video.findMany({
+      where: { productId, ipId: ipId || undefined },
+      select: { id: true, url: true, thumbnail: true, createdAt: true },
+    })
+    for (const v of aiVideos) {
+      sourceVideoIdsSet.add(v.id)
+    }
     const sourceVideoIds = Array.from(sourceVideoIdsSet)
 
     // Get source video details
