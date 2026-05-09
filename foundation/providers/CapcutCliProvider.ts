@@ -311,6 +311,7 @@ export class CapcutCliProvider {
       cwd: cliBase,
       detached: true,
       stdio: 'ignore',
+      // windowsHide: true,
     })
 
     // Unref to allow event loop to exit while child runs

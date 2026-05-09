@@ -247,7 +247,7 @@ export default function IpProductsPage() {
 
       const prepareData = await prepareRes.json()
 
-      if (prepareData.pendingCount > 0) {
+      if (prepareData.createdCount > 0) {
         await fetch('/api/video-push/clip', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

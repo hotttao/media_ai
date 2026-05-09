@@ -44,9 +44,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 更新记录
-    const updateData: Record<string, unknown> = {
-      status: status === 'skipped' ? 'completed' : status,
-    }
+    // CLI 发来 'success' 表示生成成功（文件已产出）→ DB 存 'completed'
+    // 'skipped' 表示幂等跳过（文件已存在）→ DB 存 'completed'
+    // 'failed' → DB 存 'failed'
+    const dbStatus = (status === 'success' || status === 'skipped') ? 'completed' : status
+    const updateData: Record<string, unknown> = { status: dbStatus }
 
     if (output) {
       // CLI 只返回文件名如 "clip-xxx_luxury.mp4"
