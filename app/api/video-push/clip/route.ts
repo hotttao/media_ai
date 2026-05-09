@@ -70,34 +70,22 @@ export async function POST(request: NextRequest) {
     // Step 1: 下载视频到本地
     const capcut = getCapcutProvider()
     console.log(`[clip] Step 1: download videos, teamId=${teamId}, videoIds=`, videoIds)
-    let videoPaths: string[] = []
-    try {
-      videoPaths = await Promise.all(
-        videos.map(async (v) => {
-          console.log(`[clip] Downloading video ${v.id}, url=${v.url}`)
-          const localPath = await capcut.downloadVideoToLocal(v.url, teamId)
-          console.log(`[clip] Downloaded to ${localPath}`)
-          return localPath
-        })
-      )
-    } catch (err) {
-      console.error('[clip] Step 1 failed - downloadVideoToLocal:', err)
-      throw err
-    }
+    const videoPaths = await Promise.all(
+      videos.map(async (v) => {
+        console.log(`[clip] Downloading video ${v.id}, url=${v.url}`)
+        const localPath = await capcut.downloadVideoToLocal(v.url, teamId)
+        console.log(`[clip] Downloaded to ${localPath}`)
+        return localPath
+      })
+    )
     console.log(`[clip] Step 1 success: videoPaths=`, videoPaths)
 
     // Step 2: CLI dry-run 获取 templates
     console.log(`[clip] Step 2: CLI dry-run`)
-    let dryRunResult: { count: number; templates?: { name: string; videoCount: number }[]; error?: string }
-    try {
-      dryRunResult = await capcut.clipDryRun({
-        videoUrls: videoPaths,
-        outputDir: path.join(process.cwd(), 'tmp', 'capcut-dryrun'),
-      })
-    } catch (err) {
-      console.error('[clip] Step 2 failed - clipDryRun:', err)
-      throw err
-    }
+    const dryRunResult = await capcut.clipDryRun({
+      videoUrls: videoPaths,
+      outputDir: path.join(process.cwd(), 'tmp', 'capcut-dryrun'),
+    })
 
     if (dryRunResult.error || dryRunResult.count === 0) {
       return NextResponse.json({
@@ -107,28 +95,31 @@ export async function POST(request: NextRequest) {
     }
     console.log(`[clip] Step 2 success: ${dryRunResult.count} templates`)
 
-    // Step 3: 为每个 template 创建 VideoPush 记录
-    console.log(`[clip] Step 3: create VideoPush records, templates=`, dryRunResult.templates)
-    const templateToVpMap: Map<string, string> = new Map()  // templateName → videoPushId
-    const videoPushIds: string[] = []
+    // Step 3: 查找已存在的 VideoPush 记录（prepare-clips 已创建）
+    console.log(`[clip] Step 3: find existing VideoPush records, videoIdHash=${videoIdHash}`)
+    const existingRecords = await db.videoPush.findMany({
+      where: {
+        productId,
+        ipId,
+        videoIdHash,
+        status: 'pending',
+      },
+    })
 
-    for (const tmpl of dryRunResult.templates || []) {
-      const record = await db.videoPush.create({
-        data: {
-          productId,
-          ipId,
-          sceneId,
-          videoId: videoIdStr,
-          videoIdHash,
-          templateName: tmpl.name,
-          status: 'pending',
-        }
+    if (existingRecords.length === 0) {
+      return NextResponse.json({
+        message: 'No pending VideoPush records found. Call prepare-clips first.',
+        count: 0,
       })
-      templateToVpMap.set(tmpl.name, record.id)
-      videoPushIds.push(record.id)
-      console.log(`[clip] Created VideoPush ${record.id} for template ${tmpl.name}`)
     }
-    console.log(`[clip] Step 3 success: created ${videoPushIds.length} VideoPush records`)
+
+    const templateToVpMap: Map<string, string> = new Map()
+    const videoPushIds: string[] = []
+    for (const record of existingRecords) {
+      templateToVpMap.set(record.templateName, record.id)
+      videoPushIds.push(record.id)
+    }
+    console.log(`[clip] Step 3 success: found ${videoPushIds.length} existing records`)
 
     // Step 4: 构建 mapping 并调用 CLI
     const mappingArg = Array.from(templateToVpMap.entries())
@@ -140,7 +131,7 @@ export async function POST(request: NextRequest) {
     console.log(`[clip]   callback: ${callbackUrl}`)
     console.log(`[clip]   videoPaths: ${videoPaths.join(', ')}`)
 
-    capcut.clipAsync({
+    await capcut.clipAsync({
       videoUrls: videoPaths,
       musicUrl,
       outputDir,
@@ -151,12 +142,11 @@ export async function POST(request: NextRequest) {
     console.log(`[clip] Step 4 complete, returning response`)
 
     return NextResponse.json({
-      message: `Clip job started`,
+      message: `Clip job completed`,
       videoPushIds,
       pendingCount: videoPushIds.length,
     })
-  } catch (error) {
-    console.error('[clip] Error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (err) {
+    throw err
   }
 }

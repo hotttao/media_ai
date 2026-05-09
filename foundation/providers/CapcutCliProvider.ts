@@ -1,6 +1,6 @@
 // foundation/providers/CapcutCliProvider.ts
 import crypto from 'crypto'
-import { exec, spawn } from 'child_process'
+import { exec, execSync, spawn } from 'child_process'
 import { promisify } from 'util'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -257,111 +257,67 @@ export class CapcutCliProvider {
   /**
    * Execute cap_cut clip command asynchronously
    * CLI runs in background and calls callback when done
+   * Returns a promise that resolves when CLI completes
    */
-  clipAsync(input: CapcutClipInputAsync): void {
-    // First check if output already exists (idempotency)
-    const inputHash = this.computeInputHash(input.videoUrls)
-    const outputDir = input.outputDir
-
-    // Check if files already exist for this input
-    if (fs.existsSync(outputDir)) {
-      const existingFiles = fs.readdirSync(outputDir).filter(f => f.startsWith(`clip-${inputHash}`))
-      if (existingFiles.length > 0) {
-        console.log(`[CapcutCli] Output already exists for hash ${inputHash}, skipping`)
-        // Already exists, no need to run CLI
-        return
-      }
-    }
-
+  async clipAsync(input: CapcutClipInputAsync): Promise<void> {
     const tempFiles: string[] = []
 
-    console.log(`[CapcutCli] Starting async clip job`)
-    console.log(`[CapcutCli] Output dir: ${outputDir}`)
+    console.log(`[CapcutCli] Starting clip job`)
+    console.log(`[CapcutCli] Output dir: ${input.outputDir}`)
     console.log(`[CapcutCli] Callback: ${input.callbackUrl}`)
-    console.log(`[CapcutCli] Input hash: ${inputHash}`)
 
-    // For async execution, we spawn the process without waiting
-    // The CLI itself handles the callback to our server
-    this.spawnClipProcess(input, tempFiles).catch(err => {
-      console.error('[CapcutCli] Clip process error:', err)
-    })
+    await this.spawnClipProcess(input, tempFiles)
   }
 
   private async spawnClipProcess(input: CapcutClipInputAsync, tempFiles: string[]): Promise<void> {
-    try {
-      // Download videos to temp files (only remote URLs need downloading; local paths are passed through)
-      const downloadedVideoPaths = await Promise.all(
-        input.videoUrls.map(async (url) => {
-          const localPath = await this.downloadVideo(url)
-          // Only add to tempFiles for cleanup if it was actually downloaded to temp dir
-          // Local paths (persistent storage) should NOT be cleaned up
-          if (localPath.startsWith(this.tmpDir)) {
-            tempFiles.push(localPath)
-          }
-          return localPath
-        })
-      )
-
-      // Download music if provided
-      let musicPath: string | undefined
-      if (input.musicUrl) {
-        musicPath = await this.downloadMusic(input.musicUrl)
-        tempFiles.push(musicPath)
-      }
-
-      // Build correct CLI command: node src/cli.js video-clip [videos...] -o output --callback url [--mapping vp:tmpl] [--bgm music]
-      const args = this.buildClipArgs(
-        downloadedVideoPaths,
-        input.outputDir,
-        input.callbackUrl,
-        {
-          mapping: input.mapping,
-          musicPath,
+    // Download videos to temp files (only remote URLs need downloading; local paths are passed through)
+    const downloadedVideoPaths = await Promise.all(
+      input.videoUrls.map(async (url) => {
+        const localPath = await this.downloadVideo(url)
+        // Only add to tempFiles for cleanup if it was actually downloaded to temp dir
+        // Local paths (persistent storage) should NOT be cleaned up
+        if (localPath.startsWith(this.tmpDir)) {
+          tempFiles.push(localPath)
         }
-      )
-
-      // Spawn process (non-blocking)
-      // Must cd to cap-cut-auto directory because CLI uses relative paths internally
-      const cliBase = this.config.capcutPath || path.join(process.cwd(), '..', 'cap-cut-auto')
-      const cliScript = path.join(cliBase, 'src', 'cli.js')
-      // args already starts with 'video-clip' from buildClipArgs
-      console.log('[CapcutCli] Spawning:', `cd "${cliBase}" && node "${cliScript}" ${args.join(' ')}`)
-
-      const child = spawn('node', [cliScript, ...args], {
-        cwd: cliBase,
-        stdio: ['ignore', 'pipe', 'pipe'],
-        detached: true,
+        return localPath
       })
+    )
 
-      // Collect stdout/stderr for debugging
-      let stdoutData = ''
-      let stderrData = ''
-      child.stdout?.on('data', (data) => { stdoutData += data.toString() })
-      child.stderr?.on('data', (data) => { stderrData += data.toString() })
-
-      child.on('close', (code) => {
-        console.log(`[CapcutCli] CLI exited with code ${code}`)
-        if (stdoutData) console.log('[CapcutCli] stdout:', stdoutData)
-        if (stderrData) console.log('[CapcutCli] stderr:', stderrData)
-      })
-
-      child.on('error', (err) => {
-        console.error('[CapcutCli] CLI spawn error:', err)
-      })
-
-      child.unref() // Let parent process exit independently
-
-      // Cleanup temp files after spawn
-      // Keep them around for the CLI to read
-      setTimeout(() => {
-        this.cleanupFiles(tempFiles)
-      }, 60000) // Cleanup after 1 minute
-
-    } catch (error) {
-      console.error('[CapcutCli] Spawn error:', error)
-      // Cleanup temp files on error
-      this.cleanupFiles(tempFiles)
+    // Download music if provided
+    let musicPath: string | undefined
+    if (input.musicUrl) {
+      musicPath = await this.downloadMusic(input.musicUrl)
+      tempFiles.push(musicPath)
     }
+
+    // Build correct CLI command: node src/cli.js video-clip [videos...] -o output --callback url [--mapping vp:tmpl] [--bgm music]
+    const args = this.buildClipArgs(
+      downloadedVideoPaths,
+      input.outputDir,
+      input.callbackUrl,
+      {
+        mapping: input.mapping,
+        musicPath,
+      }
+    )
+
+    // Use spawn for non-blocking execution (CLI runs in background, callback handles completion)
+    const cliBase = this.config.capcutPath || path.join(process.cwd(), '..', 'cap-cut-auto')
+    const cliScript = path.join(cliBase, 'src', 'cli.js')
+    const command = `node "${cliScript}" ${args.join(' ')}`
+    console.log('[CapcutCli] Spawning (non-blocking):', command)
+
+    const child = spawn('node', [cliScript, ...args], {
+      cwd: cliBase,
+      detached: true,
+      stdio: 'ignore',
+    })
+
+    // Unref to allow event loop to exit while child runs
+    child.unref()
+
+    // Cleanup temp files immediately (don't wait for CLI)
+    this.cleanupFiles(tempFiles)
   }
 
   /**
