@@ -69,17 +69,22 @@ export async function POST(request: NextRequest) {
 
     // Step 1: 下载视频到本地
     const capcut = getCapcutProvider()
-    console.log(`[clip] Step 1: download videos, teamId=${teamId}`)
+    console.log(`[clip] Step 1: download videos, teamId=${teamId}, videoIds=`, videoIds)
     let videoPaths: string[] = []
     try {
       videoPaths = await Promise.all(
-        videos.map((v) => capcut.downloadVideoToLocal(v.url, teamId))
+        videos.map(async (v) => {
+          console.log(`[clip] Downloading video ${v.id}, url=${v.url}`)
+          const localPath = await capcut.downloadVideoToLocal(v.url, teamId)
+          console.log(`[clip] Downloaded to ${localPath}`)
+          return localPath
+        })
       )
     } catch (err) {
       console.error('[clip] Step 1 failed - downloadVideoToLocal:', err)
       throw err
     }
-    console.log(`[clip] Step 1 success: downloaded ${videoPaths.length} videos`)
+    console.log(`[clip] Step 1 success: videoPaths=`, videoPaths)
 
     // Step 2: CLI dry-run 获取 templates
     console.log(`[clip] Step 2: CLI dry-run`)
@@ -103,7 +108,7 @@ export async function POST(request: NextRequest) {
     console.log(`[clip] Step 2 success: ${dryRunResult.count} templates`)
 
     // Step 3: 为每个 template 创建 VideoPush 记录
-    console.log(`[clip] Step 3: create VideoPush records`)
+    console.log(`[clip] Step 3: create VideoPush records, templates=`, dryRunResult.templates)
     const templateToVpMap: Map<string, string> = new Map()  // templateName → videoPushId
     const videoPushIds: string[] = []
 
@@ -121,6 +126,7 @@ export async function POST(request: NextRequest) {
       })
       templateToVpMap.set(tmpl.name, record.id)
       videoPushIds.push(record.id)
+      console.log(`[clip] Created VideoPush ${record.id} for template ${tmpl.name}`)
     }
     console.log(`[clip] Step 3 success: created ${videoPushIds.length} VideoPush records`)
 
