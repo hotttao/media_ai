@@ -333,6 +333,22 @@ export class CapcutCliProvider {
         detached: true,
       })
 
+      // Collect stdout/stderr for debugging
+      let stdoutData = ''
+      let stderrData = ''
+      child.stdout?.on('data', (data) => { stdoutData += data.toString() })
+      child.stderr?.on('data', (data) => { stderrData += data.toString() })
+
+      child.on('close', (code) => {
+        console.log(`[CapcutCli] CLI exited with code ${code}`)
+        if (stdoutData) console.log('[CapcutCli] stdout:', stdoutData)
+        if (stderrData) console.log('[CapcutCli] stderr:', stderrData)
+      })
+
+      child.on('error', (err) => {
+        console.error('[CapcutCli] CLI spawn error:', err)
+      })
+
       child.unref() // Let parent process exit independently
 
       // Cleanup temp files after spawn
