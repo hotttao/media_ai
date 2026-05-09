@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import path from 'path'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
@@ -100,10 +101,24 @@ export async function GET(request: NextRequest) {
       musicUrl = music?.url
     }
 
-    // 4. 调用 cap_cut CLI dry-run 获取 potential clips
+    // 4. 先下载视频到本地，再调用 cap_cut CLI dry-run
+    const teamId = session.user.teamId
     const capcut = getCapcutProvider()
+    console.log(`[clip-preview] Step 1: download videos, teamId=${teamId}`)
+    let videoPaths: string[] = []
+    try {
+      videoPaths = await Promise.all(
+        videos.map((v) => capcut.downloadVideoToLocal(v.url, teamId))
+      )
+    } catch (err) {
+      console.error('[clip-preview] Step 1 failed - downloadVideoToLocal:', err)
+      throw err
+    }
+    console.log(`[clip-preview] Step 1 success: downloaded ${videoPaths.length} videos`)
+
+    console.log(`[clip-preview] Step 2: CLI dry-run`)
     const dryRunResult = await capcut.clipDryRun({
-      videoUrls: videos.map(v => v.url),
+      videoUrls: videoPaths,
       musicUrl,
     })
 

@@ -16,6 +16,7 @@ export interface CapcutCliConfig {
 export interface CapcutClipInput {
   videoUrls: string[]   // AI video URL list
   musicUrl?: string     // Background music URL (optional)
+  outputDir?: string    // Output directory (defaults to tmpDir for dry-run)
 }
 
 export interface CapcutClipInputAsync {
@@ -23,7 +24,7 @@ export interface CapcutClipInputAsync {
   musicUrl?: string     // Background music URL (optional)
   outputDir: string     // Output directory for clips
   callbackUrl: string   // Callback URL when clip is done
-  templateName?: string // Template name
+  mapping?: string      // videoPushId↔template mapping, format: "vp1:tmpl1,vp2:tmpl2,..."
 }
 
 export interface CapcutClipResult {
@@ -34,6 +35,7 @@ export interface CapcutClipResult {
 
 export interface CapcutClipDryRunResult {
   count: number
+  templates?: { name: string; videoCount: number }[]
   error?: string
 }
 
@@ -70,17 +72,59 @@ export class CapcutCliProvider {
     return this.config.capcutPath || 'cap_cut'
   }
 
-  // Build correct CLI command: node src/cli.js video-clip [videos...] -t template -o output --callback url
-  private buildClipArgs(videoPaths: string[], templateName: string, outputDir: string, callbackUrl: string, musicPath?: string): string[] {
+  /**
+   * Download remote video to local public directory
+   * Returns local file path if already exists or successfully downloaded
+   */
+  async downloadVideoToLocal(url: string | null | undefined, teamId: string): Promise<string> {
+    if (!url) throw new Error('Video URL is null or undefined')
+    const IMAGE_SERVICE_BASE_URL = process.env.IMAGE_SERVICE_BASE_URL || 'http://192.168.2.38'
+    const fullUrl = url.startsWith('http') ? url : `${IMAGE_SERVICE_BASE_URL}${url}`
+
+    const relativePath = url.startsWith('/') ? url : `/uploads/teams/${teamId}/videos/${path.basename(url)}`
+    const localDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'videos')
+    const localFilePath = path.join(process.cwd(), 'public', relativePath)
+
+    if (fs.existsSync(localFilePath)) {
+      return localFilePath
+    }
+
+    fs.mkdirSync(localDir, { recursive: true })
+
+    const response = await fetch(fullUrl)
+    if (!response.ok) {
+      throw new Error(`Failed to download video: ${response.statusText}`)
+    }
+    const buffer = await response.arrayBuffer()
+    fs.writeFileSync(localFilePath, Buffer.from(buffer))
+    return localFilePath
+  }
+
+  // Build correct CLI command: node src/cli.js video-clip [videos...] -o output --callback url [--dry-run] [--mapping vp:tmpl] [--bgm music]
+  private buildClipArgs(
+    videoPaths: string[],
+    outputDir: string,
+    callbackUrl: string,
+    options: {
+      dryRun?: boolean
+      mapping?: string
+      musicPath?: string
+    } = {}
+  ): string[] {
     const args = [
       'video-clip',
-      ...videoPaths,           // positional: video files
-      '-t', templateName,
+      ...videoPaths,
       '-o', outputDir,
       '--callback', callbackUrl,
     ]
-    if (musicPath) {
-      args.push('--bgm', musicPath)
+    if (options.dryRun) {
+      args.push('--dry-run')
+    }
+    if (options.mapping) {
+      args.push('--mapping', options.mapping)
+    }
+    if (options.musicPath) {
+      args.push('--bgm', options.musicPath)
     }
     return args
   }
@@ -230,10 +274,7 @@ export class CapcutCliProvider {
     }
 
     const tempFiles: string[] = []
-    let videoPaths: string[] = []
 
-    // Download videos synchronously before spawning
-    // Note: In production, you'd want to pre-download these or pass local paths
     console.log(`[CapcutCli] Starting async clip job`)
     console.log(`[CapcutCli] Output dir: ${outputDir}`)
     console.log(`[CapcutCli] Callback: ${input.callbackUrl}`)
@@ -249,7 +290,7 @@ export class CapcutCliProvider {
   private async spawnClipProcess(input: CapcutClipInputAsync, tempFiles: string[]): Promise<void> {
     try {
       // Download videos to temp files (only remote URLs need downloading; local paths are passed through)
-      videoPaths = await Promise.all(
+      const downloadedVideoPaths = await Promise.all(
         input.videoUrls.map(async (url) => {
           const localPath = await this.downloadVideo(url)
           // Only add to tempFiles for cleanup if it was actually downloaded to temp dir
@@ -268,23 +309,25 @@ export class CapcutCliProvider {
         tempFiles.push(musicPath)
       }
 
-      // Build correct CLI command: node src/cli.js video-clip [videos...] -t template -o output --callback url
+      // Build correct CLI command: node src/cli.js video-clip [videos...] -o output --callback url [--mapping vp:tmpl] [--bgm music]
       const args = this.buildClipArgs(
-        videoPaths,
-        input.templateName || 'detail-focus',
+        downloadedVideoPaths,
         input.outputDir,
         input.callbackUrl,
-        musicPath
+        {
+          mapping: input.mapping,
+          musicPath,
+        }
       )
 
       // Spawn process (non-blocking)
       // Must cd to cap-cut-auto directory because CLI uses relative paths internally
       const cliBase = this.config.capcutPath || path.join(process.cwd(), '..', 'cap-cut-auto')
       const cliScript = path.join(cliBase, 'src', 'cli.js')
-      const cliArgs = ['video-clip', ...args]
-      console.log('[CapcutCli] Spawning:', `cd "${cliBase}" && node "${cliScript}" ${cliArgs.join(' ')}`)
+      // args already starts with 'video-clip' from buildClipArgs
+      console.log('[CapcutCli] Spawning:', `cd "${cliBase}" && node "${cliScript}" ${args.join(' ')}`)
 
-      const child = spawn('node', [cliScript, ...cliArgs], {
+      const child = spawn('node', [cliScript, ...args], {
         cwd: cliBase,
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: true,
@@ -317,11 +360,12 @@ export class CapcutCliProvider {
   /**
    * Dry run clip command - returns the number of clips that would be generated
    */
-  async clipDryRun(input: CapcutClipInput): Promise<{ count: number; error?: string }> {
+  async clipDryRun(input: CapcutClipInput): Promise<CapcutClipDryRunResult> {
     // videoUrls may be local paths or remote URLs
     // Local paths (no http scheme) are passed through directly
     // Remote URLs are downloaded to temp first
     const tempFiles: string[] = []
+    const outputDir = input.outputDir || this.tmpDir
     try {
       // Download videos to temp files (only remote URLs need downloading; local paths are passed through)
       const videoPaths = await Promise.all(
@@ -342,15 +386,12 @@ export class CapcutCliProvider {
         tempFiles.push(musicPath)
       }
 
-      // Build correct CLI command for dry-run (same format as video-clip)
-      // Note: CLI doesn't have dry-run mode, so we run with a short timeout
-      // and check if it would produce output
+      // Build correct CLI command for dry-run (same format as video-clip, with --dry-run flag)
       const args = this.buildClipArgs(
         videoPaths,
-        'detail-focus',  // default template for count estimation
-        this.tmpDir,
+        outputDir,
         'http://localhost:3000/api/video-push/callback?test=1',
-        musicPath
+        { dryRun: true }
       )
 
       const cliBase = this.config.capcutPath || path.join(process.cwd(), '..', 'cap-cut-auto')
@@ -365,12 +406,15 @@ export class CapcutCliProvider {
         console.warn('[CapcutCli] stderr:', stderr)
       }
 
-      // Parse JSON output - dry run returns { "count": N }
+      // Parse JSON output - dry run returns { "count": N, "templates": [...] }
       const jsonMatch = stdout.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         try {
           const result = JSON.parse(jsonMatch[0])
-          return { count: result.count || 0 }
+          return {
+            count: result.count || 0,
+            templates: result.templates || []
+          }
         } catch {
           return { count: 0, error: 'Failed to parse CLI output' }
         }

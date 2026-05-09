@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
-import fs from 'fs'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
@@ -14,33 +13,6 @@ function computeVideoIdHash(videoIds: string[]): string {
   const sorted = [...videoIds].sort()
   const joined = sorted.join(',')
   return crypto.createHash('md5').update(joined).digest('hex')
-}
-
-// 下载远程视频到本地 public 目录，返回本地文件路径
-async function downloadVideoToLocal(url: string | null | undefined, teamId: string): Promise<string> {
-  if (!url) throw new Error('Video URL is null or undefined')
-  const IMAGE_SERVICE_BASE_URL = process.env.IMAGE_SERVICE_BASE_URL || 'http://192.168.2.38'
-  const fullUrl = url.startsWith('http') ? url : `${IMAGE_SERVICE_BASE_URL}${url}`
-
-  const relativePath = url.startsWith('/') ? url : `/uploads/teams/${teamId}/videos/${path.basename(url)}`
-  const localDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'videos')
-  const localFilePath = path.join(process.cwd(), 'public', relativePath)
-
-  if (fs.existsSync(localFilePath)) {
-    return localFilePath
-  }
-
-  fs.mkdirSync(localDir, { recursive: true })
-
-  const response = await fetch(fullUrl)
-  if (!response.ok) {
-    console.error(`[downloadVideoToLocal] Fetch failed: ${response.status} ${response.statusText}`)
-    console.error(`[downloadVideoToLocal] URL: ${fullUrl}`)
-    throw new Error(`Failed to download video: ${response.statusText}`)
-  }
-  const buffer = await response.arrayBuffer()
-  fs.writeFileSync(localFilePath, Buffer.from(buffer))
-  return localFilePath
 }
 
 // POST /api/video-push/prepare-clips
@@ -108,11 +80,12 @@ export async function POST(request: NextRequest) {
 
     // 先下载视频到本地，再传递本地路径给 CLI dry-run
     const teamId = session.user.teamId
+    const capcut = getCapcutProvider()
     console.log(`[prepare-clips] Step 1: download videos, teamId=${teamId}`)
     let videoPaths: string[] = []
     try {
       videoPaths = await Promise.all(
-        videos.map((v) => downloadVideoToLocal(v.url, teamId))
+        videos.map((v) => capcut.downloadVideoToLocal(v.url, teamId))
       )
     } catch (err) {
       console.error('[prepare-clips] Step 1 failed - downloadVideoToLocal:', err)
@@ -121,7 +94,6 @@ export async function POST(request: NextRequest) {
     console.log(`[prepare-clips] Step 1 success: downloaded ${videoPaths.length} videos`)
 
     // dry-run 获取数量
-    const capcut = getCapcutProvider()
     console.log(`[prepare-clips] Step 2: CLI dry-run`)
     console.log(`[prepare-clips] CLI command: cd "${capcut.capcutPath}" && node src/cli.js video-clip ${videoPaths.join(' ')} -t detail-focus -o ${capcut.capcutPath}/tmp`)
     let dryRunResult: { count: number; error?: string } = {}

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
-import fs from 'fs'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { db } from '@/foundation/lib/db'
@@ -16,35 +15,8 @@ function computeVideoIdHash(videoIds: string[]): string {
   return crypto.createHash('md5').update(joined).digest('hex')
 }
 
-// 下载远程视频到本地 public 目录，返回本地文件路径
-async function downloadVideoToLocal(url: string | null | undefined, teamId: string): Promise<string> {
-  if (!url) throw new Error('Video URL is null or undefined')
-  const IMAGE_SERVICE_BASE_URL = process.env.IMAGE_SERVICE_BASE_URL || 'http://192.168.2.38'
-  const fullUrl = url.startsWith('http') ? url : `${IMAGE_SERVICE_BASE_URL}${url}`
-
-  const relativePath = url.startsWith('/') ? url : `/uploads/teams/${teamId}/videos/${path.basename(url)}`
-  const localDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'videos')
-  const localFilePath = path.join(process.cwd(), 'public', relativePath)
-
-  if (fs.existsSync(localFilePath)) {
-    return localFilePath
-  }
-
-  fs.mkdirSync(localDir, { recursive: true })
-
-  const response = await fetch(fullUrl)
-  if (!response.ok) {
-    console.error(`[downloadVideoToLocal] Fetch failed: ${response.status} ${response.statusText}`)
-    console.error(`[downloadVideoToLocal] URL: ${fullUrl}`)
-    throw new Error(`Failed to download video: ${response.statusText}`)
-  }
-  const buffer = await response.arrayBuffer()
-  fs.writeFileSync(localFilePath, Buffer.from(buffer))
-  return localFilePath
-}
-
 // POST /api/video-push/clip
-// 异步执行剪辑，CLI 完成后回调更新状态
+// 双阶段执行：dry-run → 创建 VideoPush 记录 → CLI 执行
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
@@ -63,28 +35,7 @@ export async function POST(request: NextRequest) {
     const videoIdHash = computeVideoIdHash(videoIds)
     const videoIdStr = videoIds.join(',')
 
-    // 查找 pending 记录
-    const pendingRecords = await db.videoPush.findMany({
-      where: {
-        productId,
-        ipId,
-        sceneId,
-        videoIdHash,
-        status: 'pending',
-      },
-      take: 1, // 每次执行一个
-    })
-
-    if (pendingRecords.length === 0) {
-      return NextResponse.json({
-        message: 'No pending clips to process',
-        pendingCount: 0,
-      })
-    }
-
-    const record = pendingRecords[0]
-
-    // 获取视频 URL - use any to bypass Prisma strict null checking
+    // 获取视频 URL
     const videos: { id: string; url: string }[] = await db.video.findMany({
       where: {
         id: { in: videoIds },
@@ -109,19 +60,20 @@ export async function POST(request: NextRequest) {
 
     // 获取 base URL 用于回调
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3000}`
-    const callbackUrl = `${baseUrl}/api/video-push/callback?videoPushId=${record.id}`
+    const callbackUrl = `${baseUrl}/api/video-push/callback`
 
     // 获取 output 目录
     const teamId = session.user.teamId
     const today = new Date().toISOString().split('T')[0]
     const outputDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'clips', today)
 
-    // 先下载视频到本地，再传递本地路径给 CLI
+    // Step 1: 下载视频到本地
+    const capcut = getCapcutProvider()
     console.log(`[clip] Step 1: download videos, teamId=${teamId}`)
     let videoPaths: string[] = []
     try {
       videoPaths = await Promise.all(
-        videos.map((v) => downloadVideoToLocal(v.url, teamId))
+        videos.map((v) => capcut.downloadVideoToLocal(v.url, teamId))
       )
     } catch (err) {
       console.error('[clip] Step 1 failed - downloadVideoToLocal:', err)
@@ -129,24 +81,70 @@ export async function POST(request: NextRequest) {
     }
     console.log(`[clip] Step 1 success: downloaded ${videoPaths.length} videos`)
 
-    // 调用 CLI 异步执行（使用本地文件路径）
-    const capcut = getCapcutProvider()
-    console.log(`[clip] Step 2: spawn clipAsync`)
+    // Step 2: CLI dry-run 获取 templates
+    console.log(`[clip] Step 2: CLI dry-run`)
+    let dryRunResult: { count: number; templates?: { name: string; videoCount: number }[]; error?: string }
+    try {
+      dryRunResult = await capcut.clipDryRun({
+        videoUrls: videoPaths,
+        outputDir: path.join(process.cwd(), 'tmp', 'capcut-dryrun'),
+      })
+    } catch (err) {
+      console.error('[clip] Step 2 failed - clipDryRun:', err)
+      throw err
+    }
+
+    if (dryRunResult.error || dryRunResult.count === 0) {
+      return NextResponse.json({
+        message: 'No templates available for this video count',
+        count: 0,
+      })
+    }
+    console.log(`[clip] Step 2 success: ${dryRunResult.count} templates`)
+
+    // Step 3: 为每个 template 创建 VideoPush 记录
+    console.log(`[clip] Step 3: create VideoPush records`)
+    const templateToVpMap: Map<string, string> = new Map()  // templateName → videoPushId
+    const videoPushIds: string[] = []
+
+    for (const tmpl of dryRunResult.templates || []) {
+      const record = await db.videoPush.create({
+        data: {
+          productId,
+          ipId,
+          sceneId,
+          videoId: videoIdStr,
+          videoIdHash,
+          templateName: tmpl.name,
+          status: 'pending',
+        }
+      })
+      templateToVpMap.set(tmpl.name, record.id)
+      videoPushIds.push(record.id)
+    }
+    console.log(`[clip] Step 3 success: created ${videoPushIds.length} VideoPush records`)
+
+    // Step 4: 构建 mapping 并调用 CLI
+    const mappingArg = Array.from(templateToVpMap.entries())
+      .map(([tmpl, vpId]) => `${tmpl}:${vpId}`)
+      .join(',')
+    console.log(`[clip] Step 4: spawn clipAsync with mapping`)
+
     capcut.clipAsync({
       videoUrls: videoPaths,
       musicUrl,
       outputDir,
       callbackUrl,
-      templateName: record.templateName || 'detail-focus',
+      mapping: mappingArg,
     })
 
-    console.log(`[clip] CLI command: ${capcut.capcutPath} clip --videos ${videoPaths.join(',')} --output ${outputDir} --callback ${callbackUrl}`)
-    console.log(`[clip] Started async clip for VideoPush ${record.id}`)
+    console.log(`[clip] Started async clip job for ${videoPushIds.length} templates`)
+    console.log(`[clip] Mapping: ${mappingArg}`)
 
     return NextResponse.json({
-      message: `Clip job started for VideoPush ${record.id}`,
-      videoPushId: record.id,
-      pendingCount: pendingRecords.length,
+      message: `Clip job started`,
+      videoPushIds,
+      pendingCount: videoPushIds.length,
     })
   } catch (error) {
     console.error('[clip] Error:', error)

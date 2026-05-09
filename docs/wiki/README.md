@@ -11,6 +11,12 @@
 | [jimeng-cli.md](./jimeng-cli.md) | 即梦 CLI 命令行工具完整使用文档 |
 | [image-blend.md](./image-blend.md) | 双图编辑功能的技术实现和接口文档 |
 
+### CapCut CLI 工具
+
+| 文档 | 说明 |
+|------|------|
+| [capcut-cli.md](./capcut-cli.md) | CapCut CLI 接口协议文档（Provider 定义契约） |
+
 ## 快速开始
 
 ### 使用双图编辑
