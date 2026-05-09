@@ -185,6 +185,43 @@ export default function IpDetailPage() {
     }
   }
 
+  // Re-clip: trigger clip directly without prepare (uses selectedVideos from data)
+  const handleReclip = async () => {
+    if (data.selectedVideos.length === 0) {
+      alert('没有可剪辑的视频')
+      return
+    }
+    setClipping(true)
+    try {
+      // Direct clip API call - no prepare-clips needed
+      const clipRes = await fetch('/api/video-push/clip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          ipId,
+          sceneId: '',
+          videoIds: data.selectedVideos,
+        }),
+      })
+      if (!clipRes.ok) throw new Error('clip failed')
+
+      setSuccessMessage('重新剪辑任务已启动')
+      setTimeout(() => setSuccessMessage(null), 3000)
+      // Refresh data
+      const refreshRes = await fetch(`/api/daily-publish-plan/ip-detail?productId=${productId}&ipId=${ipId}`)
+      if (refreshRes.ok) {
+        const result = await refreshRes.json()
+        setData(result)
+      }
+    } catch (err) {
+      console.error(err)
+      alert('重新剪辑失败，请重试')
+    } finally {
+      setClipping(false)
+    }
+  }
+
   // New: go to video wizard with IP pre-selected
   const handleNew = () => {
     router.push(`/products/${productId}/video-wizard?ipId=${ipId}`)
@@ -423,6 +460,13 @@ export default function IpDetailPage() {
               className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm disabled:opacity-50"
             >
               {clipping ? '剪辑中...' : '剪辑'}
+            </button>
+            <button
+              onClick={handleReclip}
+              disabled={clipping || data.selectedVideos.length === 0}
+              className="px-4 py-2 rounded-lg border border-violet-200 bg-violet-50 text-sm text-violet-600 hover:bg-violet-100 hover:border-violet-400 transition-all shadow-sm disabled:opacity-50"
+            >
+              重新剪辑
             </button>
             <button
               onClick={handleNew}
