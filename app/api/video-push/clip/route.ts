@@ -128,7 +128,9 @@ export async function POST(request: NextRequest) {
     const mappingArg = Array.from(templateToVpMap.entries())
       .map(([tmpl, vpId]) => `${tmpl}:${vpId}`)
       .join(',')
-    console.log(`[clip] Step 4: spawn clipAsync with mapping`)
+    console.log(`[clip] Step 4: spawn clipAsync with mapping: ${mappingArg}`)
+    console.log(`[clip] Output dir: ${outputDir}`)
+    console.log(`[clip] Callback: ${callbackUrl}`)
 
     capcut.clipAsync({
       videoUrls: videoPaths,
@@ -139,7 +141,6 @@ export async function POST(request: NextRequest) {
     })
 
     console.log(`[clip] Started async clip job for ${videoPushIds.length} templates`)
-    console.log(`[clip] Mapping: ${mappingArg}`)
 
     return NextResponse.json({
       message: `Clip job started`,
