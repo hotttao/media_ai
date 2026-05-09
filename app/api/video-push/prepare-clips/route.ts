@@ -95,8 +95,7 @@ export async function POST(request: NextRequest) {
 
     // dry-run 获取数量
     console.log(`[prepare-clips] Step 2: CLI dry-run`)
-    console.log(`[prepare-clips] CLI command: cd "${capcut.capcutPath}" && node src/cli.js video-clip ${videoPaths.join(' ')} -t detail-focus -o ${capcut.capcutPath}/tmp`)
-    let dryRunResult: { count: number; error?: string } = {}
+    let dryRunResult: { count: number; templates?: { name: string; videoCount: number }[]; error?: string } = {}
     try {
       dryRunResult = await capcut.clipDryRun({
         videoUrls: videoPaths,
@@ -112,17 +111,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: dryRunResult.error }, { status: 500 })
     }
 
-    const potentialCount = dryRunResult.count
+    const templates = dryRunResult.templates || []
+    if (templates.length === 0) {
+      return NextResponse.json({
+        message: 'No templates available for this video count',
+        count: 0,
+      })
+    }
 
-    // 批量创建 pending 记录
+    // 为每个 template 创建 pending 记录
     const created = await db.videoPush.createMany({
-      data: Array.from({ length: potentialCount }, () => ({
+      data: templates.map((tmpl) => ({
         videoId: videoIdStr,
         videoIdHash,
         productId,
         ipId,
         sceneId,
-        templateName: templateName || null,
+        templateName: tmpl.name,
         musicId: musicId || null,
         status: 'pending',
         url: '',
@@ -133,7 +138,7 @@ export async function POST(request: NextRequest) {
       message: `Created ${created.count} pending clips`,
       videoIdHash,
       createdCount: created.count,
-      potentialCount,
+      templates: templates.map(t => t.name),
     })
   } catch (error) {
     console.error('[prepare-clips] Error:', error)
