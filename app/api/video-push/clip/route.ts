@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { productId, ipId, sceneId, videoIds, musicId } = body
 
-    if (!productId || !ipId || !sceneId || !videoIds || !Array.isArray(videoIds)) {
-      return NextResponse.json({ error: 'productId, ipId, sceneId, videoIds[] are required' }, { status: 400 })
+    if (!productId || !ipId || videoIds === undefined || !Array.isArray(videoIds)) {
+      return NextResponse.json({ error: 'productId, ipId, videoIds[] are required' }, { status: 400 })
     }
 
     // 计算 videoIdHash
