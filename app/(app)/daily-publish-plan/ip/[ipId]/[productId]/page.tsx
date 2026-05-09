@@ -185,10 +185,16 @@ export default function IpDetailPage() {
     }
   }
 
-  // Re-clip: trigger clip directly without prepare (uses selectedVideos from data)
+  // Re-clip: trigger clip directly without prepare (uses videoIds from first clip)
   const handleReclip = async () => {
-    if (data.selectedVideos.length === 0) {
-      alert('没有可剪辑的视频')
+    if (data.clips.length === 0) {
+      alert('没有可重新剪辑的视频')
+      return
+    }
+    // Use videoIds from the first clip
+    const videoIds = data.clips[0]?.videoIds
+    if (!videoIds || videoIds.length === 0) {
+      alert('无法获取原始视频 ID')
       return
     }
     setClipping(true)
@@ -201,7 +207,7 @@ export default function IpDetailPage() {
           productId,
           ipId,
           sceneId: '',
-          videoIds: data.selectedVideos,
+          videoIds: videoIds,
         }),
       })
       if (!clipRes.ok) throw new Error('clip failed')
@@ -463,7 +469,7 @@ export default function IpDetailPage() {
             </button>
             <button
               onClick={handleReclip}
-              disabled={clipping || data.selectedVideos.length === 0}
+              disabled={clipping || data.clips.length === 0}
               className="px-4 py-2 rounded-lg border border-violet-200 bg-violet-50 text-sm text-violet-600 hover:bg-violet-100 hover:border-violet-400 transition-all shadow-sm disabled:opacity-50"
             >
               重新剪辑
