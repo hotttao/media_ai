@@ -187,7 +187,7 @@ export default function IpDetailPage() {
 
   // Re-clip: trigger clip directly without prepare (uses videoIds from first clip)
   const handleReclip = async () => {
-    if (data.clips.length === 0) {
+    if (!data || data.clips.length === 0) {
       alert('没有可重新剪辑的视频')
       return
     }
