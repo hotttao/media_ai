@@ -40,12 +40,12 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
           poseLinks: { select: { poseId: true } }
         }
       }),
-      // Scenes - 从 material 表获取 type='SCENE'，但只限允许列表中的
+      // Scenes - 从 material 表获取 type='SCENE'
+      // 如果有 allowedSceneIds 则过滤，否则返回所有场景（场景是通用素材）
       db.material.findMany({
-        where: {
-          type: 'SCENE',
-          id: { in: Array.from(allowedSceneIds) }
-        },
+        where: allowedSceneIds.size > 0
+          ? { type: 'SCENE', id: { in: Array.from(allowedSceneIds) } }
+          : { type: 'SCENE' },
         select: { id: true, name: true, url: true }
       }),
       // Style Images
