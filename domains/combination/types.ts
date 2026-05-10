@@ -92,6 +92,8 @@ export interface MaterialPool {
   scenes: Scene[]
   styleImages: StyleImage[]
   modelImages: ModelImage[]
+  productId: string
+  ipId: string
 }
 
 // ============ 组合结果 ============

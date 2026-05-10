@@ -149,13 +149,33 @@ export async function GET(request: NextRequest) {
     }) : []
     const sceneMap = new Map(scenes.map(s => [s.id, { id: s.id, name: s.name, thumbnail: s.url }]))
 
+    // Get product images (main image first)
+    const productImages = await db.productImage.findMany({
+      where: { productId },
+      orderBy: [{ isMain: 'desc' }, { order: 'asc' }],
+      take: 5,
+      select: { id: true, url: true, isMain: true }
+    })
+
+    // Return ALL AI videos regardless of clip status
+    // The frontend will handle disabling clip button for clipped videos
+    const allAIVideos = sourceVideos.map(v => ({
+      id: v.id,
+      url: v.url,
+      thumbnail: v.thumbnail || (v.firstFrameId ? firstFrameMap.get(v.firstFrameId) || null : null),
+      createdAt: v.createdAt.toISOString(),
+      sceneId: v.sceneId || null,
+      hasClip: videoPushes.some(vp => vp.videoId?.split(',').map(id => id.trim()).filter(Boolean).includes(v.id)),
+    }))
+
     return NextResponse.json({
       productId,
       ipId,
       ipNickname: ip?.nickname || '',
       productName: product.name,
+      productImages,
       selectedVideos: selectedVideoIds,
-      videos: videosList,
+      videos: allAIVideos,
       clips,
       scenes: scenes.map(s => ({ id: s.id, name: s.name, thumbnail: s.url })),
     })

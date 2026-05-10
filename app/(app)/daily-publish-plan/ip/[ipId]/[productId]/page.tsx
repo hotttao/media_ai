@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { cn, getImageUrl } from '@/foundation/lib/utils'
@@ -11,6 +11,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+
+interface AIVideo {
+  id: string
+  url: string
+  thumbnail: string | null
+  createdAt: string
+  sceneId: string | null
+  hasClip: boolean
+}
 
 interface Clip {
   id: string
@@ -25,13 +34,22 @@ interface Clip {
   videoIds: string[]
 }
 
+interface ProductImage {
+  id: string
+  url: string
+  isMain: boolean
+}
+
 interface IpDetailData {
   productId: string
   ipId: string
   ipNickname: string
   productName: string
+  productImages: ProductImage[]
   selectedVideos: string[]
+  videos: AIVideo[]
   clips: Clip[]
+  scenes: { id: string; name: string; thumbnail: string | null }[]
 }
 
 interface ProductSearchResult {
@@ -52,11 +70,15 @@ export default function IpDetailPage() {
   const productId = params.productId as string
 
   const [data, setData] = useState<IpDetailData | null>(null)
-  const [selectedVideoIds, setSelectedVideoIds] = useState<Set<string>>(new Set())
+  const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [adding, setAdding] = useState(false)
+
+  // Video player state
+  const [playingVideo, setPlayingVideo] = useState<{ url: string; title: string } | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   // Mark unqualified dialog state
   const [unqualifiedDialogOpen, setUnqualifiedDialogOpen] = useState(false)
@@ -81,7 +103,7 @@ export default function IpDetailPage() {
         if (res.ok) {
           const result = await res.json()
           setData(result)
-          setSelectedVideoIds(new Set(result.selectedVideos || []))
+          setSelectedClipIds(new Set(result.selectedVideos || []))
         } else {
           throw new Error('Failed to fetch')
         }
@@ -136,12 +158,22 @@ export default function IpDetailPage() {
 
   // Clipping: call prepare-clips then clip
   const handleClip = async () => {
-    if (selectedVideoIds.size === 0) {
+    if (selectedClipIds.size === 0) {
       alert('请先选择要剪辑的视频')
       return
     }
     setClipping(true)
     try {
+      // Get videoIds from selected clips
+      const videoIds = data?.clips
+        .filter(c => selectedClipIds.has(c.videoPushId))
+        .flatMap(c => c.videoIds) || []
+
+      if (videoIds.length === 0) {
+        alert('无法获取视频 ID')
+        return
+      }
+
       // Step 1: prepare-clips creates pending VideoPush records
       const prepareRes = await fetch('/api/video-push/prepare-clips', {
         method: 'POST',
@@ -149,12 +181,11 @@ export default function IpDetailPage() {
         body: JSON.stringify({
           productId,
           ipId,
-          sceneId: '', // Will be set when needed
-          videoIds: Array.from(selectedVideoIds),
+          sceneId: '',
+          videoIds,
         }),
       })
       if (!prepareRes.ok) throw new Error('prepare-clips failed')
-      const { videoIdHash } = await prepareRes.json()
 
       // Step 2: trigger clip async
       const clipRes = await fetch('/api/video-push/clip', {
@@ -163,8 +194,8 @@ export default function IpDetailPage() {
         body: JSON.stringify({
           productId,
           ipId,
-          sceneId: '', // Will be set when needed
-          videoIds: Array.from(selectedVideoIds),
+          sceneId: '',
+          videoIds,
         }),
       })
       if (!clipRes.ok) throw new Error('clip failed')
@@ -199,7 +230,6 @@ export default function IpDetailPage() {
     }
     setClipping(true)
     try {
-      // Direct clip API call - no prepare-clips needed
       const clipRes = await fetch('/api/video-push/clip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -207,14 +237,13 @@ export default function IpDetailPage() {
           productId,
           ipId,
           sceneId: '',
-          videoIds: videoIds,
+          videoIds,
         }),
       })
       if (!clipRes.ok) throw new Error('clip failed')
 
       setSuccessMessage('重新剪辑任务已启动')
       setTimeout(() => setSuccessMessage(null), 3000)
-      // Refresh data
       const refreshRes = await fetch(`/api/daily-publish-plan/ip-detail?productId=${productId}&ipId=${ipId}`)
       if (refreshRes.ok) {
         const result = await refreshRes.json()
@@ -233,18 +262,61 @@ export default function IpDetailPage() {
     router.push(`/products/${productId}/video-wizard?ipId=${ipId}`)
   }
 
-  // Select publish videos: toggle video list mode
-  const [selectMode, setSelectMode] = useState(false)
-
-  const handleToggleSelectMode = () => {
-    if (!selectMode) {
-      // Enter select mode - show video selection
-      setSelectMode(true)
-    }
-    // Already in select mode - just toggle off or keep
+  // Toggle clip selection for publish
+  const toggleClipSelection = (clipId: string) => {
+    setSelectedClipIds(prev => {
+      const next = new Set(prev)
+      if (next.has(clipId)) {
+        next.delete(clipId)
+      } else {
+        next.add(clipId)
+      }
+      return next
+    })
   }
 
-  // Add product: after selecting, jump to video wizard with that product pre-selected
+  // Select all / deselect all
+  const selectAllClips = () => {
+    if (!data) return
+    const allIds = data.clips.filter(c => c.status !== 'published').map(c => c.videoPushId)
+    setSelectedClipIds(new Set(allIds))
+  }
+
+  const deselectAllClips = () => {
+    setSelectedClipIds(new Set())
+  }
+
+  // Confirm publish
+  const handleConfirmPublish = async () => {
+    if (selectedClipIds.size === 0) {
+      alert('请至少选择一个视频')
+      return
+    }
+    setConfirming(true)
+    try {
+      const res = await fetch('/api/daily-publish-plan/confirm-publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          ipId,
+          videoIds: Array.from(selectedClipIds)
+        })
+      })
+      if (res.ok) {
+        router.push('/daily-publish-plan')
+      } else {
+        throw new Error('Failed to confirm')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('确认失败，请重试')
+    } finally {
+      setConfirming(false)
+    }
+  }
+
+  // Add product
   const handleConfirmAddProductAndJump = async () => {
     if (!selectedProductId) {
       alert('请选择一个商品')
@@ -264,7 +336,6 @@ export default function IpDetailPage() {
       })
       if (res.ok) {
         setAddProductDialogOpen(false)
-        // Jump to video wizard for the selected product, with this IP pre-selected
         router.push(`/products/${selectedProductId}/video-wizard?ipId=${ipId}`)
       } else {
         throw new Error('Failed to add product')
@@ -274,47 +345,6 @@ export default function IpDetailPage() {
       alert('添加失败，请重试')
     } finally {
       setAdding(false)
-    }
-  }
-
-  const toggleVideoSelection = (videoId: string) => {
-    setSelectedVideoIds(prev => {
-      const next = new Set(prev)
-      if (next.has(videoId)) {
-        next.delete(videoId)
-      } else {
-        next.add(videoId)
-      }
-      return next
-    })
-  }
-
-  const handleConfirmPublish = async () => {
-    if (selectedVideoIds.size === 0) {
-      alert('请至少选择一个视频')
-      return
-    }
-    setConfirming(true)
-    try {
-      const res = await fetch('/api/daily-publish-plan/confirm-publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId,
-          ipId,
-          videoIds: Array.from(selectedVideoIds)
-        })
-      })
-      if (res.ok) {
-        router.push('/daily-publish-plan')
-      } else {
-        throw new Error('Failed to confirm')
-      }
-    } catch (err) {
-      console.error(err)
-      alert('确认失败，请重试')
-    } finally {
-      setConfirming(false)
     }
   }
 
@@ -374,7 +404,6 @@ export default function IpDetailPage() {
         setUnqualifiedDialogOpen(false)
         setSuccessMessage('已标记为不合格')
         setTimeout(() => setSuccessMessage(null), 2000)
-        // Refresh data
         const refreshRes = await fetch(`/api/daily-publish-plan/ip-detail?productId=${productId}&ipId=${ipId}`)
         if (refreshRes.ok) {
           const result = await refreshRes.json()
@@ -386,6 +415,82 @@ export default function IpDetailPage() {
     } catch (err) {
       console.error(err)
       alert('标记失败，请重试')
+    } finally {
+      setMarkingUnqualified(false)
+    }
+  }
+
+  // Play video
+  const handlePlayVideo = (clip: Clip) => {
+    setPlayingVideo({ url: clip.url, title: `视频 ${clip.videoPushId.slice(0, 8)}` })
+  }
+
+  // Publish single clip
+  const handlePublishClip = async (clip: Clip) => {
+    setSelectedClipIds(new Set([clip.videoPushId]))
+    setConfirming(true)
+    try {
+      const res = await fetch('/api/daily-publish-plan/confirm-publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          ipId,
+          videoIds: [clip.videoPushId]
+        })
+      })
+      if (res.ok) {
+        setSuccessMessage('发布成功')
+        setTimeout(() => setSuccessMessage(null), 2000)
+        const refreshRes = await fetch(`/api/daily-publish-plan/ip-detail?productId=${productId}&ipId=${ipId}`)
+        if (refreshRes.ok) {
+          const result = await refreshRes.json()
+          setData(result)
+        }
+      } else {
+        throw new Error('Failed to confirm')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('发布失败，请重试')
+    } finally {
+      setConfirming(false)
+    }
+  }
+
+  // Delete selected (mark as unqualified)
+  const handleDeleteSelected = async () => {
+    if (selectedClipIds.size === 0) {
+      alert('请先选择要删除的视频')
+      return
+    }
+    setMarkingUnqualified(true)
+    try {
+      const res = await fetch('/api/video-push/mark-unqualified', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          ipId,
+          videoPushIds: Array.from(selectedClipIds),
+          qualified: false
+        })
+      })
+      if (res.ok) {
+        setSuccessMessage(`已删除 ${selectedClipIds.size} 个视频`)
+        setTimeout(() => setSuccessMessage(null), 2000)
+        setSelectedClipIds(new Set())
+        const refreshRes = await fetch(`/api/daily-publish-plan/ip-detail?productId=${productId}&ipId=${ipId}`)
+        if (refreshRes.ok) {
+          const result = await refreshRes.json()
+          setData(result)
+        }
+      } else {
+        throw new Error('Failed to mark unqualified')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('删除失败，请重试')
     } finally {
       setMarkingUnqualified(false)
     }
@@ -407,7 +512,11 @@ export default function IpDetailPage() {
     )
   }
 
-  const selectedCount = selectedVideoIds.size
+  // Check if any selected clips are already completed/published (should not re-clip those)
+  const selectedCount = selectedClipIds.size
+  const selectedClipsForClip = data?.clips.filter(c => selectedClipIds.has(c.videoPushId)) || []
+  const hasCompletedOrPublished = selectedClipsForClip.some(c => c.status === 'ready' || c.status === 'published')
+  const canClip = selectedCount > 0 && !hasCompletedOrPublished
   const totalCount = data.clips.length
 
   return (
@@ -416,7 +525,7 @@ export default function IpDetailPage() {
       <div className="fixed top-20 left-20 w-96 h-96 bg-violet-300/30 rounded-full blur-[120px] pointer-events-none animate-pulse" />
       <div className="fixed bottom-20 right-20 w-80 h-80 bg-fuchsia-300/30 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
 
-      <div className="relative max-w-2xl mx-auto px-6 py-8">
+      <div className="relative max-w-4xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -438,34 +547,247 @@ export default function IpDetailPage() {
             <button className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm">
               编辑
             </button>
-            <button className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-red-500 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm">
-              删除
+            <button
+              onClick={handleDeleteSelected}
+              disabled={selectedCount === 0 || markingUnqualified}
+              className="px-4 py-2 rounded-lg border border-red-200 bg-white text-sm text-red-500 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm disabled:opacity-50"
+            >
+              删除选中 ({selectedCount})
             </button>
           </div>
         </div>
 
-        {/* Product Info */}
+        {/* Product Info with Images */}
         <div className="mb-6">
           <div className="rounded-xl border border-oat bg-white p-5 shadow-clay">
-            <div className="text-sm text-warm-silver mb-1">产品</div>
-            <div className="text-base font-semibold text-warm-charcoal">{data.productName}</div>
+            <div className="text-sm text-warm-silver mb-3">产品</div>
+            <div className="flex items-start gap-6">
+              {/* Product Images - Larger display */}
+              {data.productImages.length > 0 && (
+                <div className="flex-shrink-0">
+                  <div className="grid grid-cols-3 gap-2">
+                    {data.productImages.slice(0, 3).map((img, idx) => (
+                      <div
+                        key={img.id}
+                        className={cn(
+                          'w-24 h-24 rounded-lg overflow-hidden bg-matcha-100',
+                          idx === 0 && 'row-span-2 w-28 h-52'
+                        )}
+                      >
+                        <img
+                          src={getImageUrl(img.url)}
+                          alt={`产品图 ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="text-base font-semibold text-warm-charcoal mb-1">{data.productName}</div>
+                <div className="text-xs text-warm-silver">
+                  共 {data.productImages.length} 张图片
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Videos Section */}
+        {data.videos.length > 0 && (
+          <div className="mb-6">
+            <div className="rounded-xl border border-oat bg-white shadow-clay overflow-hidden">
+              <div className="px-5 py-4 border-b border-oat flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-warm-charcoal">AI 视频 ({data.videos.length})</h2>
+                <span className="text-xs text-warm-silver">
+                  {data.videos.filter(v => v.hasClip).length} 个已剪辑
+                </span>
+              </div>
+              <div className="px-5 py-4">
+                <div className="flex items-center gap-3 overflow-x-auto pb-2">
+                  {data.videos.map(video => (
+                    <div
+                      key={video.id}
+                      className={cn(
+                        'flex-shrink-0 w-28 rounded-lg overflow-hidden bg-matcha-100 relative',
+                        video.hasClip && 'opacity-60'
+                      )}
+                    >
+                      {video.thumbnail ? (
+                        <img
+                          src={getImageUrl(video.thumbnail)}
+                          alt="AI视频"
+                          className="w-full h-20 object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-20 flex items-center justify-center">
+                          <svg className="w-8 h-8 text-matcha-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                      {video.hasClip && (
+                        <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-violet-500 text-white text-[10px] rounded">
+                          已剪辑
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Clips Section - Row display */}
+        <div className="mb-6">
+          <div className="rounded-xl border border-oat bg-white shadow-clay overflow-hidden">
+            <div className="px-5 py-4 border-b border-oat flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <h2 className="text-sm font-semibold text-warm-charcoal">剪辑成片 ({totalCount})</h2>
+                {selectedCount > 0 && (
+                  <span className="text-xs text-violet-600 font-medium">
+                    已选 {selectedCount} 个
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={selectAllClips}
+                  className="text-xs text-warm-silver hover:text-violet-600 transition-colors"
+                >
+                  全选
+                </button>
+                <span className="text-warm-silver">|</span>
+                <button
+                  onClick={deselectAllClips}
+                  className="text-xs text-warm-silver hover:text-violet-600 transition-colors"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+            <div className="divide-y divide-oat/50">
+              {data.clips.length === 0 ? (
+                <div className="px-5 py-12 text-center">
+                  <p className="text-warm-silver text-sm">暂无剪辑成片</p>
+                </div>
+              ) : (
+                data.clips.map(clip => {
+                  const isSelected = selectedClipIds.has(clip.videoPushId)
+                  return (
+                    <div
+                      key={clip.videoPushId}
+                      className="flex items-center gap-4 px-5 py-4 hover:bg-violet-50/30 transition-colors"
+                    >
+                      {/* Selection checkbox */}
+                      <button
+                        onClick={() => toggleClipSelection(clip.videoPushId)}
+                        className={cn(
+                          'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                          isSelected
+                            ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
+                            : 'bg-white border-oat hover:border-violet-400'
+                        )}
+                      >
+                        {isSelected && (
+                          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+
+                      {/* Thumbnail with play overlay */}
+                      <div
+                        className="w-24 h-16 rounded-lg bg-matcha-100 overflow-hidden flex-shrink-0 relative cursor-pointer group"
+                        onClick={() => clip.url && handlePlayVideo(clip)}
+                      >
+                        {clip.thumbnail ? (
+                          <>
+                            <img
+                              src={getImageUrl(clip.thumbnail)}
+                              alt="thumbnail"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-matcha-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Video info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-mono text-warm-charcoal truncate">{clip.videoPushId.slice(0, 16)}...</div>
+                        <div className="text-xs text-warm-silver mt-0.5">
+                          {new Date(clip.createdAt).toLocaleDateString('zh-CN')} · {clip.videoIds.length} 个源视频
+                        </div>
+                      </div>
+
+                      {/* Status badge */}
+                      <span className={cn(
+                        'text-xs font-medium px-2 py-1 rounded',
+                        clip.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
+                        clip.status === 'ready' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-warm-silver'
+                      )}>
+                        {clip.status === 'published' ? '已发布' : clip.status === 'ready' ? '待发布' : '剪辑中'}
+                      </span>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2">
+                        {clip.status !== 'published' && clip.url && (
+                          <button
+                            onClick={() => handlePlayVideo(clip)}
+                            className="px-3 py-1.5 rounded-lg border border-oat text-xs text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all"
+                          >
+                            查看
+                          </button>
+                        )}
+                        {clip.status === 'ready' && (
+                          <button
+                            onClick={() => handlePublishClip(clip)}
+                            disabled={confirming}
+                            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-xs text-white font-medium hover:shadow-lg transition-all disabled:opacity-50"
+                          >
+                            发布
+                          </button>
+                        )}
+                        {!clip.isQualified && (
+                          <button
+                            onClick={() => handleOpenUnqualifiedDialog(clip)}
+                            className="px-2 py-1 rounded border border-red-200 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                            title="标记不合格"
+                          >
+                            不合格
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
           </div>
         </div>
 
         {/* Action Bar */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm text-warm-silver">
-              已选 <span className="font-semibold text-violet-600">{selectedCount}</span>/{totalCount} 个视频
-            </div>
-          </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleClip}
-              disabled={clipping || selectedVideoIds.size === 0}
+              disabled={clipping || !canClip}
               className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm disabled:opacity-50"
             >
-              {clipping ? '剪辑中...' : '剪辑'}
+              {clipping ? '剪辑中...' : (hasCompletedOrPublished ? '包含已剪辑视频' : '剪辑选中')}
             </button>
             <button
               onClick={handleReclip}
@@ -480,122 +802,39 @@ export default function IpDetailPage() {
             >
               新增
             </button>
-            <button
-              onClick={handleToggleSelectMode}
-              className={cn(
-                'px-4 py-2 rounded-lg border text-sm transition-all shadow-sm',
-                selectMode
-                  ? 'border-violet-400 bg-violet-50 text-violet-600'
-                  : 'border-oat bg-white text-warm-silver hover:bg-matcha-50 hover:border-matcha-600'
-              )}
-            >
-              {selectMode ? '取消选择' : '选择发布视频'}
-            </button>
-            <button
-              onClick={handleOpenAddProductDialog}
-              className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
-            >
-              添加商品
-            </button>
-          </div>
-        </div>
-
-        {/* Video List */}
-        <div className="rounded-2xl border border-oat bg-white shadow-clay overflow-hidden mb-6">
-          <div className="px-5 py-4 border-b border-oat">
-            <h2 className="text-sm font-semibold text-warm-charcoal">视频列表</h2>
-          </div>
-          <div className="divide-y divide-oat/50">
-            {data.clips.length === 0 ? (
-              <div className="px-5 py-12 text-center">
-                <p className="text-warm-silver text-sm">暂无视频</p>
-              </div>
-            ) : (
-              data.clips.map(clip => {
-                const isSelected = selectedVideoIds.has(clip.videoPushId)
-                return (
-                  <div
-                    key={clip.videoPushId}
-                    onClick={() => toggleVideoSelection(clip.videoPushId)}
-                    className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-violet-50/50 transition-colors"
-                  >
-                    <button
-                      className={cn(
-                        'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all',
-                        isSelected
-                          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
-                          : 'bg-white border-oat hover:border-violet-400'
-                      )}
-                    >
-                      {isSelected && (
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </button>
-                    <div className="w-16 h-12 rounded-lg bg-matcha-100 overflow-hidden flex-shrink-0">
-                      {clip.thumbnail ? (
-                        <img
-                          src={getImageUrl(clip.thumbnail)}
-                          alt="thumbnail"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <svg className="w-6 h-6 text-matcha-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-mono text-warm-charcoal truncate">{clip.videoPushId}</div>
-                      <div className="text-xs text-warm-silver">
-                        {new Date(clip.createdAt).toLocaleDateString('zh-CN')}
-                      </div>
-                    </div>
-                    <span className={cn(
-                      'text-xs font-medium',
-                      clip.status === 'published' ? 'text-emerald-600' :
-                      clip.status === 'ready' ? 'text-amber-600' : 'text-warm-silver'
-                    )}>
-                      {clip.status === 'published' ? '已发布' : clip.status === 'ready' ? '待发布' : '剪辑中'}
-                    </span>
-                    {isSelected && (
-                      <span className="text-xs text-violet-600 font-medium">已选</span>
-                    )}
-                    {!clip.isQualified && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleOpenUnqualifiedDialog(clip)
-                        }}
-                        className="ml-2 px-2 py-1 rounded border border-red-200 text-xs text-red-500 hover:bg-red-50 transition-colors"
-                        title="标记不合格"
-                      >
-                        不合格
-                      </button>
-                    )}
-                  </div>
-                )
-              })
-            )}
           </div>
         </div>
 
         {/* Confirm Button */}
-        <button
-          onClick={handleConfirmPublish}
-          disabled={confirming || selectedCount === 0}
-          className={cn(
-            'w-full py-3 rounded-xl font-semibold text-white transition-all shadow-lg',
-            selectedCount > 0
-              ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:shadow-xl hover:scale-[1.01]'
-              : 'bg-warm-silver/50 cursor-not-allowed'
-          )}
-        >
-          {confirming ? '确认中...' : '确认发布计划'}
-        </button>
+        {selectedCount > 0 && (
+          <button
+            onClick={handleConfirmPublish}
+            disabled={confirming}
+            className="w-full py-3 rounded-xl font-semibold text-white transition-all shadow-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:shadow-xl hover:scale-[1.01]"
+          >
+            {confirming ? '确认中...' : `确认发布选中的 ${selectedCount} 个视频`}
+          </button>
+        )}
+
+        {/* Video Player Modal */}
+        <Dialog open={!!playingVideo} onOpenChange={() => setPlayingVideo(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{playingVideo?.title}</DialogTitle>
+            </DialogHeader>
+            <div className="relative rounded-lg overflow-hidden bg-black">
+              {playingVideo?.url && (
+                <video
+                  ref={videoRef}
+                  src={playingVideo.url}
+                  controls
+                  autoPlay
+                  className="w-full max-h-[60vh] mx-auto"
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Add Product Dialog */}
         <Dialog open={addProductDialogOpen} onOpenChange={setAddProductDialogOpen}>

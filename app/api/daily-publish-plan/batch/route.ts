@@ -44,20 +44,30 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // Try to create, use upsert for duplicates
-        await db.dailyPublishPlan.upsert({
+        // Check if already exists for this user or team unassigned
+        const existing = await db.dailyPublishPlan.findFirst({
           where: {
-            uk_daily_publish_plan_user_product_date: {
-              userId: session.user.id,
-              productId,
-              planDate: date,
-            },
-          },
-          update: {},
-          create: {
-            userId: session.user.id,
             productId,
             planDate: date,
+            OR: [
+              { userId: session.user.id },
+              { userId: session.user.teamId!, isUnassigned: true },
+            ],
+          },
+        })
+
+        if (existing) {
+          results.skipped++
+          continue
+        }
+
+        // Create with isUnassigned flag - product is in team pool, not assigned to anyone
+        await db.dailyPublishPlan.create({
+          data: {
+            userId: session.user.teamId!,
+            productId,
+            planDate: date,
+            isUnassigned: true,
           },
         })
         results.added++

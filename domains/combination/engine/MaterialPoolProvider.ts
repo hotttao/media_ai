@@ -79,7 +79,9 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
       })) as Movement[],
       scenes: scenes as unknown as Scene[],
       styleImages: styleImages as any[],
-      modelImages: modelImages as any[]
+      modelImages: modelImages as any[],
+      productId,
+      ipId
     }
   }
 

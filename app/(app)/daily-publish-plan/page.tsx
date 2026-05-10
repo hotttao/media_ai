@@ -1,166 +1,126 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import Link from 'next/link'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { cn, getImageUrl } from '@/foundation/lib/utils'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
-
-interface IpInfo {
-  ipId: string
-  nickname: string
-  selected: boolean
-  videoCount: number
-}
-
-interface ProductStats {
-  productId: string
-  productName: string
-  productImage: string
-  ips: IpInfo[]
-}
 
 interface AvailableIp {
   id: string
   nickname: string
+  avatarUrl: string | null
+}
+
+interface DailyPlanProduct {
+  planId: string
+  productId: string
+  productName: string
+  productImage: string
+  isUnassigned: boolean
+  videoCount: number
+  publishedCount: number
+  ipId: string | null
+  ipNickname: string | null
 }
 
 export default function DailyPublishPlanPage() {
+  const router = useRouter()
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0]
   })
-  const [products, setProducts] = useState<ProductStats[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedIpId, setSelectedIpId] = useState<string | null>(null)
-
-  // Add IP dialog state
-  const [addIpDialogOpen, setAddIpDialogOpen] = useState(false)
-  const [targetProductId, setTargetProductId] = useState<string | null>(null)
+  const [dailyPlanProducts, setDailyPlanProducts] = useState<DailyPlanProduct[]>([])
   const [availableIps, setAvailableIps] = useState<AvailableIp[]>([])
-  const [selectedIpToAdd, setSelectedIpToAdd] = useState<string | null>(null)
-  const [loadingIps, setLoadingIps] = useState(false)
-  const [addingIp, setAddingIp] = useState(false)
+  const [selectedIpId, setSelectedIpId] = useState<string | null>(null)
+  const [loadingProducts, setLoadingProducts] = useState(false)
 
-  const fetchProducts = async () => {
-    if (!selectedDate) return
-    setLoading(true)
+  // Fetch daily plan products
+  const fetchDailyPlanProducts = useCallback(async () => {
+    setLoadingProducts(true)
     try {
-      const res = await fetch(`/api/daily-publish-plan/${selectedDate}/products`)
+      const res = await fetch(`/api/daily-publish-plan/plan-products?date=${selectedDate}`)
       if (res.ok) {
         const data = await res.json()
-        setProducts(data.products || [])
-      } else {
-        throw new Error('Failed to fetch products')
+        setDailyPlanProducts(data.products || [])
       }
     } catch (err) {
       console.error(err)
-      setError('加载失败，请重试')
     } finally {
-      setLoading(false)
+      setLoadingProducts(false)
     }
-  }
-
-  useEffect(() => {
-    fetchProducts()
   }, [selectedDate])
 
-  const availableIpsForFilter = useMemo(() => {
-    const ipMap = new Map<string, { id: string; nickname: string }>()
-    products.forEach(p => {
-      p.ips.forEach(ip => {
-        if (ip.ipId && !ipMap.has(ip.ipId)) {
-          ipMap.set(ip.ipId, { id: ip.ipId, nickname: ip.nickname })
-        }
-      })
-    })
-    return Array.from(ipMap.values())
-  }, [products])
-
-  const filteredProducts = useMemo(() => {
-    if (!selectedIpId) return products
-    return products.filter(p => p.ips.some(ip => ip.ipId === selectedIpId))
-  }, [products, selectedIpId])
-
-  const aggregateStats = useMemo(() => {
-    return filteredProducts.reduce((acc, p) => {
-      const totalAi = p.ips.reduce((sum, ip) => sum + ip.videoCount, 0)
-      return {
-        totalAi: acc.totalAi + totalAi,
-        totalPushable: acc.totalPushable,
-        totalPublished: acc.totalPublished,
-        totalClippable: acc.totalClippable,
-        totalNewGeneratable: acc.totalNewGeneratable,
-      }
-    }, { totalAi: 0, totalPushable: 0, totalPublished: 0, totalClippable: 0, totalNewGeneratable: 0 })
-  }, [filteredProducts])
-
-  const handleToggleIpSelection = async (productId: string, ipId: string) => {
+  // Fetch all IPs
+  const fetchAvailableIps = useCallback(async () => {
     try {
-      const res = await fetch('/api/daily-publish-plan/assign-ip', {
+      const res = await fetch('/api/virtual-ips')
+      if (res.ok) {
+        const ips = await res.json()
+        setAvailableIps(ips)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchDailyPlanProducts()
+    fetchAvailableIps()
+  }, [fetchDailyPlanProducts, fetchAvailableIps])
+
+  // Join product to IP (creates VideoPush record)
+  const handleJoinIp = async (productId: string, ipId: string) => {
+    try {
+      await fetch('/api/daily-publish-plan/assign-ip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, ipId, date: selectedDate }),
       })
-      if (res.ok) {
-        fetchProducts()
-      }
+      fetchDailyPlanProducts()
     } catch (err) {
       console.error(err)
     }
   }
 
-  // Open add IP dialog - fetch available IPs for this product
-  const handleOpenAddIpDialog = async (productId: string) => {
-    setTargetProductId(productId)
-    setSelectedIpToAdd(null)
-    setAddIpDialogOpen(true)
-    setLoadingIps(true)
+  // Cancel join (remove VideoPush record)
+  const handleCancelJoin = async (productId: string, ipId: string) => {
     try {
-      // Fetch all IPs and filter out already assigned ones
-      const res = await fetch(`/api/virtual-ips`)
-      if (res.ok) {
-        const allIps: AvailableIp[] = await res.json()
-        const product = products.find(p => p.productId === productId)
-        const assignedIpIds = new Set(product?.ips.map(ip => ip.ipId) || [])
-        const unassigned = allIps.filter(ip => !assignedIpIds.has(ip.id))
-        setAvailableIps(unassigned)
-      }
+      await fetch(`/api/daily-publish-plan/assign-ip?productId=${productId}&ipId=${ipId}`, {
+        method: 'DELETE',
+      })
+      fetchDailyPlanProducts()
     } catch (err) {
       console.error(err)
-    } finally {
-      setLoadingIps(false)
     }
   }
 
-  // Confirm add IP
-  const handleConfirmAddIp = async () => {
-    if (!targetProductId || !selectedIpToAdd) return
-    setAddingIp(true)
+  // Add product to daily plan
+  const handleAddToPlan = async (productId: string) => {
     try {
-      const res = await fetch('/api/daily-publish-plan/assign-ip', {
+      await fetch('/api/daily-publish-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: targetProductId,
-          ipId: selectedIpToAdd,
-          date: selectedDate,
-        }),
+        body: JSON.stringify({ productId, planDate: selectedDate }),
       })
-      if (res.ok) {
-        setAddIpDialogOpen(false)
-        fetchProducts()
-      }
+      fetchDailyPlanProducts()
     } catch (err) {
       console.error(err)
-    } finally {
-      setAddingIp(false)
     }
+  }
+
+  // Remove from daily plan
+  const handleRemoveFromPlan = async (planId: string) => {
+    try {
+      await fetch(`/api/daily-publish-plan/${planId}`, {
+        method: 'DELETE',
+      })
+      fetchDailyPlanProducts()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  // Navigate to publish page
+  const handleGoToPublish = (productId: string, ipId: string) => {
+    router.push(`/daily-publish-plan/ip/${ipId}?productId=${productId}`)
   }
 
   const formatDate = (dateStr: string) => {
@@ -175,13 +135,12 @@ export default function DailyPublishPlanPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
-      {/* Floating orbs - 与 tools 页面一致 */}
       <div className="fixed top-20 left-20 w-96 h-96 bg-violet-300/30 rounded-full blur-[120px] pointer-events-none animate-pulse" />
       <div className="fixed bottom-20 right-20 w-80 h-80 bg-fuchsia-300/30 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
 
-      <div className="relative max-w-6xl mx-auto px-6 py-8">
+      <div className="relative max-w-5xl mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -229,265 +188,185 @@ export default function DailyPublishPlanPage() {
             >
               今日
             </button>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={e => setSelectedDate(e.target.value)}
-              className="sr-only"
-              id="date-input"
-            />
-            <label htmlFor="date-input" className="w-9 h-9 rounded-lg border border-oat bg-white flex items-center justify-center text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm cursor-pointer">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </label>
           </div>
         </div>
 
-        {error ? (
-          <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-4">
-              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+        {/* IP Selection Bar */}
+        {availableIps.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-3 overflow-x-auto pb-2">
+              <span className="text-sm text-warm-silver flex-shrink-0">选择 IP：</span>
+              {availableIps.map((ip) => {
+                const isSelected = selectedIpId === ip.id
+                const productCount = dailyPlanProducts.filter(p => p.ipId === ip.id).length
+                return (
+                  <button
+                    key={ip.id}
+                    onClick={() => setSelectedIpId(isSelected ? null : ip.id)}
+                    className={cn(
+                      'flex items-center gap-3 px-4 py-3 rounded-xl transition-all flex-shrink-0',
+                      isSelected
+                        ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/30'
+                        : 'bg-white border border-oat hover:border-violet-400 hover:shadow-md'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-lg overflow-hidden',
+                        isSelected ? 'bg-white/20' : 'bg-matcha-100'
+                      )}
+                    >
+                      {ip.avatarUrl ? (
+                        <img src={getImageUrl(ip.avatarUrl)} alt={ip.nickname} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-lg font-bold text-warm-silver">
+                          {ip.nickname?.charAt(0) || '?'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <div className={cn('text-sm font-medium', isSelected ? 'text-white' : 'text-warm-charcoal')}>
+                        {ip.nickname || ip.id.slice(0, 8)}
+                      </div>
+                      {productCount > 0 && (
+                        <div className={cn('text-xs', isSelected ? 'text-white/70' : 'text-warm-silver')}>
+                          {productCount} 个商品
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
             </div>
-            <p className="text-red-500 font-medium">{error}</p>
           </div>
-        ) : loading ? (
+        )}
+
+        {/* Main Content */}
+        {loadingProducts ? (
           <div className="flex items-center justify-center py-16">
             <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            <span className="ml-4 text-warm-silver">加载中...</span>
           </div>
-        ) : filteredProducts.length === 0 ? (
+        ) : dailyPlanProducts.length === 0 ? (
           <div className="text-center py-16">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-violet-50 mb-6">
               <svg className="w-10 h-10 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-warm-charcoal mb-2">暂无产品</h2>
-            <p className="text-warm-silver text-sm mb-6">在产品详情页添加产品到当日发布计划</p>
-            <Link href="/products" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-sm font-medium shadow-lg shadow-violet-500/30 hover:shadow-xl hover:scale-[1.02] transition-all">
-              浏览产品
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
+            <h2 className="text-xl font-bold text-warm-charcoal mb-2">暂无发布计划</h2>
+            <p className="text-warm-silver text-sm mb-6">点击下方按钮添加商品到当日发布计划</p>
           </div>
         ) : (
-          <>
-            {/* IP Filter Tabs */}
-            {availableIpsForFilter.length > 1 && (
-              <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-                <button
-                  onClick={() => setSelectedIpId(null)}
-                  className={cn(
-                    'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all shadow-sm',
-                    !selectedIpId
-                      ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
-                      : 'bg-white text-warm-silver hover:bg-violet-50 border border-oat'
-                  )}
+          <div className="space-y-4">
+            {dailyPlanProducts.map((product, index) => {
+              const hasIpAssigned = product.ipId && product.ipNickname
+              const isIpSelected = selectedIpId && product.ipId === selectedIpId
+
+              return (
+                <div
+                  key={product.planId}
+                  className="flex items-center gap-4 p-4 rounded-xl border border-oat bg-white hover:shadow-md transition-all"
+                  style={{ animationDelay: `${index * 40}ms` }}
                 >
-                  全部 · {products.length}
-                </button>
-                {availableIpsForFilter.map(ip => {
-                  const count = products.filter(p => p.ips.some(i => i.ipId === ip.id)).length
-                  return (
-                    <button
-                      key={ip.id}
-                      onClick={() => setSelectedIpId(ip.id)}
-                      className={cn(
-                        'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all shadow-sm',
-                        selectedIpId === ip.id
-                          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
-                          : 'bg-white text-warm-silver hover:bg-violet-50 border border-oat'
-                      )}
-                    >
-                      {ip.nickname || ip.id.slice(0, 8)} · {count}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Aggregate Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <StatCard label="AI视频" value={aggregateStats.totalAi} color="from-blue-50 to-blue-100/50" borderColor="border-blue-200" textColor="text-blue-600" />
-              <StatCard label="已发布" value={aggregateStats.totalPublished} color="from-emerald-50 to-emerald-100/50" borderColor="border-emerald-200" textColor="text-emerald-600" />
-              <StatCard label="待发布" value={aggregateStats.totalPushable} color="from-amber-50 to-amber-100/50" borderColor="border-amber-200" textColor="text-amber-600" />
-            </div>
-
-            {/* Product List */}
-            <div className="space-y-4">
-              {filteredProducts.map((product, index) => (
-                <ProductCard
-                  key={product.productId}
-                  product={product}
-                  index={index}
-                  onToggleIp={handleToggleIpSelection}
-                  onAddIp={() => handleOpenAddIpDialog(product.productId)}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Add IP Dialog */}
-      <Dialog open={addIpDialogOpen} onOpenChange={setAddIpDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>添加 IP 发布计划</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            {loadingIps ? (
-              <div className="py-8 text-center text-warm-silver text-sm">加载中...</div>
-            ) : availableIps.length === 0 ? (
-              <div className="py-8 text-center text-warm-silver text-sm">暂无可添加的 IP</div>
-            ) : (
-              <div className="space-y-2">
-                {availableIps.map(ip => (
-                  <div
-                    key={ip.id}
-                    onClick={() => setSelectedIpToAdd(ip.id)}
-                    className={cn(
-                      'flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all',
-                      selectedIpToAdd === ip.id
-                        ? 'border-violet-400 bg-violet-50'
-                        : 'border-oat bg-white hover:border-violet-300'
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                        selectedIpToAdd === ip.id
-                          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
-                          : 'bg-white border-oat'
-                      )}
-                    >
-                      {selectedIpToAdd === ip.id && (
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  {/* Product Image */}
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-matcha-100 flex-shrink-0">
+                    {product.productImage ? (
+                      <img src={getImageUrl(product.productImage)} alt={product.productName} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <svg className="w-7 h-7 text-matcha-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-warm-charcoal truncate">{product.productName}</div>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-xs text-warm-silver">
+                        <span className="font-medium text-violet-600">{product.videoCount}</span> 个视频
+                      </span>
+                      {product.publishedCount > 0 && (
+                        <span className="text-xs text-warm-silver">
+                          <span className="font-medium text-emerald-600">{product.publishedCount}</span> 次发布
+                        </span>
                       )}
                     </div>
-                    <span className="text-sm text-warm-charcoal font-medium">
-                      {ip.nickname || ip.id.slice(0, 8)}
-                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <button
-              onClick={() => setAddIpDialogOpen(false)}
-              className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-gray-50 transition-all"
-            >
-              取消
-            </button>
-            <button
-              onClick={handleConfirmAddIp}
-              disabled={!selectedIpToAdd || addingIp}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-sm text-white font-medium hover:shadow-lg transition-all disabled:opacity-50"
-            >
-              {addingIp ? '添加中...' : '确认添加'}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
-}
 
-function StatCard({ label, value, color, borderColor, textColor }: { label: string; value: number; color: string; borderColor: string; textColor: string }) {
-  return (
-    <div className={cn('rounded-xl border p-4 bg-gradient-to-br shadow-sm', color, borderColor)}>
-      <div className="text-xs text-warm-silver uppercase tracking-wider mb-1">{label}</div>
-      <div className={cn('text-2xl font-bold', textColor)}>{value}</div>
-    </div>
-  )
-}
+                  {/* Status & Actions */}
+                  {hasIpAssigned ? (
+                    <div className="flex items-center gap-2">
+                      <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border border-violet-200">
+                        <span className="text-xs text-violet-600 font-medium">{product.ipNickname}</span>
+                      </div>
+                      <button
+                        onClick={() => handleGoToPublish(product.productId, product.ipId!)}
+                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-sm font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
+                      >
+                        进入发布
+                      </button>
+                      <button
+                        onClick={() => handleCancelJoin(product.productId, product.ipId!)}
+                        className="px-3 py-2 rounded-lg border border-red-200 text-red-400 text-sm hover:bg-red-50 transition-all"
+                      >
+                        取消加入
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-warm-silver px-3 py-1.5 rounded-full bg-gray-100">待加入</span>
+                      <select
+                        className="px-3 py-2 rounded-lg border border-oat bg-white text-sm text-warm-charcoal hover:border-violet-400 transition-all"
+                        value=""
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleJoinIp(product.productId, e.target.value)
+                          }
+                        }}
+                      >
+                        <option value="">加入 IP</option>
+                        {availableIps.map((ip) => (
+                          <option key={ip.id} value={ip.id}>
+                            {ip.nickname || ip.id.slice(0, 8)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
-function ProductCard({
-  product,
-  index,
-  onToggleIp,
-  onAddIp,
-}: {
-  product: ProductStats
-  index: number
-  onToggleIp: (productId: string, ipId: string) => void
-  onAddIp: () => void
-}) {
-  return (
-    <div
-      className="relative rounded-2xl border border-oat bg-white shadow-clay overflow-hidden group animate-[fadeInUp_0.4s_ease-out_forwards]"
-      style={{ animationDelay: `${index * 60}ms`, opacity: 0 }}
-    >
-      {/* Top accent line */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-
-      <div className="p-5">
-        <div className="flex items-center gap-5">
-          {/* Product Image */}
-          <div className="relative flex-shrink-0">
-            <img
-              src={getImageUrl(product.productImage)}
-              alt={product.productName}
-              className="w-16 h-16 rounded-xl object-cover shadow-md"
-            />
-            <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-white border-2 border-oat flex items-center justify-center shadow-sm">
-              <span className="text-[10px] font-bold text-warm-silver">{(index + 1).toString().padStart(2, '0')}</span>
-            </div>
-          </div>
-
-          {/* Product Info */}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-warm-charcoal mb-2 truncate">{product.productName}</h3>
-
-            {/* IP List */}
-            <div className="space-y-2">
-              {product.ips.map(ip => (
-                <div key={ip.ipId} className="flex items-center gap-3">
+                  {/* Remove from plan */}
                   <button
-                    onClick={() => onToggleIp(product.productId, ip.ipId)}
-                    className="w-5 h-5 rounded border-2 flex items-center justify-center transition-all"
-                    style={{
-                      backgroundColor: ip.selected ? '#8b5cf6' : 'transparent',
-                      borderColor: ip.selected ? '#8b5cf6' : '#d4c5b0',
-                    }}
+                    onClick={() => handleRemoveFromPlan(product.planId)}
+                    className="p-2 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 transition-all flex-shrink-0"
+                    title="从计划中移除"
                   >
-                    {ip.selected && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-                  <span className="text-xs text-warm-silver font-medium">{ip.nickname || ip.ipId.slice(0, 8)}</span>
-                  <span className="text-xs text-warm-silver">{ip.videoCount}个视频</span>
-                  <Link
-                    href={`/daily-publish-plan/ip/${ip.ipId}?productId=${product.productId}`}
-                    className="ml-auto w-6 h-6 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 flex items-center justify-center text-white hover:scale-110 transition-all shadow-md"
-                  >
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </Link>
+                  </button>
                 </div>
-              ))}
-              {/* Add IP button */}
-              <button
-                onClick={onAddIp}
-                className="flex items-center gap-2 text-xs text-violet-600 hover:text-violet-700 mt-1"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                添加 IP 发布计划
-              </button>
-            </div>
+              )
+            })}
           </div>
+        )}
+
+        {/* Add Products Section */}
+        <div className="mt-8 p-6 rounded-2xl border-2 border-dashed border-violet-200 bg-white/50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-warm-charcoal">添加商品</h3>
+            <button
+              onClick={() => router.push('/products')}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-sm font-medium hover:shadow-lg transition-all"
+            >
+              去产品库选择
+            </button>
+          </div>
+          <p className="text-sm text-warm-silver">
+            从产品库选择商品后，自动添加到当日发布计划（{formatDate(selectedDate)}）
+          </p>
         </div>
       </div>
     </div>

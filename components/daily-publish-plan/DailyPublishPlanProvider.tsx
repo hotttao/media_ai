@@ -9,6 +9,7 @@ interface ProductInPlan {
   productImage: string | null
   planDate: string
   createdAt: string
+  isUnassigned: boolean
 }
 
 interface DailyPublishPlanContextType {
@@ -20,6 +21,7 @@ interface DailyPublishPlanContextType {
   addPlansBatch: (productIds: string[], planDate: string) => Promise<void>
   removePlan: (id: string) => Promise<void>
   refreshPlans: (date: string) => Promise<void>
+  claimPlan: (planId: string) => Promise<void>
 }
 
 const DailyPublishPlanContext = createContext<DailyPublishPlanContextType | null>(null)
@@ -119,6 +121,25 @@ export function DailyPublishPlanProvider({ children }: { children: ReactNode }) 
     }
   }, [])
 
+  const claimPlan = useCallback(async (planId: string) => {
+    try {
+      const res = await fetch('/api/daily-publish-plan', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId }),
+      })
+      if (res.ok) {
+        await refreshPlans(getTodayDateString())
+      } else {
+        const error = await res.json()
+        alert(error.error || '认领失败')
+      }
+    } catch (error) {
+      console.error('Failed to claim plan:', error)
+      alert('认领失败')
+    }
+  }, [refreshPlans])
+
   return (
     <DailyPublishPlanContext.Provider value={{
       plans,
@@ -129,6 +150,7 @@ export function DailyPublishPlanProvider({ children }: { children: ReactNode }) 
       addPlansBatch,
       removePlan,
       refreshPlans,
+      claimPlan,
     }}>
       {children}
     </DailyPublishPlanContext.Provider>

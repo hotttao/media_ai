@@ -5,7 +5,7 @@ import { getImageUrl } from '@/foundation/lib/utils'
 import Link from 'next/link'
 
 export function DailyPublishPlanFloating() {
-  const { plans, count, isOpen, setIsOpen, removePlan } = useDailyPublishPlan()
+  const { plans, count, isOpen, setIsOpen, removePlan, claimPlan } = useDailyPublishPlan()
 
   return (
     <>
@@ -69,16 +69,26 @@ export function DailyPublishPlanFloating() {
                       </p>
                       <p className="text-xs text-gray-400">
                         {new Date(plan.planDate).toLocaleDateString('zh-CN')}
+                        {plan.isUnassigned && <span className="ml-2 text-amber-500">(待认领)</span>}
                       </p>
                     </div>
-                    <button
-                      onClick={() => removePlan(plan.id)}
-                      className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                    {plan.isUnassigned ? (
+                      <button
+                        onClick={() => claimPlan(plan.id)}
+                        className="flex-shrink-0 px-2 py-1 rounded text-xs text-emerald-600 hover:bg-emerald-50 transition-colors"
+                      >
+                        认领
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => removePlan(plan.id)}
+                        className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

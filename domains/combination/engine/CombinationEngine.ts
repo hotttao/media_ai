@@ -129,11 +129,22 @@ export class CombinationEngine implements ICombinationEngine {
   private generateModelImageCombinations(pool: MaterialPool): Combination[] {
     const combinations: Combination[] = []
 
-    for (const modelImage of pool.modelImages) {
+    // 如果已有 modelImage 记录，基于这些生成组合
+    if (pool.modelImages.length > 0) {
+      for (const modelImage of pool.modelImages) {
+        combinations.push({
+          id: `model_${modelImage.id}`,
+          type: CombinationType.MODEL_IMAGE,
+          elements: { modelImageId: modelImage.id, productId: modelImage.productId, ipId: modelImage.ipId },
+          status: 'pending'
+        })
+      }
+    } else {
+      // 没有记录时，基于 IP 和 Product 生成待生成组合（用于首次生成）
       combinations.push({
-        id: `model_${modelImage.id}`,
+        id: `model_pending_${pool.ipId}_${pool.productId}`,
         type: CombinationType.MODEL_IMAGE,
-        elements: { modelImageId: modelImage.id, productId: modelImage.productId, ipId: modelImage.ipId },
+        elements: { modelImageId: '', productId: pool.productId, ipId: pool.ipId },
         status: 'pending'
       })
     }

@@ -321,6 +321,7 @@ export function ProductDetail({ product }: { product: any }) {
                       src={getImageUrl(mainImage.url)}
                       alt={product.name}
                       fill
+                      sizes="100vw"
                       className="object-contain transition-transform duration-500 group-hover:scale-105"
                       priority
                     />
@@ -364,6 +365,7 @@ export function ProductDetail({ product }: { product: any }) {
                         src={getImageUrl(image.url)}
                         alt={`${product.name} ${index + 1}`}
                         fill
+                        sizes="64px"
                         className="object-contain group-hover:scale-105 transition-transform duration-300"
                       />
                       {image.isMain && (
@@ -610,6 +612,7 @@ export function ProductDetail({ product }: { product: any }) {
               src={getImageUrl(mainImage.url)}
               alt={product.name}
               fill
+              sizes="100vw"
               className="object-contain"
             />
           </div>
@@ -1162,6 +1165,7 @@ function SecondaryImagesSection({
                   src={getImageUrl(image.url)}
                   alt="副图"
                   fill
+                  sizes="(min-width: 640px) 25vw, 33vw"
                   className="object-contain"
                 />
               </div>

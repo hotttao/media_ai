@@ -22,8 +22,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
     }
 
-    // Verify ownership
-    if (plan.userId !== session.user.id) {
+    // Allow deletion if:
+    // 1. It's an unassigned plan (team pool) and user belongs to that team
+    // 2. It's owned by the current user
+    const canDelete =
+      (plan.isUnassigned && plan.userId === session.user.teamId) ||
+      plan.userId === session.user.id
+
+    if (!canDelete) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

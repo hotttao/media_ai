@@ -39,7 +39,6 @@ model User {
   videoTasks   VideoTask[]  @relation("UserToVideoTasks")
   videos       Video[]      @relation("UserToVideos")
   virtualIps   VirtualIp[]  @relation("UserToVirtualIps")
-  dailyPublishPlans DailyPublishPlan[] @relation("UserToDailyPublishPlans")
 
   @@index([teamId], map: "users_team_id_fkey")
   @@map("users")
@@ -202,6 +201,15 @@ model Product {
   productDetails   String?           @db.Text
   displayActions   String?           @map("display_actions") @db.Text
   tags             String?
+  promotionId      String?           @map("promotion_id") @db.VarChar(100)
+  elasticTitle     String?           @map("elastic_title") @db.VarChar(500)
+  elasticImagesUri String?           @map("elastic_images_uri") @db.VarChar(500)
+  firstCName       String?           @map("first_c_name") @db.VarChar(200)
+  secondCName      String?           @map("second_c_name") @db.VarChar(200)
+  thirdCName       String?           @map("third_c_name") @db.VarChar(200)
+  fourthCName      String?           @map("fourth_c_name") @db.VarChar(200)
+  price            Float             @default(0) @map("price")
+  awemeId          String?           @map("aweme_id") @db.VarChar(100)
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
   images           ProductImage[]    @relation("ProductToImages")
@@ -441,7 +449,7 @@ model DailyPublishPlan {
   planDate   DateTime @db.Date @map("plan_date")
   createdAt  DateTime @default(now()) @map("created_at")
   product    Product  @relation("ProductToDailyPublishPlans", fields: [productId], references: [id], onDelete: Cascade)
-  user       User     @relation("UserToDailyPublishPlans", fields: [userId], references: [id])
+  isUnassigned Boolean @default(false) @map("is_unassigned")
 
   @@unique([userId, productId, planDate], name: "uk_daily_publish_plan_user_product_date")
   @@index([userId], map: "idx_daily_publish_plan_user")

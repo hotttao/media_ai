@@ -57,3 +57,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+// DELETE /api/daily-publish-plan/assign-ip?productId=xxx&ipId=xxx
+export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const productId = searchParams.get('productId')
+    const ipId = searchParams.get('ipId')
+
+    if (!productId || !ipId) {
+      return NextResponse.json({ error: 'productId and ipId are required' }, { status: 400 })
+    }
+
+    await db.videoPush.deleteMany({
+      where: { productId, ipId },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Failed to remove IP assignment:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
