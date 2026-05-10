@@ -155,17 +155,37 @@ export class CombinationEngine implements ICombinationEngine {
   private generateStyleImageCombinations(pool: MaterialPool): Combination[] {
     const combinations: Combination[] = []
 
-    for (const modelImage of pool.modelImages) {
+    if (pool.modelImages.length > 0) {
+      for (const modelImage of pool.modelImages) {
+        for (const pose of pool.poses) {
+          combinations.push({
+            id: this.generateCombinationId({
+              modelImageId: modelImage.id,
+              poseId: pose.id
+            }),
+            type: CombinationType.STYLE_IMAGE,
+            elements: {
+              modelImageId: modelImage.id,
+              poseId: pose.id
+            },
+            status: 'pending'
+          })
+        }
+      }
+    } else {
+      // 无已有记录时，基于 IP+Product 生成待生成组合
       for (const pose of pool.poses) {
         combinations.push({
           id: this.generateCombinationId({
-            modelImageId: modelImage.id,
+            modelImageId: '',
             poseId: pose.id
           }),
           type: CombinationType.STYLE_IMAGE,
           elements: {
-            modelImageId: modelImage.id,
-            poseId: pose.id
+            modelImageId: '',
+            poseId: pose.id,
+            productId: pool.productId,
+            ipId: pool.ipId
           },
           status: 'pending'
         })
@@ -178,19 +198,43 @@ export class CombinationEngine implements ICombinationEngine {
   private generateFirstFrameCombinations(pool: MaterialPool, generationPath?: GenerationPath): Combination[] {
     const combinations: Combination[] = []
 
-    for (const styleImage of pool.styleImages) {
+    if (pool.styleImages.length > 0) {
+      for (const styleImage of pool.styleImages) {
+        for (const scene of pool.scenes) {
+          combinations.push({
+            id: this.generateCombinationId({
+              styleImageId: styleImage.id,
+              sceneId: scene.id,
+              generationPath: generationPath || GenerationPath.GPT
+            }),
+            type: CombinationType.FIRST_FRAME,
+            elements: {
+              styleImageId: styleImage.id,
+              sceneId: scene.id,
+              generationPath: generationPath || GenerationPath.GPT,
+              productId: pool.productId,
+              ipId: pool.ipId
+            },
+            status: 'pending'
+          })
+        }
+      }
+    } else {
+      // 无已有定妆图时，基于 IP+Product 生成待生成组合
       for (const scene of pool.scenes) {
         combinations.push({
           id: this.generateCombinationId({
-            styleImageId: styleImage.id,
+            styleImageId: '',
             sceneId: scene.id,
             generationPath: generationPath || GenerationPath.GPT
           }),
           type: CombinationType.FIRST_FRAME,
           elements: {
-            styleImageId: styleImage.id,
+            styleImageId: '',
             sceneId: scene.id,
-            generationPath: generationPath || GenerationPath.GPT
+            generationPath: generationPath || GenerationPath.GPT,
+            productId: pool.productId,
+            ipId: pool.ipId
           },
           status: 'pending'
         })

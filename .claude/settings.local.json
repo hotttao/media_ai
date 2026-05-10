@@ -15,7 +15,9 @@
       "Bash(curl -s -c /tmp/cookies.txt -b /tmp/cookies.txt \"http://localhost:3000/api/tools/combination/model-images\")",
       "Bash(curl -s \"http://localhost:3000/api/products/3761930129899651522\")",
       "Bash(npx tsc:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(curl -s \"http://localhost:3000/api/tools/combination/first-frames?productId=3815577250129117187\")"
     ],
     "deny": [
       "Bash(rm -rf *)",
