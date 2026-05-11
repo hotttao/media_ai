@@ -61,7 +61,7 @@ export async function PATCH(
     }
 
     const updated = await db.videoPush.update({
-      where: { id: params.id },
+      where: { id: videoPush.id },
       data: updateData,
     })
 
