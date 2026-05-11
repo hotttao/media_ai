@@ -272,7 +272,7 @@ export default function IpDetailPage() {
         // Refresh data
         const refreshRes = await fetch(`/api/daily-publish-plan/ip-detail?productId=${productId}&ipId=${ipId}`)
         if (refreshRes.ok) {
-          const result = await res.json()
+          const result = await refreshRes.json()
           setData(result)
           // Reset dirty flags
           setClipStates(prev => {
@@ -648,6 +648,13 @@ export default function IpDetailPage() {
                           {/* Actions */}
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1">
+                              <button
+                                disabled
+                                className="px-2 py-1 rounded border border-violet-200 text-xs text-violet-400 hover:bg-violet-50 transition-all disabled:opacity-50"
+                                title="AI 填充"
+                              >
+                                AI 填充
+                              </button>
                               {clip.status !== 'published' && clip.url && (
                                 <button
                                   onClick={() => handlePlayVideo(clip)}
