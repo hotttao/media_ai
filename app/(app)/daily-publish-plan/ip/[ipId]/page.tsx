@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { ThumbnailUploader } from '@/components/daily-publish-plan/ThumbnailUploader'
 
 interface Clip {
   id: string
@@ -23,6 +24,20 @@ interface Clip {
   isQualified: boolean
   isPublished: boolean
   videoIds: string[]
+  musicId?: string
+  templateName?: string
+  title?: string
+  content?: string
+}
+
+// Per-row editing state
+interface ClipRowState {
+  thumbnail: string
+  title: string
+  content: string
+  isQualified: boolean
+  isPublished: boolean
+  dirty: boolean
 }
 
 interface ProductDetailData {
@@ -79,22 +94,16 @@ export default function IpProductsPage() {
   const [confirming, setConfirming] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  // Select clips mode
-  const [selectMode, setSelectMode] = useState(false)
-  const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set())
+  // Per-row editing states for clips table
+  const [clipStates, setClipStates] = useState<Record<string, ClipRowState>>({})
+
+  // Video player state
+  const [playingVideo, setPlayingVideo] = useState<{ url: string; title: string } | null>(null)
 
   // Scene filter for source videos
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null)
 
-  // Add product dialog
-  const [addProductDialogOpen, setAddProductDialogOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
-  const [searchResults, setSearchResults] = useState<SearchProductResult[]>([])
-  const [searching, setSearching] = useState(false)
-  const [selectedProductToAdd, setSelectedProductToAdd] = useState<string | null>(null)
-  const [addingProduct, setAddingProduct] = useState(false)
-
+  
   // Derive unique scenes with counts from API data (must be before early returns to preserve hook order)
   const availableScenes = useMemo(() => {
     if (!detailData?.scenes) return []
@@ -138,7 +147,19 @@ export default function IpProductsPage() {
         const result = await res.json()
         setDetailData(result)
         setSelectedSourceIds(new Set())
-        setSelectedClipIds(new Set(result.selectedVideos || []))
+        // Initialize per-row states for clips table
+        const states: Record<string, ClipRowState> = {}
+        result.clips?.forEach((clip: Clip) => {
+          states[clip.videoPushId] = {
+            thumbnail: clip.thumbnail || '',
+            title: clip.title || '',
+            content: clip.content || '',
+            isQualified: clip.isQualified,
+            isPublished: clip.isPublished,
+            dirty: false,
+          }
+        })
+        setClipStates(states)
       }
     } catch (err) {
       console.error(err)
@@ -151,39 +172,54 @@ export default function IpProductsPage() {
     }
   }, [selectedProductId, fetchVideoDetail])
 
-  // Search products for IP
-  const searchProducts = useCallback(async (query: string, filter: FilterTab) => {
-    setSearching(true)
+  // Update clip row state
+  const updateClipState = (videoPushId: string, field: keyof ClipRowState, value: string | boolean) => {
+    setClipStates(prev => ({
+      ...prev,
+      [videoPushId]: {
+        ...prev[videoPushId],
+        [field]: value,
+        dirty: true,
+      }
+    }))
+  }
+
+  // Confirm/save clip changes
+  const handleConfirmClips = async () => {
+    const dirtyClips = Object.entries(clipStates).filter(([_, state]) => state.dirty)
+    if (dirtyClips.length === 0) return
+
+    const updates = dirtyClips.map(([videoPushId, state]) => ({
+      videoPushId,
+      thumbnail: state.thumbnail,
+      title: state.title,
+      content: state.content,
+      isQualified: state.isQualified,
+      isPublished: state.isPublished,
+    }))
+
+    setConfirming(true)
     try {
-      const res = await fetch(
-        `/api/products/search-for-ip?ipId=${ipId}&filter=${filter}&search=${encodeURIComponent(query)}`
-      )
+      const res = await fetch('/api/video-push/batch-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
+      })
       if (res.ok) {
-        const results = await res.json()
-        setSearchResults(results.products || [])
+        setSuccessMessage(`已保存 ${updates.length} 个视频`)
+        setTimeout(() => setSuccessMessage(null), 2000)
+        // Refresh data
+        if (selectedProductId) {
+          fetchVideoDetail(selectedProductId)
+        }
       }
     } catch (err) {
       console.error(err)
+      alert('保存失败')
     } finally {
-      setSearching(false)
+      setConfirming(false)
     }
-  }, [ipId])
-
-  // Open add product dialog
-  const handleOpenAddProductDialog = () => {
-    setAddProductDialogOpen(true)
-    setSearchQuery('')
-    setActiveFilter('all')
-    setSelectedProductToAdd(null)
-    searchProducts('', 'all')
   }
-
-  // Search when filter or query changes
-  useEffect(() => {
-    if (addProductDialogOpen) {
-      searchProducts(searchQuery, activeFilter)
-    }
-  }, [addProductDialogOpen, searchQuery, activeFilter, searchProducts])
 
   // Toggle source video selection
   const toggleSourceSelection = (videoId: string) => {
@@ -193,19 +229,6 @@ export default function IpProductsPage() {
         next.delete(videoId)
       } else {
         next.add(videoId)
-      }
-      return next
-    })
-  }
-
-  // Toggle clip selection
-  const toggleClipSelection = (clipId: string) => {
-    setSelectedClipIds(prev => {
-      const next = new Set(prev)
-      if (next.has(clipId)) {
-        next.delete(clipId)
-      } else {
-        next.add(clipId)
       }
       return next
     })
@@ -272,69 +295,6 @@ export default function IpProductsPage() {
     }
   }
 
-  // Handle confirm add product
-  const handleConfirmAddProduct = async () => {
-    if (!selectedProductToAdd) return
-    setAddingProduct(true)
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      const res = await fetch('/api/daily-publish-plan/assign-ip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: selectedProductToAdd,
-          ipId,
-          date: today,
-        }),
-      })
-      if (res.ok) {
-        setAddProductDialogOpen(false)
-        // Navigate to video wizard for the added product with IP pre-selected
-        router.push(`/products/${selectedProductToAdd}/video-wizard?ipId=${ipId}`)
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setAddingProduct(false)
-    }
-  }
-
-  // Handle confirm publish
-  const handleConfirmPublish = async () => {
-    if (!detailData || selectedClipIds.size === 0) {
-      alert('请选择要发布的视频')
-      return
-    }
-    if (!selectedProductId) return
-
-    setConfirming(true)
-    try {
-      const res = await fetch('/api/daily-publish-plan/confirm-publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: selectedProductId,
-          ipId,
-          videoIds: Array.from(selectedClipIds),
-        }),
-      })
-      if (res.ok) {
-        setSuccessMessage('发布计划已确认')
-        setTimeout(() => setSuccessMessage(null), 2000)
-        setSelectMode(false)
-        setSelectedClipIds(new Set())
-        fetchVideoDetail(selectedProductId)
-      } else {
-        throw new Error('Failed to confirm')
-      }
-    } catch (err) {
-      console.error(err)
-      alert('确认失败')
-    } finally {
-      setConfirming(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -355,6 +315,7 @@ export default function IpProductsPage() {
   const totalClips = detailData?.clips?.length || 0
   const readyClips = detailData?.clips?.filter(c => c.status === 'ready').length || 0
   const publishedClips = detailData?.clips?.filter(c => c.status === 'published').length || 0
+  const dirtyCount = Object.values(clipStates).filter(s => s.dirty).length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
@@ -427,48 +388,29 @@ export default function IpProductsPage() {
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap mb-6">
-          <button
-            onClick={handleClip}
-            disabled={selectedSourceIds.size === 0 || clipping}
-            className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm disabled:opacity-50"
-          >
-            {clipping ? '剪辑中...' : '剪辑'}
-          </button>
-          <button
-            onClick={() => {
-              if (!selectedProductId) return
-              router.push(`/products/${selectedProductId}/video-wizard?ipId=${ipId}`)
-            }}
-            className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
-          >
-            新增
-          </button>
-          <button
-            onClick={() => setSelectMode(!selectMode)}
-            className={cn(
-              'px-4 py-2 rounded-lg border text-sm transition-all shadow-sm',
-              selectMode
-                ? 'border-violet-400 bg-violet-50 text-violet-600'
-                : 'border-oat bg-white text-warm-silver hover:bg-matcha-50 hover:border-matcha-600'
-            )}
-          >
-            {selectMode ? '取消选择' : '选择发布视频'}
-          </button>
-          <button
-            onClick={handleOpenAddProductDialog}
-            className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
-          >
-            添加商品
-          </button>
-        </div>
-
         {/* Source Video List */}
         <div className="rounded-2xl border border-oat bg-white shadow-clay overflow-hidden mb-6">
           <div className="px-5 py-4 border-b border-oat flex items-center justify-between">
             <h2 className="text-sm font-semibold text-warm-charcoal">AI 生成视频</h2>
-            <span className="text-xs text-warm-silver">选择后点击剪辑</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleClip}
+                disabled={selectedSourceIds.size === 0 || clipping}
+                className="px-3 py-1.5 rounded-lg border border-oat bg-white text-xs text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm disabled:opacity-50"
+              >
+                {clipping ? '剪辑中...' : '剪辑'}
+              </button>
+              <button
+                onClick={() => {
+                  if (!selectedProductId) return
+                  router.push(`/products/${selectedProductId}/video-wizard?ipId=${ipId}`)
+                }}
+                className="px-3 py-1.5 rounded-lg border border-oat bg-white text-xs text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
+              >
+                新增
+              </button>
+              <span className="text-xs text-warm-silver ml-2">选择后点击剪辑</span>
+            </div>
           </div>
           {/* Scene filter */}
           {availableScenes.length > 0 && (
@@ -559,89 +501,155 @@ export default function IpProductsPage() {
           </div>
         </div>
 
-        {/* Clips List */}
+        {/* Clips Table */}
         {detailData && detailData.clips.length > 0 && (
-          <div className="rounded-2xl border border-oat bg-white shadow-clay overflow-hidden mb-6">
+          <div className="rounded-xl border border-oat bg-white shadow-clay overflow-hidden mb-6">
             <div className="px-5 py-4 border-b border-oat flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-warm-charcoal">剪辑成片</h2>
-              <span className="text-xs text-warm-silver">
-                {readyClips} 个待发布 / {publishedClips} 个已发布
-              </span>
-            </div>
-            <div className="divide-y divide-oat/50">
-              {detailData.clips.map(clip => (
-                <div
-                  key={clip.videoPushId}
-                  onClick={() => selectMode && toggleClipSelection(clip.videoPushId)}
-                  className={cn(
-                    'flex items-center gap-4 px-5 py-4 transition-colors',
-                    selectMode ? 'cursor-pointer hover:bg-violet-50/50' : ''
-                  )}
+              <h2 className="text-sm font-semibold text-warm-charcoal">剪辑成片 ({totalClips})</h2>
+              <div className="flex items-center gap-3">
+                {dirtyCount > 0 && (
+                  <span className="text-xs text-orange-500 font-medium">{dirtyCount} 个待保存</span>
+                )}
+                <button
+                  onClick={handleConfirmClips}
+                  disabled={!dirtyCount || confirming}
+                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-xs text-white font-medium hover:shadow-lg transition-all disabled:opacity-50"
                 >
-                  {selectMode && (
-                    <div
-                      className={cn(
-                        'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                        selectedClipIds.has(clip.videoPushId)
-                          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
-                          : 'bg-white border-oat'
-                      )}
-                    >
-                      {selectedClipIds.has(clip.videoPushId) && (
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                  )}
-                  <div className="w-16 h-12 rounded-lg bg-matcha-100 overflow-hidden flex-shrink-0">
-                    {clip.thumbnail ? (
-                      <img src={getImageUrl(clip.thumbnail)} alt="thumbnail" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-matcha-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-mono text-warm-charcoal truncate">
-                      源: {clip.sourceVideoId.slice(0, 8)}...
-                    </div>
-                    <div className="text-xs text-warm-silver">
-                      {new Date(clip.createdAt).toLocaleDateString('zh-CN')}
-                    </div>
-                  </div>
-                  <div className={cn(
-                    'px-2 py-1 rounded-full text-xs font-medium',
-                    clip.status === 'published' ? 'bg-emerald-100 text-emerald-600' :
-                    clip.status === 'ready' ? 'bg-amber-100 text-amber-600' :
-                    'bg-gray-100 text-gray-500'
-                  )}>
-                    {clip.status === 'published' ? '已发布' :
-                     clip.status === 'ready' ? '待发布' : '剪辑中'}
-                  </div>
-                </div>
-              ))}
+                  {confirming ? '保存中...' : '确认'}
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-oat bg-violet-50">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">视频</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">音乐</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">模板</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">封面图</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">发布标题</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">发布内容</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">状态</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">合格</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">发布</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detailData.clips.map(clip => {
+                    const state = clipStates[clip.videoPushId]
+                    return (
+                      <tr key={clip.videoPushId} className="border-b border-oat/50 hover:bg-violet-50/30">
+                        {/* Video - thumbnail with play */}
+                        <td className="px-4 py-3">
+                          <div
+                            className="w-20 h-14 rounded-lg bg-matcha-100 overflow-hidden flex-shrink-0 relative cursor-pointer group"
+                            onClick={() => clip.url && setPlayingVideo({ url: clip.url, title: `视频 ${clip.videoPushId.slice(0, 8)}` })}
+                          >
+                            {(state?.thumbnail || clip.thumbnail) ? (
+                              <img src={getImageUrl(state?.thumbnail || clip.thumbnail || '')} alt="thumbnail" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <svg className="w-6 h-6 text-matcha-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        {/* Music */}
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-warm-silver font-mono truncate max-w-[80px] block">
+                            {clip.musicId || '-'}
+                          </span>
+                        </td>
+                        {/* Template */}
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-warm-silver truncate max-w-[80px] block">
+                            {clip.templateName || '-'}
+                          </span>
+                        </td>
+                        {/* Thumbnail uploader */}
+                        <td className="px-4 py-3">
+                          {state && (
+                            <ThumbnailUploader
+                              value={state.thumbnail}
+                              onChange={(url) => updateClipState(clip.videoPushId, 'thumbnail', url)}
+                              disabled={clip.status === 'published'}
+                            />
+                          )}
+                        </td>
+                        {/* Title */}
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={state?.title || ''}
+                            onChange={(e) => updateClipState(clip.videoPushId, 'title', e.target.value)}
+                            disabled={clip.status === 'published'}
+                            className="w-full px-2 py-1.5 text-xs border border-oat rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:bg-gray-50"
+                            placeholder="标题"
+                          />
+                        </td>
+                        {/* Content */}
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={state?.content || ''}
+                            onChange={(e) => updateClipState(clip.videoPushId, 'content', e.target.value)}
+                            disabled={clip.status === 'published'}
+                            className="w-full px-2 py-1.5 text-xs border border-oat rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:bg-gray-50"
+                            placeholder="内容"
+                          />
+                        </td>
+                        {/* Status */}
+                        <td className="px-4 py-3">
+                          <span className={cn(
+                            'text-xs font-medium px-2 py-1 rounded',
+                            clip.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
+                            clip.status === 'ready' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-warm-silver'
+                          )}>
+                            {clip.status === 'published' ? '已发布' : clip.status === 'ready' ? '待发布' : '剪辑中'}
+                          </span>
+                        </td>
+                        {/* Qualified */}
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={state?.isQualified || false}
+                            onChange={(e) => updateClipState(clip.videoPushId, 'isQualified', e.target.checked)}
+                            disabled={clip.status === 'published'}
+                            className="w-4 h-4 rounded border-oat text-violet-600 focus:ring-violet-500"
+                          />
+                        </td>
+                        {/* Published */}
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={state?.isPublished || false}
+                            onChange={(e) => updateClipState(clip.videoPushId, 'isPublished', e.target.checked)}
+                            disabled={clip.status === 'published'}
+                            className="w-4 h-4 rounded border-oat text-violet-600 focus:ring-violet-500"
+                          />
+                        </td>
+                        {/* Actions */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1">
+                            <button
+                              disabled
+                              title="AI 填充"
+                              className="px-2 py-1 rounded border border-oat text-xs text-warm-silver opacity-50 cursor-not-allowed"
+                            >
+                              AI填充
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
-
-        {/* Confirm Button */}
-        {selectMode && (
-          <button
-            onClick={handleConfirmPublish}
-            disabled={selectedClipIds.size === 0 || confirming}
-            className={cn(
-              'w-full py-3 rounded-xl font-semibold text-white transition-all shadow-lg',
-              selectedClipIds.size > 0
-                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:shadow-xl hover:scale-[1.01]'
-                : 'bg-warm-silver/50 cursor-not-allowed'
-            )}
-          >
-            {confirming ? '确认中...' : `确认发布计划 (${selectedClipIds.size}个)`}
-          </button>
         )}
 
         {/* Success Toast */}
@@ -652,125 +660,6 @@ export default function IpProductsPage() {
         )}
       </div>
 
-      {/* Add Product Dialog */}
-      <Dialog open={addProductDialogOpen} onOpenChange={setAddProductDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>添加商品</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {/* Search */}
-            <div className="relative">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-silver"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="搜索商品名称..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-oat bg-white text-sm text-warm-charcoal placeholder:text-warm-silver/60 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1">
-              {(['all', 'published', 'library'] as FilterTab[]).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveFilter(tab)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-lg text-sm transition-all',
-                    activeFilter === tab
-                      ? 'bg-violet-500 text-white'
-                      : 'bg-white text-warm-silver hover:bg-violet-50 border border-oat'
-                  )}
-                >
-                  {tab === 'all' ? '全部' : tab === 'published' ? '已发布' : '商品库'}
-                </button>
-              ))}
-            </div>
-
-            {/* Product List */}
-            <div className="max-h-64 overflow-y-auto border border-oat rounded-lg">
-              {searching ? (
-                <div className="py-8 text-center text-warm-silver text-sm">搜索中...</div>
-              ) : searchResults.length === 0 ? (
-                <div className="py-8 text-center text-warm-silver text-sm">暂无商品</div>
-              ) : (
-                searchResults.map((product) => (
-                  <div
-                    key={product.productId}
-                    onClick={() => setSelectedProductToAdd(product.productId)}
-                    className={cn(
-                      'px-4 py-3 cursor-pointer border-b border-oat/50 last:border-b-0 transition-colors',
-                      selectedProductToAdd === product.productId
-                        ? 'bg-violet-50'
-                        : 'hover:bg-gray-50'
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                          selectedProductToAdd === product.productId
-                            ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
-                            : 'bg-white border-oat'
-                        )}
-                      >
-                        {selectedProductToAdd === product.productId && (
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-warm-charcoal">{product.name}</div>
-                        <div className="text-xs text-warm-silver mt-0.5">
-                          {product.isInDailyPlan ? (
-                            <span className="text-matcha-600">已加入当日计划</span>
-                          ) : product.publishCount > 0 ? (
-                            <span>
-                              该IP历史发布 {product.publishCount} 次
-                              {product.hasGoodData && <span className="text-orange-500 ml-1">数据好 ⭐</span>}
-                            </span>
-                          ) : (
-                            '商品库 - 未发布过'
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <p className="text-xs text-warm-silver">
-              说明：已发布商品复用该IP历史数据，新视频效果更好
-            </p>
           </div>
-          <DialogFooter>
-            <button
-              onClick={() => setAddProductDialogOpen(false)}
-              className="px-4 py-2 rounded-lg border border-oat bg-white text-sm text-warm-silver hover:bg-gray-50 transition-all"
-            >
-              取消
-            </button>
-            <button
-              onClick={handleConfirmAddProduct}
-              disabled={!selectedProductToAdd || addingProduct}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-sm text-white font-medium hover:shadow-lg transition-all disabled:opacity-50"
-            >
-              {addingProduct ? '添加中...' : '确认添加'}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
   )
 }

@@ -25,7 +25,16 @@
       "Bash(git diff:*)",
       "Bash(git show:*)",
       "Bash(git checkout:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(grep -n \"PATCH\\\\|GET\\\\|POST\\\\|PUT\\\\|DELETE\" app/api/materials/[id]/route.ts)",
+      "Bash(ls -la app/api/materials/[id]/)",
+      "Bash(grep -n \"params\" app/api/materials/[id]/route.ts)",
+      "Bash(npm run:*)",
+      "Bash(curl -X PATCH \"http://localhost:3000/api/materials/test-id\" -H \"Content-Type: application/json\" -d \"{}\")",
+      "Bash(git log:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(dir \"D:\\\\Code\\\\media\\\\MediaCrawler\\\\core\\\\notifier\")"
     ],
     "deny": [
       "Bash(rm -rf *)",
