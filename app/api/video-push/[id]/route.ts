@@ -7,7 +7,13 @@ export const dynamic = 'force-dynamic'
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-type VideoPushUpdateInput = { isQualified?: boolean; isPublished?: boolean }
+type VideoPushUpdateInput = {
+  isQualified?: boolean
+  isPublished?: boolean
+  thumbnail?: string
+  title?: string
+  content?: string
+}
 
 async function verifyTeamOwnership(id: string, teamId: string) {
   const videoPush = await db.videoPush.findUnique({
@@ -36,11 +42,14 @@ export async function PATCH(
 
   try {
     const body = await request.json()
-    const { qualified, published } = body
+    const { qualified, published, thumbnail, title, content } = body
 
     const updateData: VideoPushUpdateInput = {}
     if (typeof qualified === 'boolean') updateData.isQualified = qualified
     if (typeof published === 'boolean') updateData.isPublished = published
+    if (typeof thumbnail === 'string') updateData.thumbnail = thumbnail
+    if (typeof title === 'string') updateData.title = title
+    if (typeof content === 'string') updateData.content = content
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
