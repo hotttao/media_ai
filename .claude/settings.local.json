@@ -18,7 +18,14 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(curl -s \"http://localhost:3000/api/tools/combination/first-frames?productId=3815577250129117187\")",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(cd /d D:Codemediamedia_ai)",
+      "mcp__plugin_claude-mem_mcp-search__get_observations",
+      "Bash(git restore:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git checkout:*)",
+      "Bash(git status:*)"
     ],
     "deny": [
       "Bash(rm -rf *)",

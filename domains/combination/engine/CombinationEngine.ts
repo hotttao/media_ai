@@ -161,12 +161,16 @@ export class CombinationEngine implements ICombinationEngine {
           combinations.push({
             id: this.generateCombinationId({
               modelImageId: modelImage.id,
-              poseId: pose.id
+              poseId: pose.id,
+              productId: pool.productId,
+              ipId: pool.ipId
             }),
             type: CombinationType.STYLE_IMAGE,
             elements: {
               modelImageId: modelImage.id,
-              poseId: pose.id
+              poseId: pose.id,
+              productId: pool.productId,
+              ipId: pool.ipId
             },
             status: 'pending'
           })
@@ -201,20 +205,20 @@ export class CombinationEngine implements ICombinationEngine {
     if (pool.styleImages.length > 0) {
       for (const styleImage of pool.styleImages) {
         for (const scene of pool.scenes) {
+          const comboElements = {
+            styleImageId: styleImage.id,
+            sceneId: scene.id,
+            generationPath: generationPath || GenerationPath.GPT
+          }
+          // Only add productId/ipId if pool has valid productId (not empty)
+          if (pool.productId) {
+            comboElements.productId = pool.productId
+            comboElements.ipId = pool.ipId
+          }
           combinations.push({
-            id: this.generateCombinationId({
-              styleImageId: styleImage.id,
-              sceneId: scene.id,
-              generationPath: generationPath || GenerationPath.GPT
-            }),
+            id: this.generateCombinationId(comboElements),
             type: CombinationType.FIRST_FRAME,
-            elements: {
-              styleImageId: styleImage.id,
-              sceneId: scene.id,
-              generationPath: generationPath || GenerationPath.GPT,
-              productId: pool.productId,
-              ipId: pool.ipId
-            },
+            elements: comboElements,
             status: 'pending'
           })
         }
@@ -355,7 +359,10 @@ export class CombinationEngine implements ICombinationEngine {
   private generateCombinationId(elements: Record<string, string>): string {
     const parts = Object.keys(elements).sort()
       .map(k => `${k}:${elements[k]}`)
-    .filter(p => p.includes(':')) // 过滤空值
+      .filter(p => {
+        const [, value] = p.split(':')
+        return value !== '' // 过滤空值
+      })
     return parts.join('|')
   }
 

@@ -84,8 +84,16 @@ export default function StyleImagePage() {
           console.error(`Failed to generate: ${poseId}-${modelImageId}`)
         }
       }
-      alert('生成完成')
-      window.location.reload()
+      alert('已提交生成任务')
+      // Mark selected combinations as pending without reloading page
+      const selectedPoseModelPairs = combinations.map(c => c.key)
+      setAvailableCombinations(prev => prev.map(c => {
+        const comboKey = `${c.pose.id}::${c.modelImage.id}`
+        if (selectedPoseModelPairs.includes(comboKey) && !c.existingStyleImageId) {
+          return { ...c, existingStyleImageId: 'pending' }
+        }
+        return c
+      }))
     } catch (err) {
       console.error(err)
       alert('生成失败')

@@ -18,15 +18,15 @@ export async function GET(request: Request) {
     const productId = searchParams.get('productId')
     const teamId = session.user.teamId as string
 
-    if (!productId) {
-      return NextResponse.json({ error: 'productId required' }, { status: 400 })
-    }
-
     // 获取该产品的所有 IP
     const ips = await db.virtualIp.findMany({
       where: { teamId },
       select: { id: true }
     })
+
+    if (ips.length === 0) {
+      return NextResponse.json([])
+    }
 
     // 初始化 Engine
     const registry = new ConstraintRegistry()
@@ -37,14 +37,14 @@ export async function GET(request: Request) {
     const allCombinations: Awaited<ReturnType<typeof engine.compute>>['combinations'] = []
 
     for (const ip of ips) {
-      const result = await engine.compute(productId, ip.id, {
+      const result = await engine.compute(productId || '', ip.id, {
         type: CombinationType.STYLE_IMAGE
       })
       allCombinations.push(...result.combinations)
     }
 
     // 转换格式
-    const adaptedResults = await adaptStyleImageCombinations(allCombinations, productId)
+    const adaptedResults = await adaptStyleImageCombinations(allCombinations, productId || '')
 
     return NextResponse.json(adaptedResults)
   } catch (error) {

@@ -29,7 +29,10 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { modelImageId, poseId = '', makeupId = '', accessoryId = '', imageUrl, prompt } = body
+    const { modelImageId, poseId, makeupId, accessoryId, imageUrl, prompt } = body
+    const safePoseId = poseId || ''
+    const safeMakeupId = makeupId || ''
+    const safeAccessoryId = accessoryId || ''
 
     if (!modelImageId || !imageUrl) {
       return NextResponse.json({ error: 'Missing required fields: modelImageId, imageUrl' }, { status: 400 })
@@ -48,9 +51,9 @@ export async function POST(
       where: {
         uniq_style_images_dedup: {
           modelImageId,
-          poseId,
-          makeupId,
-          accessoryId,
+          poseId: safePoseId,
+          makeupId: safeMakeupId,
+          accessoryId: safeAccessoryId,
         }
       }
     })
@@ -67,10 +70,10 @@ export async function POST(
         modelImageId,
         url: imageUrl,
         prompt: buildGeneratedImagePrompt(typeof prompt === 'string' ? prompt : null),
-        poseId,
-        makeupId,
-        accessoryId,
-        inputHash: hashStrings(poseId, makeupId, accessoryId),
+        poseId: safePoseId,
+        makeupId: safeMakeupId,
+        accessoryId: safeAccessoryId,
+        inputHash: hashStrings(safePoseId, safeMakeupId, safeAccessoryId),
       }
     })
 

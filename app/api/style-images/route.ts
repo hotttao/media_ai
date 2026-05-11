@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     }
 
     const ipId = request.nextUrl.searchParams.get('ipId')
+    const modelImageId = request.nextUrl.searchParams.get('modelImageId')
+
     if (!ipId) {
       return NextResponse.json({ error: 'ipId is required' }, { status: 400 })
     }
@@ -33,8 +35,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'IP not found' }, { status: 404 })
     }
 
+    const where: { ipId: string; modelImageId?: string } = { ipId }
+    if (modelImageId) {
+      where.modelImageId = modelImageId
+    }
+
     const images = await db.styleImage.findMany({
-      where: { ipId },
+      where,
       orderBy: { createdAt: 'desc' },
     })
 

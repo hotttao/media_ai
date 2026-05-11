@@ -50,12 +50,12 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
       }),
       // Style Images
       db.styleImage.findMany({
-        where: { productId, ipId },
+        where: productId ? { productId, ipId } : { ipId },
         select: { id: true, productId: true, ipId: true, url: true, prompt: true, poseId: true, makeupId: true, accessoryId: true }
       }),
       // Model Images
       db.modelImage.findMany({
-        where: { productId, ipId },
+        where: productId ? { productId, ipId } : { ipId },
         select: { id: true, productId: true, ipId: true, url: true, prompt: true }
       })
     ])
@@ -129,7 +129,9 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
       type: CombinationType.STYLE_IMAGE,
       elements: {
         modelImageId: r.modelImageId,
-        poseId: r.poseId
+        poseId: r.poseId,
+        productId,
+        ipId
       },
       status: 'generated' as const,
       existingRecordId: r.id
@@ -153,7 +155,9 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
         styleImageId: r.styleImageId,
         sceneId: r.sceneId,
         generationPath: r.generationPath as GenerationPath,
-        firstFrameId: r.id
+        firstFrameId: r.id,
+        productId,
+        ipId
       },
       status: 'generated' as const,
       existingRecordId: r.id
