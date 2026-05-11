@@ -484,6 +484,8 @@ model VideoPush {
   musicId         String?  @map("music_id")
   url             String   @default("") @db.VarChar(500)
   thumbnail       String?  @db.VarChar(500)
+  title           String?  @db.VarChar(500)
+  content         String?  @db.Text
   status          String   @default("pending")  // pending | completed | failed
   isQualified     Boolean  @default(false) @map("is_qualified")  // 是否达标可发布
   isPublished     Boolean  @default(false) @map("is_published")  // 是否已发布
