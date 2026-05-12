@@ -206,9 +206,13 @@ export class CombinationEngine implements ICombinationEngine {
             sceneId: scene.id,
             generationPath: generationPath || GenerationPath.GPT
           }
-          // Always include productId/ipId if available - critical for key matching
-          if (pool.productId && pool.productId !== 'undefined') comboElements.productId = pool.productId
-          if (pool.ipId && pool.ipId !== 'undefined') comboElements.ipId = pool.ipId
+          // Only add productId/ipId if they are valid non-empty strings
+          if (pool.productId && pool.productId !== 'undefined' && pool.productId.length > 0) {
+            comboElements.productId = pool.productId
+          }
+          if (pool.ipId && pool.ipId !== 'undefined' && pool.ipId.length > 0) {
+            comboElements.ipId = pool.ipId
+          }
           combinations.push({
             id: this.generateCombinationId(comboElements),
             type: CombinationType.FIRST_FRAME,
@@ -355,12 +359,12 @@ export class CombinationEngine implements ICombinationEngine {
       .map(k => `${k}:${elements[k]}`)
       .filter(p => {
         const [, value] = p.split(':')
-        return value !== undefined && value !== '' && value !== 'undefined'
+        return value !== '' && value !== 'undefined'
       })
     return parts.join('|')
   }
 
   private getCombinationKey(elements: Combination['elements']): string {
-    return this.generateCombinationId(elements as Record<string, string>)
+    return this.generateCombinationId(elements as Record<string, string | undefined>)
   }
 }
