@@ -50,18 +50,14 @@ export function DailyPublishPlanFloating() {
               <div className="divide-y divide-gray-100">
                 {plans.map(plan => (
                   <div key={plan.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden">
                       {plan.productImage ? (
                         <img
                           src={getImageUrl(plan.productImage)}
                           alt={plan.productName}
                           className="w-full h-full object-cover"
                         />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
-                          无图
-                        </div>
-                      )}
+                      ) : null}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">

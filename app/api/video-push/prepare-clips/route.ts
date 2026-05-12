@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         ipId,
         sceneId,
         videoIdHash,
-        status: { in: ['pending', 'completed'] },
+        status: { in: ['pending', 'completed', 'published'] },
       },
     })
 
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
         videoIdHash,
         existingCount: 1,
         pendingCount: existing.status === 'pending' ? 1 : 0,
+        createdCount: 0,
       })
     }
 
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     // dry-run 获取数量
     console.log(`[prepare-clips] Step 2: CLI dry-run`)
-    let dryRunResult: { count: number; templates?: { name: string; videoCount: number }[]; error?: string } = {}
+    let dryRunResult: { count: number; templates?: { name: string; videoCount: number }[]; error?: string } = { count: 0 }
     try {
       dryRunResult = await capcut.clipDryRun({
         videoUrls: videoPaths,
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: `Created ${created.count} pending clips`,
       videoIdHash,
-      createdCount: created.count,
+      createdCount: created?.count ?? 0,
       templates: templates.map(t => t.name),
     })
   } catch (error) {

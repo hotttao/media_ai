@@ -18,6 +18,7 @@ interface Clip {
   videoPushId: string
   sourceVideoId: string
   url: string
+  videoThumbnail: string | null
   thumbnail: string | null
   createdAt: string
   status: 'pending' | 'ready' | 'published'
@@ -189,14 +190,19 @@ export default function IpProductsPage() {
     const dirtyClips = Object.entries(clipStates).filter(([_, state]) => state.dirty)
     if (dirtyClips.length === 0) return
 
-    const updates = dirtyClips.map(([videoPushId, state]) => ({
-      videoPushId,
-      thumbnail: state.thumbnail,
-      title: state.title,
-      content: state.content,
-      isQualified: state.isQualified,
-      isPublished: state.isPublished,
-    }))
+    const updates = dirtyClips.map(([videoPushId, state]) => {
+      const originalClip = detailData?.clips.find(c => c.videoPushId === videoPushId)
+      // If was published but is now dirty, reset to unpublished
+      const wasPublished = originalClip?.isPublished === true
+      return {
+        videoPushId,
+        thumbnail: state.thumbnail,
+        title: state.title,
+        content: state.content,
+        isQualified: state.isQualified,
+        isPublished: wasPublished ? false : state.isPublished,
+      }
+    })
 
     setConfirming(true)
     try {
@@ -218,6 +224,76 @@ export default function IpProductsPage() {
       alert('保存失败')
     } finally {
       setConfirming(false)
+    }
+  }
+
+  // Publish single clip
+  const handleRowPublish = async (videoPushId: string) => {
+    const state = clipStates[videoPushId]
+    if (!state) return
+
+    const originalClip = detailData?.clips.find(c => c.videoPushId === videoPushId)
+    const wasPublished = originalClip?.isPublished === true
+
+    setConfirming(true)
+    try {
+      const res = await fetch('/api/video-push/batch-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          updates: [{
+            videoPushId,
+            thumbnail: state.thumbnail,
+            title: state.title,
+            content: state.content,
+            isQualified: state.isQualified,
+            isPublished: wasPublished ? false : state.isPublished,
+          }]
+        }),
+      })
+      if (res.ok) {
+        setSuccessMessage('已发布')
+        setTimeout(() => setSuccessMessage(null), 2000)
+        if (selectedProductId) {
+          fetchVideoDetail(selectedProductId)
+        }
+      }
+    } catch (err) {
+      console.error(err)
+      alert('发布失败')
+    } finally {
+      setConfirming(false)
+    }
+  }
+
+  // Push clip via Feishu
+  const handlePushClip = async (videoPushId: string) => {
+    const state = clipStates[videoPushId]
+    const clip = detailData?.clips.find(c => c.videoPushId === videoPushId)
+    if (!state || !clip) return
+
+    try {
+      const res = await fetch('/api/video-push/feishu-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoPushId,
+          title: state.title || clip.title,
+          content: state.content || clip.content,
+          thumbnail: state.thumbnail || clip.thumbnail,
+          videoUrl: clip.url,
+        }),
+      })
+      if (res.ok) {
+        setSuccessMessage('推送成功')
+        setTimeout(() => setSuccessMessage(null), 2000)
+      } else {
+        const data = await res.json()
+        alert(data.error || '推送失败')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('推送失败')
     }
   }
 
@@ -283,7 +359,11 @@ export default function IpProductsPage() {
         })
       }
 
-      setSuccessMessage(`剪辑任务已启动，${prepareData.createdCount} 个片段处理中`)
+      if (prepareData.message === 'Clips already prepared') {
+        setSuccessMessage('该视频组合已完成剪辑')
+      } else {
+        setSuccessMessage(`剪辑任务已启动，${prepareData.createdCount} 个片段处理中`)
+      }
       setTimeout(() => setSuccessMessage(null), 3000)
       setSelectedSourceIds(new Set())
       fetchVideoDetail(selectedProductId)
@@ -318,85 +398,86 @@ export default function IpProductsPage() {
   const dirtyCount = Object.values(clipStates).filter(s => s.dirty).length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-100 via-background to-fuchsia-100">
-      {/* Floating orbs */}
-      <div className="fixed top-20 left-20 w-96 h-96 bg-violet-300/30 rounded-full blur-[120px] pointer-events-none animate-pulse" />
-      <div className="fixed bottom-20 right-20 w-80 h-80 bg-fuchsia-300/30 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      {/* Decorative top gradient */}
+      <div className="h-64 bg-gradient-to-b from-indigo-50/50 to-transparent absolute inset-x-0 top-0 pointer-events-none" />
 
-      <div className="relative max-w-2xl mx-auto px-6 py-8">
+      <div className="relative max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-4">
             <Link
               href="/daily-publish-plan"
-              className="w-9 h-9 rounded-lg border border-oat bg-white flex items-center justify-center text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
+              className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-sm"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-warm-charcoal tracking-tight">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                 {productsData.ipNickname || ipId.slice(0, 8)}
               </h1>
-              <p className="text-warm-silver text-sm">虚拟IP发布管理</p>
+              <p className="text-slate-500 text-sm">虚拟IP发布管理</p>
             </div>
           </div>
         </div>
 
-        {/* Product Selector Tabs */}
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+        {/* Product Selector */}
+        <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-2">
           {productsData.products.map(product => (
             <button
               key={product.productId}
               onClick={() => setSelectedProductId(product.productId)}
               className={cn(
-                'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all shadow-sm flex items-center gap-2',
+                'px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all shadow-sm border',
                 selectedProductId === product.productId
-                  ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
-                  : 'bg-white text-warm-silver hover:bg-violet-50 border border-oat'
+                  ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white border-transparent shadow-lg shadow-indigo-500/25'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
               )}
             >
-              <img
-                src={getImageUrl(product.productImage)}
-                alt={product.productName}
-                className="w-5 h-5 rounded object-cover"
-              />
-              <span className="truncate max-w-[120px]">{product.productName}</span>
-              {product.hasPublishedVideos && (
-                <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-              )}
+              <div className="flex items-center gap-2">
+                <img
+                  src={getImageUrl(product.productImage)}
+                  alt={product.productName}
+                  className="w-5 h-5 rounded object-cover"
+                />
+                <span className="truncate max-w-[100px]">{product.productName}</span>
+                {product.hasPublishedVideos && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                )}
+              </div>
             </button>
           ))}
         </div>
 
         {/* Stats */}
         {selectedProduct && (
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="rounded-xl border border-oat bg-white p-4 shadow-sm">
-              <div className="text-xs text-warm-silver uppercase tracking-wider mb-1">AI视频</div>
-              <div className="text-2xl font-bold text-warm-charcoal">{detailData?.videos?.length || 0}</div>
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm">
+              <div className="text-xs text-slate-500 uppercase tracking-wider mb-2">AI视频</div>
+              <div className="text-3xl font-bold text-slate-900">{detailData?.videos?.length || 0}</div>
             </div>
-            <div className="rounded-xl border border-oat bg-white p-4 shadow-sm">
-              <div className="text-xs text-warm-silver uppercase tracking-wider mb-1">待发布</div>
-              <div className="text-2xl font-bold text-amber-600">{readyClips}</div>
+            <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm">
+              <div className="text-xs text-slate-500 uppercase tracking-wider mb-2">待发布</div>
+              <div className="text-3xl font-bold text-amber-500">{readyClips}</div>
             </div>
-            <div className="rounded-xl border border-oat bg-white p-4 shadow-sm">
-              <div className="text-xs text-warm-silver uppercase tracking-wider mb-1">已发布</div>
-              <div className="text-2xl font-bold text-emerald-600">{publishedClips}</div>
+            <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm">
+              <div className="text-xs text-slate-500 uppercase tracking-wider mb-2">已发布</div>
+              <div className="text-3xl font-bold text-emerald-500">{publishedClips}</div>
             </div>
           </div>
         )}
 
-        {/* Source Video List */}
-        <div className="rounded-2xl border border-oat bg-white shadow-clay overflow-hidden mb-6">
-          <div className="px-5 py-4 border-b border-oat flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-warm-charcoal">AI 生成视频</h2>
-            <div className="flex items-center gap-2">
+        {/* Source Video Grid - 9:16 vertical thumbnails */}
+        <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden mb-8 shadow-sm">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-900">AI 生成视频</h2>
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleClip}
                 disabled={selectedSourceIds.size === 0 || clipping}
-                className="px-3 py-1.5 rounded-lg border border-oat bg-white text-xs text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm disabled:opacity-50"
+                className="px-4 py-2 rounded-xl border border-slate-300 text-sm text-slate-600 hover:border-indigo-400 hover:text-indigo-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {clipping ? '剪辑中...' : '剪辑'}
               </button>
@@ -405,24 +486,24 @@ export default function IpProductsPage() {
                   if (!selectedProductId) return
                   router.push(`/products/${selectedProductId}/video-wizard?ipId=${ipId}`)
                 }}
-                className="px-3 py-1.5 rounded-lg border border-oat bg-white text-xs text-warm-silver hover:bg-matcha-50 hover:border-matcha-600 transition-all shadow-sm"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-sm text-white font-medium hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
               >
                 新增
               </button>
-              <span className="text-xs text-warm-silver ml-2">选择后点击剪辑</span>
             </div>
           </div>
+
           {/* Scene filter */}
           {availableScenes.length > 0 && (
-            <div className="px-5 py-3 border-b border-oat/50 flex items-center gap-2 overflow-x-auto">
-              <span className="text-xs text-warm-silver whitespace-nowrap">场景：</span>
+            <div className="px-6 py-3 border-b border-slate-100 flex items-center gap-2 overflow-x-auto">
+              <span className="text-xs text-slate-400 whitespace-nowrap">场景：</span>
               <button
                 onClick={() => setSelectedSceneId(null)}
                 className={cn(
-                  'px-3 py-1 rounded-lg text-xs whitespace-nowrap transition-all',
+                  'px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all',
                   selectedSceneId === null
-                    ? 'bg-violet-500 text-white'
-                    : 'bg-white text-warm-silver border border-oat hover:bg-violet-50'
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
                 )}
               >
                 全部
@@ -432,10 +513,10 @@ export default function IpProductsPage() {
                   key={s.id}
                   onClick={() => setSelectedSceneId(s.id)}
                   className={cn(
-                    'px-3 py-1 rounded-lg text-xs whitespace-nowrap transition-all flex items-center gap-1.5',
+                    'px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all flex items-center gap-1.5',
                     selectedSceneId === s.id
-                      ? 'bg-violet-500 text-white'
-                      : 'bg-white text-warm-silver border border-oat hover:bg-violet-50'
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
                   )}
                 >
                   {s.thumbnail && (
@@ -447,73 +528,57 @@ export default function IpProductsPage() {
               ))}
             </div>
           )}
-          <div className="divide-y divide-oat/50">
+
+          {/* Video grid - 9:16 vertical thumbnails */}
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3 p-6">
             {!detailData || detailData.videos.length === 0 ? (
-              <div className="px-5 py-12 text-center">
-                <p className="text-warm-silver text-sm">暂无 AI 视频</p>
+              <div className="col-span-full py-12 text-center">
+                <p className="text-slate-400 text-sm">暂无 AI 视频</p>
               </div>
             ) : (
               detailData.videos
                 .filter(v => selectedSceneId === null || v.sceneId === selectedSceneId)
                 .map(video => (
-                <div
-                  key={video.id}
-                  onClick={() => toggleSourceSelection(video.id)}
-                  className={cn(
-                    'flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-violet-50/50 transition-colors',
-                    selectedSourceIds.has(video.id) ? 'bg-violet-50/50' : ''
-                  )}
-                >
                   <div
+                    key={video.id}
+                    onClick={() => toggleSourceSelection(video.id)}
                     className={cn(
-                      'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                      'relative rounded-xl overflow-hidden cursor-pointer transition-all shadow-sm border-2',
                       selectedSourceIds.has(video.id)
-                        ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent'
-                        : 'bg-white border-oat'
+                        ? 'border-indigo-500 shadow-lg shadow-indigo-500/20'
+                        : 'border-transparent hover:border-slate-300'
                     )}
+                    style={{ aspectRatio: '9/16' }}
                   >
-                    {selectedSourceIds.has(video.id) && (
-                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="w-16 h-12 rounded-lg bg-matcha-100 overflow-hidden flex-shrink-0">
                     {video.thumbnail ? (
                       <img src={getImageUrl(video.thumbnail)} alt="thumbnail" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-matcha-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    ) : null}
+                    {selectedSourceIds.has(video.id) && (
+                      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center shadow-lg">
+                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-mono text-warm-charcoal truncate">{video.id}</div>
-                    <div className="text-xs text-warm-silver">
-                      {new Date(video.createdAt).toLocaleDateString('zh-CN')}
-                    </div>
-                  </div>
-                </div>
-              ))
+                ))
             )}
           </div>
         </div>
 
-        {/* Clips Table */}
+        {/* Clips Table - 9:16 thumbnails */}
         {detailData && detailData.clips.length > 0 && (
-          <div className="rounded-xl border border-oat bg-white shadow-clay overflow-hidden mb-6">
-            <div className="px-5 py-4 border-b border-oat flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-warm-charcoal">剪辑成片 ({totalClips})</h2>
+          <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden mb-8 shadow-sm">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900">剪辑成片 ({totalClips})</h2>
               <div className="flex items-center gap-3">
                 {dirtyCount > 0 && (
-                  <span className="text-xs text-orange-500 font-medium">{dirtyCount} 个待保存</span>
+                  <span className="text-xs text-amber-500 font-medium">{dirtyCount} 个待保存</span>
                 )}
                 <button
                   onClick={handleConfirmClips}
                   disabled={!dirtyCount || confirming}
-                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-xs text-white font-medium hover:shadow-lg transition-all disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-sm text-white font-medium hover:shadow-lg hover:shadow-indigo-500/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {confirming ? '保存中...' : '确认'}
                 </button>
@@ -522,91 +587,83 @@ export default function IpProductsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-oat bg-violet-50">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">视频</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">音乐</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">模板</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">封面图</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">发布标题</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">发布内容</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">状态</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">合格</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">发布</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-warm-charcoal">操作</th>
+                  <tr className="border-b border-slate-100 bg-slate-50">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">视频</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">音乐</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">模板</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">封面图</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">发布标题</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">发布内容</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">状态</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">合格</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">发布</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {detailData.clips.map(clip => {
                     const state = clipStates[clip.videoPushId]
                     return (
-                      <tr key={clip.videoPushId} className="border-b border-oat/50 hover:bg-violet-50/30">
-                        {/* Video - thumbnail with play */}
+                      <tr key={clip.videoPushId} className="border-b border-slate-100 hover:bg-slate-50/50">
+                        {/* Video - 9:16 thumbnail */}
                         <td className="px-4 py-3">
                           <div
-                            className="w-20 h-14 rounded-lg bg-matcha-100 overflow-hidden flex-shrink-0 relative cursor-pointer group"
+                            className="rounded-lg overflow-hidden relative cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all shadow-sm"
+                            style={{ aspectRatio: '9/16', width: '60px' }}
                             onClick={() => clip.url && setPlayingVideo({ url: clip.url, title: `视频 ${clip.videoPushId.slice(0, 8)}` })}
                           >
-                            {(state?.thumbnail || clip.thumbnail) ? (
-                              <img src={getImageUrl(state?.thumbnail || clip.thumbnail || '')} alt="thumbnail" className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <svg className="w-6 h-6 text-matcha-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                            )}
+                            {clip.videoThumbnail ? (
+                              <img src={getImageUrl(clip.videoThumbnail)} alt="thumbnail" className="w-full h-full object-cover" />
+                            ) : null}
                           </div>
                         </td>
                         {/* Music */}
                         <td className="px-4 py-3">
-                          <span className="text-xs text-warm-silver font-mono truncate max-w-[80px] block">
+                          <span className="text-xs text-slate-500 font-mono truncate max-w-[80px] block">
                             {clip.musicId || '-'}
                           </span>
                         </td>
                         {/* Template */}
                         <td className="px-4 py-3">
-                          <span className="text-xs text-warm-silver truncate max-w-[80px] block">
+                          <span className="text-xs text-slate-500 truncate max-w-[80px] block">
                             {clip.templateName || '-'}
                           </span>
                         </td>
-                        {/* Thumbnail uploader */}
+                        {/* Thumbnail */}
                         <td className="px-4 py-3">
                           {state && (
                             <ThumbnailUploader
                               value={state.thumbnail}
                               onChange={(url) => updateClipState(clip.videoPushId, 'thumbnail', url)}
-                              disabled={clip.status === 'published'}
                             />
                           )}
                         </td>
                         {/* Title */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 min-w-[120px]">
                           <input
                             type="text"
                             value={state?.title || ''}
                             onChange={(e) => updateClipState(clip.videoPushId, 'title', e.target.value)}
-                            disabled={clip.status === 'published'}
-                            className="w-full px-2 py-1.5 text-xs border border-oat rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:bg-gray-50"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 placeholder:text-slate-400"
                             placeholder="标题"
                           />
                         </td>
                         {/* Content */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 min-w-[150px]">
                           <input
                             type="text"
                             value={state?.content || ''}
                             onChange={(e) => updateClipState(clip.videoPushId, 'content', e.target.value)}
-                            disabled={clip.status === 'published'}
-                            className="w-full px-2 py-1.5 text-xs border border-oat rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:bg-gray-50"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 placeholder:text-slate-400"
                             placeholder="内容"
                           />
                         </td>
                         {/* Status */}
                         <td className="px-4 py-3">
                           <span className={cn(
-                            'text-xs font-medium px-2 py-1 rounded',
+                            'text-xs font-medium px-2.5 py-1 rounded-lg',
                             clip.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
-                            clip.status === 'ready' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-warm-silver'
+                            clip.status === 'ready' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
                           )}>
                             {clip.status === 'published' ? '已发布' : clip.status === 'ready' ? '待发布' : '剪辑中'}
                           </span>
@@ -617,8 +674,7 @@ export default function IpProductsPage() {
                             type="checkbox"
                             checked={state?.isQualified || false}
                             onChange={(e) => updateClipState(clip.videoPushId, 'isQualified', e.target.checked)}
-                            disabled={clip.status === 'published'}
-                            className="w-4 h-4 rounded border-oat text-violet-600 focus:ring-violet-500"
+                            className="w-4 h-4 rounded border-slate-300 text-indigo-500 focus:ring-indigo-500/50"
                           />
                         </td>
                         {/* Published */}
@@ -627,19 +683,24 @@ export default function IpProductsPage() {
                             type="checkbox"
                             checked={state?.isPublished || false}
                             onChange={(e) => updateClipState(clip.videoPushId, 'isPublished', e.target.checked)}
-                            disabled={clip.status === 'published'}
-                            className="w-4 h-4 rounded border-oat text-violet-600 focus:ring-violet-500"
+                            className="w-4 h-4 rounded border-slate-300 text-indigo-500 focus:ring-indigo-500/50"
                           />
                         </td>
                         {/* Actions */}
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-2">
                             <button
-                              disabled
-                              title="AI 填充"
-                              className="px-2 py-1 rounded border border-oat text-xs text-warm-silver opacity-50 cursor-not-allowed"
+                              onClick={() => handleRowPublish(clip.videoPushId)}
+                              className="px-3 py-1.5 rounded-lg bg-indigo-500 border border-indigo-500 text-xs text-white hover:bg-indigo-600 transition-all"
                             >
-                              AI填充
+                              发布
+                            </button>
+                            <button
+                              onClick={() => handlePushClip(clip.videoPushId)}
+                              disabled={!state?.isPublished}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-500 border border-emerald-500 text-xs text-white hover:bg-emerald-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              推送
                             </button>
                           </div>
                         </td>
@@ -654,12 +715,30 @@ export default function IpProductsPage() {
 
         {/* Success Toast */}
         {successMessage && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-matcha-600 text-white text-sm font-medium rounded-lg shadow-lg animate-fade-in">
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-emerald-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-emerald-500/25 animate-fade-in">
             {successMessage}
           </div>
         )}
-      </div>
 
-          </div>
+        {/* Video Player Modal */}
+        {playingVideo && (
+          <Dialog open={!!playingVideo} onOpenChange={() => setPlayingVideo(null)}>
+            <DialogContent className="bg-white border-slate-200 max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-slate-900">{playingVideo.title}</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <video
+                  src={playingVideo.url}
+                  controls
+                  autoPlay
+                  className="w-full rounded-lg"
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+    </div>
   )
 }

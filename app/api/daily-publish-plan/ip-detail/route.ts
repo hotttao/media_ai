@@ -104,12 +104,17 @@ export async function GET(request: NextRequest) {
         // For pending clips without output, show source video
         // For completed clips, show clip output
         url: clipUrl || primarySource?.url || '',
-        thumbnail: clipThumbnail || primarySource?.thumbnail || (primarySource?.firstFrameId ? firstFrameMap.get(primarySource.firstFrameId) || null : null),
+        videoThumbnail: primarySource?.firstFrameId ? firstFrameMap.get(primarySource.firstFrameId) || null : null,
+        thumbnail: clipThumbnail || null,
         createdAt: vp.createdAt.toISOString(),
         status: vp.isPublished ? 'published' : (vp.status === 'completed' ? 'ready' : 'pending'),
         isQualified: vp.isQualified,
         isPublished: vp.isPublished,
         videoIds: sourceIds,
+        templateName: vp.templateName || null,
+        musicId: vp.musicId || null,
+        title: vp.title || null,
+        content: vp.content || null,
       }
     })
 
