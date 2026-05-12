@@ -15,12 +15,8 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url)
-    const productId = searchParams.get('productId')
+    const productId = searchParams.get('productId') || ''
     const teamId = session.user.teamId
-
-    if (!productId) {
-      return NextResponse.json({ error: 'productId required' }, { status: 400 })
-    }
 
     // 获取团队 IP
     const ips = await db.virtualIp.findMany({
