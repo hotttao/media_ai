@@ -104,8 +104,9 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
   }
 
   private async getExistingModelImages(productId: string, ipId: string): Promise<Combination[]> {
+    const whereClause = productId ? { productId, ipId } : { ipId }
     const records = await db.modelImage.findMany({
-      where: { productId, ipId },
+      where: whereClause,
       select: { id: true, productId: true, ipId: true }
     })
 
@@ -119,9 +120,10 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
   }
 
   private async getExistingStyleImages(productId: string, ipId: string): Promise<Combination[]> {
+    const whereClause = productId ? { productId, ipId } : { ipId }
     const records = await db.styleImage.findMany({
-      where: { productId, ipId },
-      select: { id: true, modelImageId: true, poseId: true }
+      where: whereClause,
+      select: { id: true, modelImageId: true, poseId: true, productId: true, ipId: true }
     })
 
     return records.map(r => ({
@@ -130,8 +132,8 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
       elements: {
         modelImageId: r.modelImageId,
         poseId: r.poseId,
-        productId,
-        ipId
+        productId: r.productId,
+        ipId: r.ipId
       },
       status: 'generated' as const,
       existingRecordId: r.id
@@ -140,12 +142,12 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
 
   private async getExistingFirstFrames(productId: string, ipId: string, generationPath?: GenerationPath): Promise<Combination[]> {
     const whereClause = generationPath
-      ? { productId, ipId, generationPath }
-      : { productId, ipId }
+      ? (productId ? { productId, ipId, generationPath } : { ipId, generationPath })
+      : (productId ? { productId, ipId } : { ipId })
 
     const records = await db.firstFrame.findMany({
       where: whereClause,
-      select: { id: true, styleImageId: true, sceneId: true, generationPath: true }
+      select: { id: true, styleImageId: true, sceneId: true, generationPath: true, productId: true, ipId: true }
     })
 
     return records.map(r => ({
@@ -156,8 +158,8 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
         sceneId: r.sceneId,
         generationPath: r.generationPath as GenerationPath,
         firstFrameId: r.id,
-        productId,
-        ipId
+        productId: r.productId,
+        ipId: r.ipId
       },
       status: 'generated' as const,
       existingRecordId: r.id
