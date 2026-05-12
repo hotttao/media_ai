@@ -158,20 +158,16 @@ export class CombinationEngine implements ICombinationEngine {
     if (pool.modelImages.length > 0) {
       for (const modelImage of pool.modelImages) {
         for (const pose of pool.poses) {
+          const comboElements: Record<string, string> = {
+            modelImageId: modelImage.id,
+            poseId: pose.id
+          }
+          if (pool.productId && pool.productId !== 'undefined') comboElements.productId = pool.productId
+          if (pool.ipId && pool.ipId !== 'undefined') comboElements.ipId = pool.ipId
           combinations.push({
-            id: this.generateCombinationId({
-              modelImageId: modelImage.id,
-              poseId: pose.id,
-              productId: pool.productId || undefined,
-              ipId: pool.ipId || undefined
-            }),
+            id: this.generateCombinationId(comboElements),
             type: CombinationType.STYLE_IMAGE,
-            elements: {
-              modelImageId: modelImage.id,
-              poseId: pose.id,
-              productId: pool.productId || undefined,
-              ipId: pool.ipId || undefined
-            },
+            elements: comboElements as any,
             status: 'pending'
           })
         }
@@ -205,24 +201,18 @@ export class CombinationEngine implements ICombinationEngine {
     if (pool.styleImages.length > 0) {
       for (const styleImage of pool.styleImages) {
         for (const scene of pool.scenes) {
-          const comboElements: {
-            styleImageId: string
-            sceneId: string
-            generationPath: GenerationPath
-            productId?: string
-            ipId?: string
-          } = {
+          const comboElements: Record<string, string> = {
             styleImageId: styleImage.id,
             sceneId: scene.id,
             generationPath: generationPath || GenerationPath.GPT
           }
-          // Always include productId/ipId for consistent key matching
-          comboElements.productId = pool.productId || undefined
-          comboElements.ipId = pool.ipId || undefined
+          // Always include productId/ipId if available - critical for key matching
+          if (pool.productId && pool.productId !== 'undefined') comboElements.productId = pool.productId
+          if (pool.ipId && pool.ipId !== 'undefined') comboElements.ipId = pool.ipId
           combinations.push({
             id: this.generateCombinationId(comboElements),
             type: CombinationType.FIRST_FRAME,
-            elements: comboElements,
+            elements: comboElements as any,
             status: 'pending'
           })
         }
@@ -360,9 +350,13 @@ export class CombinationEngine implements ICombinationEngine {
     return { total, generated, qualified, published, pending, newGeneratable }
   }
 
-  private generateCombinationId(elements: Record<string, string>): string {
+  private generateCombinationId(elements: Record<string, string | undefined>): string {
     const parts = Object.keys(elements).sort()
       .map(k => `${k}:${elements[k]}`)
+      .filter(p => {
+        const [, value] = p.split(':')
+        return value !== undefined && value !== '' && value !== 'undefined'
+      })
     return parts.join('|')
   }
 
