@@ -162,15 +162,15 @@ export class CombinationEngine implements ICombinationEngine {
             id: this.generateCombinationId({
               modelImageId: modelImage.id,
               poseId: pose.id,
-              productId: pool.productId,
-              ipId: pool.ipId
+              productId: pool.productId || undefined,
+              ipId: pool.ipId || undefined
             }),
             type: CombinationType.STYLE_IMAGE,
             elements: {
               modelImageId: modelImage.id,
               poseId: pose.id,
-              productId: pool.productId,
-              ipId: pool.ipId
+              productId: pool.productId || undefined,
+              ipId: pool.ipId || undefined
             },
             status: 'pending'
           })
@@ -205,16 +205,20 @@ export class CombinationEngine implements ICombinationEngine {
     if (pool.styleImages.length > 0) {
       for (const styleImage of pool.styleImages) {
         for (const scene of pool.scenes) {
-          const comboElements = {
+          const comboElements: {
+            styleImageId: string
+            sceneId: string
+            generationPath: GenerationPath
+            productId?: string
+            ipId?: string
+          } = {
             styleImageId: styleImage.id,
             sceneId: scene.id,
             generationPath: generationPath || GenerationPath.GPT
           }
-          // Only add productId/ipId if pool has valid productId (not empty)
-          if (pool.productId) {
-            comboElements.productId = pool.productId
-            comboElements.ipId = pool.ipId
-          }
+          // Always include productId/ipId for consistent key matching
+          comboElements.productId = pool.productId || undefined
+          comboElements.ipId = pool.ipId || undefined
           combinations.push({
             id: this.generateCombinationId(comboElements),
             type: CombinationType.FIRST_FRAME,
@@ -359,10 +363,6 @@ export class CombinationEngine implements ICombinationEngine {
   private generateCombinationId(elements: Record<string, string>): string {
     const parts = Object.keys(elements).sort()
       .map(k => `${k}:${elements[k]}`)
-      .filter(p => {
-        const [, value] = p.split(':')
-        return value !== '' // 过滤空值
-      })
     return parts.join('|')
   }
 
