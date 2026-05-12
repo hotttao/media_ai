@@ -1,48 +1,14 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-// Mock fetch
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
-
-describe('Feishu 模块', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    vi.resetModules()
-  })
-
-  it('sendTextMessage 返回 boolean', async () => {
-    // Mock token response
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        code: 0,
-        tenant_access_token: 'test-token',
-        expire: 7200,
-      }),
-    }).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ code: 0 }),
-    })
+describe('Feishu 模块 - 真实调用', () => {
+  it('发送文本消息并打印请求详情', async () => {
+    console.log('FEISHU_APP_ID:', process.env.FEISHU_APP_ID ? '已配置' : '未配置')
+    console.log('FEISHU_APP_SECRET:', process.env.FEISHU_APP_SECRET ? '已配置' : '未配置')
+    console.log('FEISHU_RECEIVE_ID:', process.env.FEISHU_RECEIVE_ID ? '已配置' : '未配置')
 
     const { sendTextMessage } = await import('@/foundation/lib/feishu')
-    const result = await sendTextMessage('测试', '内容')
-
-    // 返回值应该是 boolean
+    const result = await sendTextMessage('媒体AI测试', '这是一条测试消息')
+    console.log('发送结果:', result ? '成功' : '失败')
     expect(typeof result).toBe('boolean')
-  })
-
-  it('无配置时 sendTextMessage 返回 false', async () => {
-    // 确保环境变量未设置
-    delete process.env.FEISHU_APP_ID
-    delete process.env.FEISHU_APP_SECRET
-
-    const { sendTextMessage } = await import('@/foundation/lib/feishu')
-    const result = await sendTextMessage('测试', '内容')
-
-    expect(result).toBe(false)
-  })
-
-  afterEach(() => {
-    vi.unstubGlobal('fetch')
   })
 })

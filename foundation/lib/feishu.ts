@@ -9,7 +9,6 @@ interface FeishuConfig {
   receiveIdType: 'email' | 'open_id' | 'chat_id'
 }
 
-// 获取配置
 function getConfig(): FeishuConfig {
   return {
     appId: process.env.FEISHU_APP_ID || '',
@@ -31,7 +30,6 @@ async function getAccessToken(): Promise<string> {
     return ''
   }
 
-  // 缓存未过期时直接返回
   if (_accessToken && Date.now() < _tokenExpiresAt - 60 * 1000) {
     return _accessToken
   }
@@ -59,46 +57,6 @@ async function getAccessToken(): Promise<string> {
   return ''
 }
 
-// ============ 上传文件 ============
-
-async function uploadFile(
-  fileBuffer: Buffer,
-  fileName: string,
-  fileType: 'image' | 'video' | 'file'
-): Promise<string | null> {
-  const token = await getAccessToken()
-  if (!token) return null
-
-  const endpoint = fileType === 'image' ? '/im/v1/images' : '/im/v1/files'
-  const formData = new FormData()
-
-  const blob = new Blob([new Uint8Array(fileBuffer)])
-  formData.append(fileType === 'image' ? 'image' : 'file', blob, fileName)
-  if (fileType === 'image') {
-    formData.append('image_type', 'message')
-  }
-
-  const resp = await fetch(`${FEISHU_API_BASE}${endpoint}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  })
-
-  if (!resp.ok) {
-    console.error(`[Feishu] Upload ${fileType} failed:`, resp.status)
-    return null
-  }
-
-  const result = await resp.json()
-  if (result.code === 0) {
-    // 图片返回 image_key，视频/文件返回 file_key
-    return result.data?.image_key || result.data?.file_key || null
-  }
-
-  console.error(`[Feishu] Upload ${fileType} error:`, result.msg)
-  return null
-}
-
 // ============ 发送消息 ============
 
 async function sendMessage(msgType: string, content: object): Promise<boolean> {
@@ -121,12 +79,15 @@ async function sendMessage(msgType: string, content: object): Promise<boolean> {
   })
 
   if (!resp.ok) {
-    console.error('[Feishu] Send message failed:', resp.status)
-    return false
+    const text = await resp.text()
+    throw new Error(`Feishu API error: ${resp.status} ${resp.statusText}, body: ${text}`)
   }
 
   const result = await resp.json()
-  return result.code === 0
+  if (result.code !== 0) {
+    throw new Error(`Feishu response error: code=${result.code}, msg=${result.msg}`)
+  }
+  return true
 }
 
 // ============ 对外 API ============
@@ -158,7 +119,7 @@ export async function sendMarkdownMessage(title: string, content: string): Promi
  * 上传图片并发送
  */
 export async function sendImage(imageBuffer: Buffer, imageName = 'image.png'): Promise<boolean> {
-  const imageKey = await uploadFile(imageBuffer, imageName, 'image')
+  const imageKey = await uploadImage(imageBuffer, imageName)
   if (!imageKey) return false
   return sendMessage('image', { image_key: imageKey })
 }
@@ -171,20 +132,121 @@ export async function sendVideo(
   title = '视频',
   videoName = 'video.mp4'
 ): Promise<boolean> {
-  const fileKey = await uploadFile(videoBuffer, videoName, 'video')
+  const fileKey = await uploadVideo(videoBuffer, videoName)
   if (!fileKey) return false
   return sendMessage('video', { file_key: fileKey, title })
 }
 
+// ============ 文件上传 ============
+
+async function uploadImage(imagePath: string): Promise<string> {
+  const token = await getAccessToken()
+  if (!token) return ''
+
+  // 读取文件
+  let imageData: ArrayBuffer
+  try {
+    const fs = await import('fs')
+    imageData = fs.readFileSync(imagePath)
+  } catch {
+    return ''
+  }
+
+  const formData = new FormData()
+  formData.append('image', new Blob([new Uint8Array(imageData)]), 'image.png')
+  formData.append('image_type', 'message')
+
+  try {
+    const resp = await fetch(`${FEISHU_API_BASE}/im/v1/images`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+    const result = await resp.json()
+    return result.code === 0 ? result.data?.image_key : ''
+  } catch {
+    return ''
+  }
+}
+
+async function uploadVideo(videoPath: string): Promise<string> {
+  const token = await getAccessToken()
+  if (!token) return ''
+
+  let videoData: ArrayBuffer
+  try {
+    const fs = await import('fs')
+    videoData = fs.readFileSync(videoPath)
+  } catch {
+    return ''
+  }
+
+  const formData = new FormData()
+  formData.append('file', new Blob([new Uint8Array(videoData)]), 'video.mp4')
+
+  try {
+    const resp = await fetch(`${FEISHU_API_BASE}/im/v1/files`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+    const result = await resp.json()
+    return result.code === 0 ? result.data?.file_key : ''
+  } catch {
+    return ''
+  }
+}
+
+async function uploadImageBuffer(imageBuffer: Buffer, fileName: string): Promise<string | null> {
+  const token = await getAccessToken()
+  if (!token) return null
+
+  const formData = new FormData()
+  formData.append('image', new Blob([new Uint8Array(imageBuffer)]), fileName)
+  formData.append('image_type', 'message')
+
+  try {
+    const resp = await fetch(`${FEISHU_API_BASE}/im/v1/images`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+    const result = await resp.json()
+    return result.code === 0 ? result.data?.image_key : null
+  } catch {
+    return null
+  }
+}
+
+async function uploadVideoBuffer(videoBuffer: Buffer, fileName: string): Promise<string | null> {
+  const token = await getAccessToken()
+  if (!token) return null
+
+  const formData = new FormData()
+  formData.append('file', new Blob([new Uint8Array(videoBuffer)]), fileName)
+
+  try {
+    const resp = await fetch(`${FEISHU_API_BASE}/im/v1/files`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+    const result = await resp.json()
+    return result.code === 0 ? result.data?.file_key : null
+  } catch {
+    return null
+  }
+}
+
 /**
- * 发送图文混合消息（图片 + 文字）
+ * 发送图片+文字混合消息
  */
 export async function sendImageWithText(
   imageBuffer: Buffer,
   title: string,
   content: string
 ): Promise<boolean> {
-  const imageKey = await uploadFile(imageBuffer, 'image.png', 'image')
+  const imageKey = await uploadImageBuffer(imageBuffer, 'image.png')
   if (!imageKey) return false
 
   const timestamp = new Date().toLocaleString('zh-CN')
@@ -195,7 +257,7 @@ export async function sendImageWithText(
         content: [
           [{ tag: 'img', image_key: imageKey }],
           [{ tag: 'text', text: content }],
-          [{ tag: 'text', text: `\n⏰ ${timestamp}` }],
+          [{ tag: 'text', text: `\n\n⏰ ${timestamp}` }],
         ],
       },
     },
@@ -203,7 +265,7 @@ export async function sendImageWithText(
 }
 
 /**
- * 发送视频 + 文字混合消息
+ * 发送视频+文字混合消息
  */
 export async function sendVideoWithText(
   videoBuffer: Buffer,
@@ -211,7 +273,7 @@ export async function sendVideoWithText(
   content: string,
   videoName = 'video.mp4'
 ): Promise<boolean> {
-  const fileKey = await uploadFile(videoBuffer, videoName, 'video')
+  const fileKey = await uploadVideoBuffer(videoBuffer, videoName)
   if (!fileKey) return false
 
   const timestamp = new Date().toLocaleString('zh-CN')
@@ -220,9 +282,9 @@ export async function sendVideoWithText(
       zh_cn: {
         title,
         content: [
-          [{ tag: 'video', file_key: fileKey, title }],
+          [{ tag: 'at', at_type: 'all' }],
           [{ tag: 'text', text: content }],
-          [{ tag: 'text', text: `\n⏰ ${timestamp}` }],
+          [{ tag: 'text', text: `\n\n⏰ ${timestamp}` }],
         ],
       },
     },
