@@ -161,8 +161,8 @@ export class CombinationEngine implements ICombinationEngine {
           const comboElements: Record<string, string | undefined> = {
             modelImageId: modelImage.id,
             poseId: pose.id,
-            productId: pool.productId || undefined,
-            ipId: pool.ipId || undefined
+            productId: modelImage.productId || pool.productId || undefined,
+            ipId: modelImage.ipId || pool.ipId || undefined
           }
           combinations.push({
             id: this.generateCombinationId(comboElements),
@@ -205,8 +205,8 @@ export class CombinationEngine implements ICombinationEngine {
             styleImageId: styleImage.id,
             sceneId: scene.id,
             generationPath: generationPath || GenerationPath.GPT,
-            productId: pool.productId || undefined,
-            ipId: pool.ipId || undefined
+            productId: styleImage.productId || pool.productId || undefined,
+            ipId: styleImage.ipId || pool.ipId || undefined
           }
           combinations.push({
             id: this.generateCombinationId(comboElements),
