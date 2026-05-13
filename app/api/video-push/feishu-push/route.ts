@@ -38,12 +38,14 @@ export async function POST(request: NextRequest) {
     if (videoBuffer) {
       // Send video with text
       const fileName = `video_${videoPushId.slice(0, 8)}.mp4`
+      console.log('[feishu-push] Sending video, size:', videoBuffer.length)
       success = await sendVideoWithText(
         videoBuffer,
         title || '视频推送',
         content || '',
         fileName
       )
+      console.log('[feishu-push] sendVideoWithText result:', success)
     } else if (imageBuffer) {
       // Send image with text
       success = await sendImageWithText(
@@ -62,19 +64,22 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('[feishu-push] Error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    if (error instanceof Error) {
+      console.error('[feishu-push] Stack:', error.stack)
+    }
+    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }, { status: 500 })
   }
 }
 
+const VIDEO_SERVICE_BASE_URL = process.env.NEXT_PUBLIC_VIDEO_SERVICE_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+
 async function downloadToBuffer(url: string): Promise<Buffer | null> {
   if (!url) return null
-  try {
-    const response = await fetch(url)
-    if (!response.ok) return null
-    const arrayBuffer = await response.arrayBuffer()
-    return Buffer.from(arrayBuffer)
-  } catch (error) {
-    console.error('[feishu-push] Download error:', error)
-    return null
+  const fullUrl = url.startsWith('http') ? url : `${VIDEO_SERVICE_BASE_URL}${url}`
+  const response = await fetch(fullUrl)
+  if (!response.ok) {
+    throw new Error(`Failed to download ${fullUrl}: ${response.status} ${response.statusText}`)
   }
+  const arrayBuffer = await response.arrayBuffer()
+  return Buffer.from(arrayBuffer)
 }

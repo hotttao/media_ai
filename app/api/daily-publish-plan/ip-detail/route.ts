@@ -106,6 +106,7 @@ export async function GET(request: NextRequest) {
         url: clipUrl || primarySource?.url || '',
         videoThumbnail: primarySource?.firstFrameId ? firstFrameMap.get(primarySource.firstFrameId) || null : null,
         thumbnail: clipThumbnail || null,
+        manualClipUrl: vp.manualClipUrl || null,
         createdAt: vp.createdAt.toISOString(),
         status: vp.isPublished ? 'published' : (vp.status === 'completed' ? 'ready' : 'pending'),
         isQualified: vp.isQualified,

@@ -120,7 +120,7 @@ export default function DailyPublishPlanPage() {
 
   // Navigate to publish page
   const handleGoToPublish = (productId: string, ipId: string) => {
-    router.push(`/daily-publish-plan/ip/${ipId}?productId=${productId}`)
+    router.push(`/daily-publish-plan/ip/${ipId}?productId=${productId}&date=${selectedDate}`)
   }
 
   const formatDate = (dateStr: string) => {

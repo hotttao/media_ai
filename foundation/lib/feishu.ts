@@ -65,6 +65,7 @@ async function sendMessage(msgType: string, content: object): Promise<boolean> {
   if (!token || !config.receiveId) return false
 
   const url = `${FEISHU_API_BASE}/im/v1/messages?receive_id_type=${config.receiveIdType}`
+  const bodyContent = typeof content === 'string' ? content : JSON.stringify(content)
   const resp = await fetch(url, {
     method: 'POST',
     headers: {
@@ -74,7 +75,7 @@ async function sendMessage(msgType: string, content: object): Promise<boolean> {
     body: JSON.stringify({
       receive_id: config.receiveId,
       msg_type: msgType,
-      content: JSON.stringify(content),
+      content: bodyContent,
     }),
   })
 
@@ -224,6 +225,7 @@ async function uploadVideoBuffer(videoBuffer: Buffer, fileName: string): Promise
 
   const formData = new FormData()
   formData.append('file', new Blob([new Uint8Array(videoBuffer)]), fileName)
+  formData.append('file_type', 'mp4')
 
   try {
     const resp = await fetch(`${FEISHU_API_BASE}/im/v1/files`, {
@@ -277,16 +279,9 @@ export async function sendVideoWithText(
   if (!fileKey) return false
 
   const timestamp = new Date().toLocaleString('zh-CN')
-  return sendMessage('post', {
-    post: {
-      zh_cn: {
-        title,
-        content: [
-          [{ tag: 'at', at_type: 'all' }],
-          [{ tag: 'text', text: content }],
-          [{ tag: 'text', text: `\n\n⏰ ${timestamp}` }],
-        ],
-      },
-    },
-  })
+  const textContent = content?.trim() || title || '视频推送'
+  // 先发文本消息
+  await sendMessage('text', { text: `${title || '视频推送'}\n\n${textContent}\n\n⏰ ${timestamp}` })
+  // 再发视频消息
+  return sendMessage('media', { file_key: fileKey, title: title || '视频推送' })
 }

@@ -34,7 +34,16 @@
       "Bash(git log:*)",
       "Bash(ls:*)",
       "Bash(wc:*)",
-      "Bash(dir \"D:\\\\Code\\\\media\\\\MediaCrawler\\\\core\\\\notifier\")"
+      "Bash(dir \"D:\\\\Code\\\\media\\\\MediaCrawler\\\\core\\\\notifier\")",
+      "WebSearch",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Bash(npx next:*)",
+      "Bash(npm test:*)",
+      "Bash(curl -s \"https://api.minimaxi.com/v1/models\" -H \"Authorization: Bearer $MINIMAX_API_KEY\")",
+      "Bash(curl:*)",
+      "Bash(grep -n \"VIDEO_SERVICE\\\\|IMAGE_SERVICE\" .env*)",
+      "Bash(npx prisma:*)"
     ],
     "deny": [
       "Bash(rm -rf *)",

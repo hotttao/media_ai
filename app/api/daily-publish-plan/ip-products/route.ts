@@ -27,9 +27,22 @@ export async function GET(request: NextRequest) {
       select: { nickname: true }
     })
 
-    // Get all VideoPush records for this IP
+    // Get VideoPush records for this IP on this date (if date provided)
+    const videoPushWhere: any = { ipId }
+    if (date) {
+      const planDate = new Date(date)
+      planDate.setHours(0, 0, 0, 0)
+      const nextDate = new Date(planDate)
+      nextDate.setDate(nextDate.getDate() + 1)
+
+      videoPushWhere.createdAt = {
+        gte: planDate,
+        lt: nextDate,
+      }
+    }
+
     const videoPushes = await db.videoPush.findMany({
-      where: { ipId },
+      where: videoPushWhere,
       include: {
         product: {
           include: {

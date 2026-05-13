@@ -12,7 +12,7 @@ export const models = {
   extract: minimax("MiniMax-M2.7"),
   memory: minimax("MiniMax-M2.7"),
   compactor: minimax("MiniMax-M2.7"),
-  chat: minimax("MiniMax-LLM"),
+  chat: minimax("MiniMax-M2.7"),
 };
 
 export const extractJson = (output: string) => {
