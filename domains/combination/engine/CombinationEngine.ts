@@ -158,12 +158,12 @@ export class CombinationEngine implements ICombinationEngine {
     if (pool.modelImages.length > 0) {
       for (const modelImage of pool.modelImages) {
         for (const pose of pool.poses) {
-          const comboElements: Record<string, string> = {
+          const comboElements: Record<string, string | undefined> = {
             modelImageId: modelImage.id,
-            poseId: pose.id
+            poseId: pose.id,
+            productId: pool.productId || undefined,
+            ipId: pool.ipId || undefined
           }
-          if (pool.productId && pool.productId !== 'undefined') comboElements.productId = pool.productId
-          if (pool.ipId && pool.ipId !== 'undefined') comboElements.ipId = pool.ipId
           combinations.push({
             id: this.generateCombinationId(comboElements),
             type: CombinationType.STYLE_IMAGE,
@@ -201,17 +201,12 @@ export class CombinationEngine implements ICombinationEngine {
     if (pool.styleImages.length > 0) {
       for (const styleImage of pool.styleImages) {
         for (const scene of pool.scenes) {
-          const comboElements: Record<string, string> = {
+          const comboElements: Record<string, string | undefined> = {
             styleImageId: styleImage.id,
             sceneId: scene.id,
-            generationPath: generationPath || GenerationPath.GPT
-          }
-          // Only add productId/ipId if they are valid non-empty strings
-          if (pool.productId && pool.productId !== 'undefined' && pool.productId.length > 0) {
-            comboElements.productId = pool.productId
-          }
-          if (pool.ipId && pool.ipId !== 'undefined' && pool.ipId.length > 0) {
-            comboElements.ipId = pool.ipId
+            generationPath: generationPath || GenerationPath.GPT,
+            productId: pool.productId || undefined,
+            ipId: pool.ipId || undefined
           }
           combinations.push({
             id: this.generateCombinationId(comboElements),
