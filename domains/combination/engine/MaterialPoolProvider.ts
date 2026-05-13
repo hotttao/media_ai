@@ -157,7 +157,6 @@ export class PrismaMaterialPoolProvider implements MaterialPoolProvider {
         styleImageId: r.styleImageId,
         sceneId: r.sceneId,
         generationPath: r.generationPath as GenerationPath,
-        firstFrameId: r.id,
         productId: r.productId,
         ipId: r.ipId
       },
