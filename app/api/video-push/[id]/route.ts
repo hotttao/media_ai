@@ -13,6 +13,7 @@ type VideoPushUpdateInput = {
   thumbnail?: string
   title?: string
   content?: string
+  manualClipUrl?: string
 }
 
 async function verifyTeamOwnership(id: string, teamId: string) {
@@ -42,7 +43,7 @@ export async function PATCH(
 
   try {
     const body = await request.json()
-    const { qualified, published, thumbnail, title, content } = body
+    const { qualified, published, thumbnail, title, content, manualClipUrl } = body
 
     const updateData: VideoPushUpdateInput = {}
     if (typeof qualified === 'boolean') updateData.isQualified = qualified
@@ -50,6 +51,7 @@ export async function PATCH(
     if (typeof thumbnail === 'string') updateData.thumbnail = thumbnail
     if (typeof title === 'string') updateData.title = title
     if (typeof content === 'string') updateData.content = content
+    if (typeof manualClipUrl === 'string') updateData.manualClipUrl = manualClipUrl
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })

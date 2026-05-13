@@ -29,6 +29,7 @@ interface Clip {
   templateName?: string
   title?: string
   content?: string
+  manualClipUrl?: string  // 手动剪辑后上传的视频
 }
 
 // Per-row editing state
@@ -40,6 +41,15 @@ interface ClipRowState {
   isPublished: boolean
   dirty: boolean
   aiFilling?: boolean
+  manualClipUrl?: string  // 手动剪辑后上传的视频
+}
+
+interface AiFillResult {
+  videoPushId: string
+  results: { title: string; content: string }[]
+  prompt: string
+  productName: string
+  productImage: string
 }
 
 interface ProductDetailData {
@@ -102,6 +112,9 @@ export default function IpProductsPage() {
   // Video player state
   const [playingVideo, setPlayingVideo] = useState<{ url: string; title: string } | null>(null)
 
+  // AI fill dialog state
+  const [aiFillDialog, setAiFillDialog] = useState<AiFillResult | null>(null)
+
   // Scene filter for source videos
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null)
 
@@ -159,6 +172,7 @@ export default function IpProductsPage() {
             isQualified: clip.isQualified,
             isPublished: clip.isPublished,
             dirty: false,
+            manualClipUrl: clip.manualClipUrl || '',
           }
         })
         setClipStates(states)
@@ -202,6 +216,7 @@ export default function IpProductsPage() {
         content: state.content,
         isQualified: state.isQualified,
         isPublished: wasPublished ? false : state.isPublished,
+        manualClipUrl: state.manualClipUrl,
       }
     })
 
@@ -273,6 +288,13 @@ export default function IpProductsPage() {
     const clip = detailData?.clips.find(c => c.videoPushId === videoPushId)
     if (!state || !clip) return
 
+    // 优先使用手动剪辑的视频，否则使用 AI 生成的视频
+    const videoUrl = state.manualClipUrl || clip.url
+    if (!videoUrl) {
+      alert('请先上传手动剪辑的视频')
+      return
+    }
+
     try {
       const res = await fetch('/api/video-push/feishu-push', {
         method: 'POST',
@@ -282,7 +304,7 @@ export default function IpProductsPage() {
           title: state.title || clip.title,
           content: state.content || clip.content,
           thumbnail: state.thumbnail || clip.thumbnail,
-          videoUrl: clip.url,
+          videoUrl,
         }),
       })
       if (res.ok) {
@@ -312,11 +334,7 @@ export default function IpProductsPage() {
       if (res.ok) {
         const data = await res.json()
         if (data.results && data.results.length > 0) {
-          const first = data.results[0]
-          updateClipState(videoPushId, 'title', first.title)
-          updateClipState(videoPushId, 'content', first.content)
-          setSuccessMessage('AI 填充成功')
-          setTimeout(() => setSuccessMessage(null), 2000)
+          setAiFillDialog({ videoPushId, results: data.results, prompt: data.prompt, productName: data.productName, productImage: data.productImage })
         } else {
           alert('AI 生成失败，请重试')
         }
@@ -732,6 +750,30 @@ export default function IpProductsPage() {
                               className="px-3 py-1.5 rounded-lg bg-violet-500 border border-violet-500 text-xs text-white hover:bg-violet-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {state?.aiFilling ? '生成中...' : 'AI 填充'}
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const input = document.createElement('input')
+                                input.type = 'file'
+                                input.accept = 'video/*'
+                                input.onchange = async (e) => {
+                                  const file = (e.target as HTMLInputElement).files?.[0]
+                                  if (!file) return
+                                  const formData = new FormData()
+                                  formData.append('file', file)
+                                  formData.append('subDir', 'clips')
+                                  const res = await fetch('/api/upload', { method: 'POST', body: formData })
+                                  if (res.ok) {
+                                    const { url } = await res.json()
+                                    updateClipState(clip.videoPushId, 'manualClipUrl', url)
+                                  }
+                                }
+                                input.click()
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-orange-500 border border-orange-500 text-xs text-white hover:bg-orange-600 transition-all"
+                              title="上传手动剪辑后的视频"
+                            >
+                              上传
                             </button>
                             <button
                               onClick={() => handleRowPublish(clip.videoPushId)}

@@ -486,6 +486,7 @@ model VideoPush {
   thumbnail       String?  @db.VarChar(500)
   title           String?  @db.VarChar(500)
   content         String?  @db.Text
+  manualClipUrl   String?  @map("manual_clip_url") @db.VarChar(500)  // 手动剪辑后上传的视频URL
   status          String   @default("pending")  // pending | completed | failed
   isQualified     Boolean  @default(false) @map("is_qualified")  // 是否达标可发布
   isPublished     Boolean  @default(false) @map("is_published")  // 是否已发布

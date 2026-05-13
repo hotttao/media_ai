@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     const results = []
     for (const update of updates) {
-      const { videoPushId, thumbnail, title, content, isQualified, isPublished } = update
+      const { videoPushId, thumbnail, title, content, isQualified, isPublished, manualClipUrl } = update
 
       const updateData: any = {}
       if (typeof thumbnail === 'string') updateData.thumbnail = thumbnail
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       if (typeof content === 'string') updateData.content = content
       if (typeof isQualified === 'boolean') updateData.isQualified = isQualified
       if (typeof isPublished === 'boolean') updateData.isPublished = isPublished
+      if (typeof manualClipUrl === 'string') updateData.manualClipUrl = manualClipUrl
 
       if (Object.keys(updateData).length > 0) {
         const updated = await db.videoPush.update({
