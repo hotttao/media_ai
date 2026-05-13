@@ -644,6 +644,7 @@ export default function IpProductsPage() {
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50">
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">视频</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">手动剪辑</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">音乐</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">模板</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">封面图</th>
@@ -672,6 +673,42 @@ export default function IpProductsPage() {
                             ) : null}
                           </div>
                         </td>
+                        {/* Manual Clip - separate column */}
+                        <td className="px-4 py-3">
+                          {state?.manualClipUrl ? (
+                            <div
+                              className="rounded-lg overflow-hidden relative cursor-pointer hover:ring-2 hover:ring-orange-300 transition-all shadow-sm"
+                              style={{ aspectRatio: '9/16', width: '60px' }}
+                              onClick={() => setPlayingVideo({ url: state.manualClipUrl!, title: `手动剪辑 ${clip.videoPushId.slice(0, 8)}` })}
+                            >
+                              <span className="absolute top-1 left-1 bg-orange-500 text-white text-[8px] px-1 rounded">手动</span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={async () => {
+                                const input = document.createElement('input')
+                                input.type = 'file'
+                                input.accept = 'video/*'
+                                input.onchange = async (e) => {
+                                  const file = (e.target as HTMLInputElement).files?.[0]
+                                  if (!file) return
+                                  const formData = new FormData()
+                                  formData.append('file', file)
+                                  formData.append('subDir', 'clips')
+                                  const res = await fetch('/api/upload', { method: 'POST', body: formData })
+                                  if (res.ok) {
+                                    const { url } = await res.json()
+                                    updateClipState(clip.videoPushId, 'manualClipUrl', url)
+                                  }
+                                }
+                                input.click()
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-orange-500 border border-orange-500 text-xs text-white hover:bg-orange-600 transition-all"
+                            >
+                              上传
+                            </button>
+                          )}
+                        </td>
                         {/* Music */}
                         <td className="px-4 py-3">
                           <span className="text-xs text-slate-500 font-mono truncate max-w-[80px] block">
@@ -694,22 +731,22 @@ export default function IpProductsPage() {
                           )}
                         </td>
                         {/* Title */}
-                        <td className="px-4 py-3 min-w-[120px]">
-                          <input
-                            type="text"
+                        <td className="px-4 py-3 min-w-[180px]">
+                          <textarea
+                            rows={2}
                             value={state?.title || ''}
                             onChange={(e) => updateClipState(clip.videoPushId, 'title', e.target.value)}
-                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 placeholder:text-slate-400"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 placeholder:text-slate-400 resize-none"
                             placeholder="标题"
                           />
                         </td>
                         {/* Content */}
-                        <td className="px-4 py-3 min-w-[150px]">
-                          <input
-                            type="text"
+                        <td className="px-4 py-3 min-w-[220px]">
+                          <textarea
+                            rows={3}
                             value={state?.content || ''}
                             onChange={(e) => updateClipState(clip.videoPushId, 'content', e.target.value)}
-                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 placeholder:text-slate-400"
+                            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 placeholder:text-slate-400 resize-none"
                             placeholder="内容"
                           />
                         </td>
@@ -750,30 +787,6 @@ export default function IpProductsPage() {
                               className="px-3 py-1.5 rounded-lg bg-violet-500 border border-violet-500 text-xs text-white hover:bg-violet-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {state?.aiFilling ? '生成中...' : 'AI 填充'}
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const input = document.createElement('input')
-                                input.type = 'file'
-                                input.accept = 'video/*'
-                                input.onchange = async (e) => {
-                                  const file = (e.target as HTMLInputElement).files?.[0]
-                                  if (!file) return
-                                  const formData = new FormData()
-                                  formData.append('file', file)
-                                  formData.append('subDir', 'clips')
-                                  const res = await fetch('/api/upload', { method: 'POST', body: formData })
-                                  if (res.ok) {
-                                    const { url } = await res.json()
-                                    updateClipState(clip.videoPushId, 'manualClipUrl', url)
-                                  }
-                                }
-                                input.click()
-                              }}
-                              className="px-3 py-1.5 rounded-lg bg-orange-500 border border-orange-500 text-xs text-white hover:bg-orange-600 transition-all"
-                              title="上传手动剪辑后的视频"
-                            >
-                              上传
                             </button>
                             <button
                               onClick={() => handleRowPublish(clip.videoPushId)}
@@ -832,6 +845,42 @@ export default function IpProductsPage() {
                   autoPlay
                   className="w-full rounded-lg"
                 />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* AI Fill Result Selection Dialog */}
+        {aiFillDialog && (
+          <Dialog open={!!aiFillDialog} onOpenChange={() => setAiFillDialog(null)}>
+            <DialogContent className="bg-white border-slate-200 max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-slate-900">选择 AI 生成的内容</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4 space-y-3">
+                {aiFillDialog.results.map((item, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      if (aiFillDialog) {
+                        updateClipState(aiFillDialog.videoPushId, 'title', item.title)
+                        updateClipState(aiFillDialog.videoPushId, 'content', item.content)
+                        setAiFillDialog(null)
+                        setSuccessMessage('AI 填充成功')
+                        setTimeout(() => setSuccessMessage(null), 2000)
+                      }
+                    }}
+                    className="p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all"
+                  >
+                    <div className="text-sm font-medium text-slate-900 mb-1">选项 {idx + 1}</div>
+                    <div className="text-sm text-slate-700 mb-2">
+                      <span className="font-medium">标题：</span>{item.title}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      <span className="font-medium">内容：</span>{item.content}
+                    </div>
+                  </div>
+                ))}
               </div>
             </DialogContent>
           </Dialog>
