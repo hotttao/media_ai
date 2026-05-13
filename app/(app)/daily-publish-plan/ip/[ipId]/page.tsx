@@ -39,6 +39,7 @@ interface ClipRowState {
   isQualified: boolean
   isPublished: boolean
   dirty: boolean
+  aiFilling?: boolean
 }
 
 interface ProductDetailData {
@@ -294,6 +295,42 @@ export default function IpProductsPage() {
     } catch (err) {
       console.error(err)
       alert('推送失败')
+    }
+  }
+
+  // AI fill title and content
+  const handleAIFill = async (videoPushId: string) => {
+    if (!selectedProductId) return
+
+    setClipStates(prev => ({
+      ...prev,
+      [videoPushId]: { ...prev[videoPushId], aiFilling: true }
+    }))
+
+    try {
+      const res = await fetch(`/api/video-push/ai-fill?productId=${selectedProductId}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.results && data.results.length > 0) {
+          const first = data.results[0]
+          updateClipState(videoPushId, 'title', first.title)
+          updateClipState(videoPushId, 'content', first.content)
+          setSuccessMessage('AI 填充成功')
+          setTimeout(() => setSuccessMessage(null), 2000)
+        } else {
+          alert('AI 生成失败，请重试')
+        }
+      } else {
+        alert('AI 填充失败')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('AI 填充失败')
+    } finally {
+      setClipStates(prev => ({
+        ...prev,
+        [videoPushId]: { ...prev[videoPushId], aiFilling: false }
+      }))
     }
   }
 
@@ -690,6 +727,13 @@ export default function IpProductsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <button
+                              onClick={() => handleAIFill(clip.videoPushId)}
+                              disabled={state?.aiFilling}
+                              className="px-3 py-1.5 rounded-lg bg-violet-500 border border-violet-500 text-xs text-white hover:bg-violet-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              {state?.aiFilling ? '生成中...' : 'AI 填充'}
+                            </button>
+                            <button
                               onClick={() => handleRowPublish(clip.videoPushId)}
                               className="px-3 py-1.5 rounded-lg bg-indigo-500 border border-indigo-500 text-xs text-white hover:bg-indigo-600 transition-all"
                             >
@@ -701,6 +745,18 @@ export default function IpProductsPage() {
                               className="px-3 py-1.5 rounded-lg bg-emerald-500 border border-emerald-500 text-xs text-white hover:bg-emerald-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               推送
+                            </button>
+                            <button
+                              onClick={() => clip.url && fetch('/api/tools/open-folder', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ filePath: clip.url })
+                              })}
+                              disabled={!clip.url}
+                              className="px-3 py-1.5 rounded-lg bg-slate-500 border border-slate-500 text-xs text-white hover:bg-slate-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="打开视频所在目录"
+                            >
+                              目录
                             </button>
                           </div>
                         </td>
