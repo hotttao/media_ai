@@ -62,10 +62,10 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3000}`
     const callbackUrl = `${baseUrl}/api/video-push/callback`
 
-    // 获取 output 目录
+    // 获取 output 目录 - 与源视频目录格式一致，方便管理
+    // 格式: /uploads/teams/{teamId}/clips/xxx.mp4
     const teamId = session.user.teamId
-    const today = new Date().toISOString().split('T')[0]
-    const outputDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'clips', today)
+    const outputDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'clips')
 
     // Step 1: 下载视频到本地
     const capcut = getCapcutProvider()

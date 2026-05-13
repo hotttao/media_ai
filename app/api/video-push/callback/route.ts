@@ -52,17 +52,15 @@ export async function POST(request: NextRequest) {
 
     if (output) {
       // CLI 只返回文件名如 "clip-xxx_luxury.mp4"
-      // 需要构建完整的本地文件路径并验证文件存在
-      // 使用 VideoPush 的创建时间来确定目录，而非当前时间（避免跨天问题）
+      // 格式: /uploads/teams/{teamId}/clips/{filename}
       const teamId = videoPush.product.teamId
-      const clipsDate = videoPush.createdAt.toISOString().split('T')[0]
-      const clipsDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'clips', clipsDate)
+      const clipsDir = path.join(process.cwd(), 'public', 'uploads', 'teams', teamId, 'clips')
       const fullLocalPath = path.join(clipsDir, output)
 
       console.log(`[callback] Checking file existence: ${fullLocalPath}`)
       if (fs.existsSync(fullLocalPath)) {
         // 文件存在，构建可访问的 URL
-        const fileUrl = `/uploads/teams/${teamId}/clips/${clipsDate}/${output}`
+        const fileUrl = `/uploads/teams/${teamId}/clips/${output}`
         updateData.url = fileUrl
         console.log(`[callback] File exists, URL: ${fileUrl}`)
       } else {
