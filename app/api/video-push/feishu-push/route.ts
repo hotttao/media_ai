@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/foundation/lib/auth'
 import { sendVideoWithText, sendImageWithText } from '@/foundation/lib/feishu'
 import { db } from '@/foundation/lib/db'
+import fs from 'fs'
+import path from 'path'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'VideoPush not found' }, { status: 404 })
     }
 
-    // Download video and image from URLs
+    // Download video and image from URLs (优先从本地读取)
     const videoBuffer = await downloadToBuffer(videoUrl)
     const imageBuffer = thumbnail ? await downloadToBuffer(thumbnail) : null
 
@@ -71,11 +73,36 @@ export async function POST(request: NextRequest) {
   }
 }
 
-const VIDEO_SERVICE_BASE_URL = process.env.NEXT_PUBLIC_VIDEO_SERVICE_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+// 本地 public 目录
+const PUBLIC_DIR = path.join(process.cwd(), 'public')
 
 async function downloadToBuffer(url: string): Promise<Buffer | null> {
   if (!url) return null
-  const fullUrl = url.startsWith('http') ? url : `${VIDEO_SERVICE_BASE_URL}${url}`
+
+  // 如果是完整URL，直接下载
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Failed to download ${url}: ${response.status} ${response.statusText}`)
+    }
+    const arrayBuffer = await response.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  }
+
+  // 相对路径：优先从本地读取
+  const localPath = path.join(PUBLIC_DIR, url.replace(/^\//, ''))
+  console.log('[feishu-push] Trying local path:', localPath)
+
+  if (fs.existsSync(localPath)) {
+    console.log('[feishu-push] Found local file, reading...')
+    return fs.readFileSync(localPath)
+  }
+
+  // 本地不存在，从图片服务下载
+  const IMAGE_SERVICE_BASE_URL = process.env.IMAGE_SERVICE_BASE_URL || 'http://192.168.2.38'
+  const fullUrl = `${IMAGE_SERVICE_BASE_URL}${url}`
+  console.log('[feishu-push] Local not found, downloading from:', fullUrl)
+
   const response = await fetch(fullUrl)
   if (!response.ok) {
     throw new Error(`Failed to download ${fullUrl}: ${response.status} ${response.statusText}`)
