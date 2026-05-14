@@ -80,7 +80,7 @@ export async function saveToLocal(
   return relativePath
 }
 
-// 上传文件到外部图片服务
+// 上传文件到外部图片服务，同时在本地缓存一份
 export async function uploadToRemote(
   file: File | Buffer,
   teamId: string,
@@ -92,6 +92,15 @@ export async function uploadToRemote(
   // 从 File 对象获取原始文件名
   const originalName = file instanceof File ? file.name : 'upload.jpg'
   const fileName = generateFileName(originalName)
+
+  // 获取文件 buffer 用于同时保存本地
+  let fileBuffer: Buffer
+  if (Buffer.isBuffer(file)) {
+    fileBuffer = file
+  } else {
+    const arrayBuffer = await file.arrayBuffer()
+    fileBuffer = Buffer.from(arrayBuffer)
+  }
 
   if (Buffer.isBuffer(file)) {
     // 如果是 Buffer，转换为 Uint8Array 再转为 Blob
@@ -118,6 +127,11 @@ export async function uploadToRemote(
 
   const data = await response.json()
   console.log(`[uploadToRemote] image service returned url="${data.url}"`)
+
+  // 同时保存到本地缓存
+  await saveToLocal(fileBuffer, teamId, subDir)
+  console.log(`[uploadToRemote] local cache saved for "${filePath}"`)
+
   // 返回相对路径，与数据库存储格式一致
   return data.url
 }
