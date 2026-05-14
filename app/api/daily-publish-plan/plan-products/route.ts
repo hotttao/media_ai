@@ -20,7 +20,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Normalize date to UTC midnight for @db.Date comparison
     const date = new Date(dateStr)
+    date.setUTCHours(0, 0, 0, 0)
     if (isNaN(date.getTime())) {
       return NextResponse.json({ error: 'Invalid date format' }, { status: 400 })
     }
