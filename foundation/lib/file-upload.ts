@@ -48,11 +48,12 @@ export function getFilePath(teamId: string, fileName: string): string {
 export async function saveToLocal(
   file: File | Buffer,
   teamId: string,
-  subDir: string = ''
+  subDir: string = '',
+  fileName?: string
 ): Promise<string> {
-  // 从 File 对象获取原始文件名
-  const originalName = file instanceof File ? file.name : 'upload.jpg'
-  const fileName = generateFileName(originalName)
+  // 从 File 对象或参数获取原始文件名
+  const originalName = fileName || (file instanceof File ? file.name : 'upload.jpg')
+  const finalFileName = generateFileName(originalName)
 
   // 构建本地保存路径
   const teamDir = ensureUploadDir(teamId)
@@ -63,7 +64,7 @@ export async function saveToLocal(
     fs.mkdirSync(fullDir, { recursive: true })
   }
 
-  const filePath = path.join(fullDir, fileName)
+  const filePath = path.join(fullDir, finalFileName)
 
   // 写入文件
   if (Buffer.isBuffer(file)) {
@@ -75,7 +76,7 @@ export async function saveToLocal(
   }
 
   // 返回相对路径
-  const relativePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${fileName}`
+  const relativePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${finalFileName}`
   console.log(`[saveToLocal] saved to "${relativePath}"`)
   return relativePath
 }
@@ -128,8 +129,8 @@ export async function uploadToRemote(
   const data = await response.json()
   console.log(`[uploadToRemote] image service returned url="${data.url}"`)
 
-  // 同时保存到本地缓存
-  await saveToLocal(fileBuffer, teamId, subDir)
+  // 同时保存到本地缓存（使用与远程相同的文件名）
+  await saveToLocal(fileBuffer, teamId, subDir, fileName)
   console.log(`[uploadToRemote] local cache saved for "${filePath}"`)
 
   // 返回相对路径，与数据库存储格式一致

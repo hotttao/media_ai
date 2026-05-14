@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { cn, getImageUrl } from '@/foundation/lib/utils'
+import { cn, getImageUrl, getMediaUrl } from '@/foundation/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -576,7 +576,7 @@ export default function IpProductsPage() {
               <button
                 onClick={() => {
                   if (!selectedProductId) return
-                  router.push(`/products/${selectedProductId}/video-wizard?ipId=${ipId}`)
+                  window.open(`/products/${selectedProductId}/video-wizard?ipId=${ipId}`, '_blank')
                 }}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-sm text-white font-medium hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
               >
@@ -747,7 +747,7 @@ export default function IpProductsPage() {
                             <div
                               className="rounded-lg overflow-hidden relative cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all shadow-sm"
                               style={{ aspectRatio: '9/16', width: '60px' }}
-                              onClick={() => setPlayingVideo({ url: state.manualClipUrl!, title: `视频 ${clip.videoPushId.slice(0, 8)}` })}
+                              onClick={() => setPlayingVideo({ url: getMediaUrl(state.manualClipUrl), title: `视频 ${clip.videoPushId.slice(0, 8)}` })}
                             >
                               <div className="absolute inset-0 bg-slate-900 flex items-center justify-center">
                                 <svg className="w-6 h-6 text-white/80" fill="currentColor" viewBox="0 0 24 24">
@@ -759,7 +759,7 @@ export default function IpProductsPage() {
                             <div
                               className="rounded-lg overflow-hidden relative cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all shadow-sm"
                               style={{ aspectRatio: '9/16', width: '60px' }}
-                              onClick={() => setPlayingVideo({ url: clip.url, title: `视频 ${clip.videoPushId.slice(0, 8)}` })}
+                              onClick={() => setPlayingVideo({ url: getMediaUrl(clip.url), title: `视频 ${clip.videoPushId.slice(0, 8)}` })}
                             >
                               {clip.videoThumbnail ? (
                                 <img src={getImageUrl(clip.videoThumbnail)} alt="thumbnail" className="w-full h-full object-cover" />
