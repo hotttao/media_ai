@@ -20,11 +20,13 @@ export async function POST(request: NextRequest) {
 
     const teamId = session.user.teamId
     const userId = session.user.id
+    console.log('[upload API] 开始上传, fileName:', file.name, 'teamId:', teamId, 'subDir:', subDir)
     const url = await uploadToImageService(file, teamId, userId, subDir)
+    console.log('[upload API] 上传完成, 返回url:', url)
 
     return NextResponse.json({ url })
   } catch (error) {
-    console.error('Upload error:', error)
+    console.error('[upload API] 上传错误:', error)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }

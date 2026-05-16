@@ -34,16 +34,32 @@ export async function generateVideoTitleContent(
     .replace("{{ product_name }}", productName)
     .replace("{{ product_image }}", productImage);
 
+  console.log('[generateVideoTitleContent] Starting AI generation for product:', productName)
+
+  const startTime = Date.now()
   const { text } = await generateText({
     model: models.chat,
     messages: [{ role: "user", content: prompt }],
     maxRetries: 1,
     timeout: 120000,
-  });
+    providerOptions: {
+      minimax: {
+        // 禁用思考模式，减少响应延迟
+        thinking: { type: 'disabled' } as any,
+      },
+    },
+  })
+  console.log('[generateVideoTitleContent] AI responded in', Date.now() - startTime, 'ms')
+
+  // 过滤掉思考过程
+  const cleanText = text.replace(/<[^>]*>/g, '').trim()
+  console.log('[generateVideoTitleContent] AI raw response length:', cleanText.length)
+  console.log('[generateVideoTitleContent] AI raw response:', cleanText)
 
   // Extract JSON from response
-  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  const jsonMatch = cleanText.match(/\[[\s\S]*\]/);
   if (!jsonMatch) {
+    console.log('[generateVideoTitleContent] No JSON array found in response')
     return { results: [], prompt, productName, productImage };
   }
 
@@ -54,10 +70,12 @@ export async function generateVideoTitleContent(
         title: typeof item.title === "string" ? item.title : "",
         content: typeof item.content === "string" ? item.content : "",
       }));
+      console.log('[generateVideoTitleContent] Generated', results.length, 'results')
       return { results, prompt, productName, productImage };
     }
     return { results: [], prompt, productName, productImage };
   } catch {
+    console.error('[generateVideoTitleContent] JSON parse error')
     return { results: [], prompt, productName, productImage };
   }
 }

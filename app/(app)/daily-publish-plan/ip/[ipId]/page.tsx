@@ -106,6 +106,7 @@ export default function IpProductsPage() {
   const [selectedSourceIds, setSelectedSourceIds] = useState<Set<string>>(new Set())
   const [clipping, setClipping] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [pushingClipId, setPushingClipId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Per-row editing states for clips table
@@ -298,6 +299,7 @@ export default function IpProductsPage() {
       return
     }
 
+    setPushingClipId(videoPushId)
     try {
       const res = await fetch('/api/video-push/feishu-push', {
         method: 'POST',
@@ -315,11 +317,16 @@ export default function IpProductsPage() {
         setTimeout(() => setSuccessMessage(null), 2000)
       } else {
         const data = await res.json()
-        alert(data.error || '推送失败')
+        // 优先显示后端返回的详细错误信息
+        const errorMsg = data.details || data.error || '推送失败'
+        const stackInfo = data.stack ? `\n\n堆栈:\n${data.stack}` : ''
+        alert(`推送失败: ${errorMsg}${stackInfo}`)
       }
     } catch (err) {
       console.error(err)
       alert('推送失败')
+    } finally {
+      setPushingClipId(null)
     }
   }
 
@@ -743,18 +750,6 @@ export default function IpProductsPage() {
                                 <div className="w-5 h-5 border-2 border-slate-300 border-t-indigo-500 rounded-full animate-spin" />
                               </div>
                             </div>
-                          ) : state?.manualClipUrl ? (
-                            <div
-                              className="rounded-lg overflow-hidden relative cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all shadow-sm"
-                              style={{ aspectRatio: '9/16', width: '60px' }}
-                              onClick={() => setPlayingVideo({ url: getMediaUrl(state.manualClipUrl), title: `视频 ${clip.videoPushId.slice(0, 8)}` })}
-                            >
-                              <div className="absolute inset-0 bg-slate-900 flex items-center justify-center">
-                                <svg className="w-6 h-6 text-white/80" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M8 5v14l11-7z"/>
-                                </svg>
-                              </div>
-                            </div>
                           ) : clip.url ? (
                             <div
                               className="rounded-lg overflow-hidden relative cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all shadow-sm"
@@ -889,13 +884,17 @@ export default function IpProductsPage() {
                             {/* 推送 - 绿 */}
                             <button
                               onClick={() => handlePushClip(clip.videoPushId)}
-                              disabled={!state?.isPublished}
+                              disabled={!state?.isPublished || pushingClipId === clip.videoPushId}
                               className="w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all"
                               title="推送"
                             >
-                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                              </svg>
+                              {pushingClipId === clip.videoPushId ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                </svg>
+                              )}
                             </button>
                             {/* 目录 - 灰 */}
                             <button

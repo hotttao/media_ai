@@ -17,10 +17,20 @@ export function ensureUploadDir(teamId: string): string {
 }
 
 // Generate unique filename preserving extension
+// 如果输入已包含 UUID 格式（8-4-4-4-12 模式），不再追加额外 UUID
 export function generateFileName(originalName: string): string {
   const ext = path.extname(originalName)
   // 移除中文字符和空格，只保留安全的字符
   const baseName = path.basename(originalName, ext).replace(/[^\x00-\x7F]/g, '').replace(/\s+/g, '_')
+
+  // 检测是否已经是 UUID 格式（8-4-4-4-12），避免重复追加
+  const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i
+  const hasUuidSuffix = /_[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(baseName)
+
+  if (hasUuidSuffix) {
+    // 已经是 UUID 格式，直接返回（不再追加 UUID）
+    return `${baseName}${ext}`
+  }
   return `${baseName}_${uuid()}${ext}`
 }
 
@@ -53,7 +63,9 @@ export async function saveToLocal(
 ): Promise<string> {
   // 从 File 对象或参数获取原始文件名
   const originalName = fileName || (file instanceof File ? file.name : 'upload.jpg')
-  const finalFileName = generateFileName(originalName)
+  const finalFileName = fileName || generateFileName(originalName)
+
+  console.log('[saveToLocal] 开始保存, originalName:', originalName, 'fileName:', fileName, 'finalFileName:', finalFileName)
 
   // 构建本地保存路径
   const teamDir = ensureUploadDir(teamId)
@@ -65,6 +77,7 @@ export async function saveToLocal(
   }
 
   const filePath = path.join(fullDir, finalFileName)
+  console.log('[saveToLocal] 完整路径:', filePath)
 
   // 写入文件
   if (Buffer.isBuffer(file)) {
@@ -77,7 +90,7 @@ export async function saveToLocal(
 
   // 返回相对路径
   const relativePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${finalFileName}`
-  console.log(`[saveToLocal] saved to "${relativePath}"`)
+  console.log(`[saveToLocal] 保存完成, relativePath: "${relativePath}"`)
   return relativePath
 }
 
@@ -93,6 +106,8 @@ export async function uploadToRemote(
   // 从 File 对象获取原始文件名
   const originalName = file instanceof File ? file.name : 'upload.jpg'
   const fileName = generateFileName(originalName)
+
+  console.log('[uploadToRemote] originalName:', originalName, '-> fileName:', fileName)
 
   // 获取文件 buffer 用于同时保存本地
   let fileBuffer: Buffer
@@ -115,7 +130,7 @@ export async function uploadToRemote(
   // 构造上传 URL：/uploads/teams/{teamId}/{subDir}/{filename}
   const filePath = `/uploads/teams/${teamId}${subDir ? `/${subDir}` : ''}/${fileName}`
   const uploadUrl = `${IMAGE_SERVICE_BASE_URL}${filePath}`
-  console.log(`[uploadToRemote] POST ${uploadUrl}`)
+  console.log(`[uploadToRemote] 上传到 ${uploadUrl}`)
 
   const response = await fetch(uploadUrl, {
     method: 'POST',
@@ -127,11 +142,12 @@ export async function uploadToRemote(
   }
 
   const data = await response.json()
-  console.log(`[uploadToRemote] image service returned url="${data.url}"`)
+  console.log(`[uploadToRemote] 图片服务返回 url="${data.url}"`)
 
   // 同时保存到本地缓存（使用与远程相同的文件名）
+  console.log(`[uploadToRemote] 开始保存本地缓存, fileName:`, fileName)
   await saveToLocal(fileBuffer, teamId, subDir, fileName)
-  console.log(`[uploadToRemote] local cache saved for "${filePath}"`)
+  console.log(`[uploadToRemote] 本地缓存保存完成`)
 
   // 返回相对路径，与数据库存储格式一致
   return data.url

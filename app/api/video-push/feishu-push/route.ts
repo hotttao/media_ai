@@ -15,61 +15,59 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  try {
-    const body = await request.json()
-    const { videoPushId, title, content, thumbnail, videoUrl } = body
+  const body = await request.json()
+  const { videoPushId, title, content, thumbnail, videoUrl } = body
 
-    if (!videoPushId) {
-      return NextResponse.json({ error: 'videoPushId is required' }, { status: 400 })
-    }
+  if (!videoPushId) {
+    return NextResponse.json({ error: 'videoPushId is required' }, { status: 400 })
+  }
 
-    // Get videoPush record
-    const videoPush = await db.videoPush.findUnique({
-      where: { id: videoPushId },
-    })
+  // Get videoPush record
+  const videoPush = await db.videoPush.findUnique({
+    where: { id: videoPushId },
+  })
 
-    if (!videoPush) {
-      return NextResponse.json({ error: 'VideoPush not found' }, { status: 404 })
-    }
+  if (!videoPush) {
+    return NextResponse.json({ error: 'VideoPush not found' }, { status: 404 })
+  }
 
-    // Download video and image from URLs (优先从本地读取)
-    const videoBuffer = await downloadToBuffer(videoUrl)
-    const imageBuffer = thumbnail ? await downloadToBuffer(thumbnail) : null
+  // Download video and image from URLs (优先从本地读取)
+  const videoBuffer = await downloadToBuffer(videoUrl)
+  const imageBuffer = thumbnail ? await downloadToBuffer(thumbnail) : null
 
-    let success = false
-    if (videoBuffer) {
-      // Send video with text
-      const fileName = `video_${videoPushId.slice(0, 8)}.mp4`
-      console.log('[feishu-push] Sending video, size:', videoBuffer.length)
-      success = await sendVideoWithText(
-        videoBuffer,
-        title || '视频推送',
-        content || '',
-        fileName
-      )
-      console.log('[feishu-push] sendVideoWithText result:', success)
-    } else if (imageBuffer) {
-      // Send image with text
-      success = await sendImageWithText(
-        imageBuffer,
-        title || '图片推送',
-        content || ''
-      )
-    } else {
-      return NextResponse.json({ error: 'No video or image URL provided' }, { status: 400 })
-    }
+  let success = false
+  let errorMessages: string[] = []
+  if (videoBuffer) {
+    // Send video with text (传入封面图作为视频失败时的降级备选)
+    const fileName = `video_${videoPushId.slice(0, 8)}.mp4`
+    console.log('[feishu-push] Sending video, size:', videoBuffer.length)
+    const result = await sendVideoWithText(
+      videoBuffer,
+      title || '视频推送',
+      content || '',
+      fileName,
+      imageBuffer  // 封面图始终推送
+    )
+    success = result.success
+    errorMessages = result.errors
+    console.log('[feishu-push] sendVideoWithText result:', result)
+  } else if (imageBuffer) {
+    // Send image with text
+    const result = await sendImageWithText(
+      imageBuffer,
+      title || '图片推送',
+      content || ''
+    )
+    success = result.success
+    errorMessages = result.errors
+  } else {
+    return NextResponse.json({ error: 'No video or image URL provided' }, { status: 400 })
+  }
 
-    if (success) {
-      return NextResponse.json({ message: 'Push successful' })
-    } else {
-      return NextResponse.json({ error: 'Push failed' }, { status: 500 })
-    }
-  } catch (error) {
-    console.error('[feishu-push] Error:', error)
-    if (error instanceof Error) {
-      console.error('[feishu-push] Stack:', error.stack)
-    }
-    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }, { status: 500 })
+  if (success) {
+    return NextResponse.json({ message: 'Push successful' })
+  } else {
+    return NextResponse.json({ error: 'Push failed', details: errorMessages.join('; ') }, { status: 500 })
   }
 }
 
@@ -79,8 +77,11 @@ const PUBLIC_DIR = path.join(process.cwd(), 'public')
 async function downloadToBuffer(url: string): Promise<Buffer | null> {
   if (!url) return null
 
+  console.log('[feishu-push downloadToBuffer] url:', url)
+
   // 如果是完整URL，直接下载
   if (url.startsWith('http://') || url.startsWith('https://')) {
+    console.log('[feishu-push] Full URL, downloading directly')
     const response = await fetch(url)
     if (!response.ok) {
       throw new Error(`Failed to download ${url}: ${response.status} ${response.statusText}`)

@@ -63,6 +63,33 @@ export async function POST(request: NextRequest) {
         const fileUrl = `/uploads/teams/${teamId}/clips/${output}`
         updateData.url = fileUrl
         console.log(`[callback] File exists, URL: ${fileUrl}`)
+
+        // 上传到远程图片服务
+        console.log(`[callback] Uploading to remote image service...`)
+        const IMAGE_SERVICE_BASE_URL = process.env.IMAGE_SERVICE_BASE_URL || 'http://192.168.2.38'
+        const remotePath = `/uploads/teams/${teamId}/clips/${output}`
+        const uploadUrl = `${IMAGE_SERVICE_BASE_URL}${remotePath}`
+
+        try {
+          const fileBuffer = fs.readFileSync(fullLocalPath)
+          const formData = new FormData()
+          const blob = new Blob([fileBuffer], { type: 'video/mp4' })
+          formData.append('file', blob, output)
+
+          console.log(`[callback] Uploading to ${uploadUrl}`)
+          const response = await fetch(uploadUrl, {
+            method: 'POST',
+            body: formData,
+          })
+
+          if (response.ok) {
+            console.log(`[callback] Upload successful`)
+          } else {
+            console.error(`[callback] Upload failed: ${response.status} ${response.statusText}`)
+          }
+        } catch (err) {
+          console.error(`[callback] Upload error:`, err)
+        }
       } else {
         console.log(`[callback] File not found: ${fullLocalPath}`)
         // 文件不存在，但仍然更新状态（CLI 已处理）

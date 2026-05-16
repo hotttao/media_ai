@@ -14,22 +14,36 @@ export function ThumbnailUploader({ value, onChange, disabled }: ThumbnailUpload
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file) {
+      console.log('[ThumbnailUploader] 没有选择文件')
+      return
+    }
 
+    console.log('[ThumbnailUploader] 开始上传, fileName:', file.name, 'size:', file.size)
     setUploading(true)
     try {
       const formData = new FormData()
       formData.append('file', file)
 
+      console.log('[ThumbnailUploader] 发送请求到 /api/upload')
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       })
 
+      console.log('[ThumbnailUploader] 响应状态:', res.status, res.statusText)
       if (res.ok) {
         const { url } = await res.json()
+        console.log('[ThumbnailUploader] 上传成功, url:', url)
         onChange(url)
+      } else {
+        const errText = await res.text()
+        console.error('[ThumbnailUploader] 上传失败:', res.status, errText)
+        alert(`上传失败: ${res.status} ${errText}`)
       }
+    } catch (err) {
+      console.error('[ThumbnailUploader] 上传异常:', err)
+      alert(`上传异常: ${err}`)
     } finally {
       setUploading(false)
     }
